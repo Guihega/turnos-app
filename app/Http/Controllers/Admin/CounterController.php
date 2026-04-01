@@ -15,7 +15,7 @@ class CounterController extends Controller
     public function index(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
-        $branches = Branch::where('tenant_id', $tenantId)->active()->get();
+        $branches = Branch::where('tenant_id', $tenantId)->where('is_active', true)->get();
         $branchId = $request->input('branch_id', $branches->first()?->id);
 
         $counters = $branchId ? Counter::where('branch_id', $branchId)
@@ -36,7 +36,7 @@ class CounterController extends Controller
 
     public function create(Request $request)
     {
-        $branches = Branch::where('tenant_id', $request->user()->tenant_id)->active()->get(['id', 'name']);
+        $branches = Branch::where('tenant_id', $request->user()->tenant_id)->where('is_active', true)->get(['id', 'name']);
         return Inertia::render('Admin/Counters/Form', ['counter' => null, 'branches' => $branches]);
     }
 
@@ -55,7 +55,7 @@ class CounterController extends Controller
 
     public function edit(Counter $counter)
     {
-        $branches = Branch::where('tenant_id', $counter->branch->tenant_id)->active()->get(['id', 'name']);
+        $branches = Branch::where('tenant_id', $counter->branch->tenant_id)->where('is_active', true)->get(['id', 'name']);
         return Inertia::render('Admin/Counters/Form', [
             'counter' => $counter->only(['id', 'branch_id', 'name', 'number', 'status']),
             'branches' => $branches,
@@ -67,6 +67,7 @@ class CounterController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'number' => 'required|string|max:10',
+            'status' => 'nullable|in:open,closed,paused',
         ]);
 
         $counter->update($data);

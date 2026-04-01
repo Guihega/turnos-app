@@ -112,12 +112,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ══════════════════════════════════════════
 // Ruta Pública para el Kiosco
 // ══════════════════════════════════════════
-//Route::get('/kiosco/{branch}', [KioskController::class, 'index'])->name('kiosk.public');
-Route::get('/kiosko/{branch}', [KioskController::class, 'index']);
+Route::get('/kiosco/{branch}', [KioskController::class, 'index'])->name('kiosk.public');
 Route::post('/kiosco/{branch}/turno', [KioskController::class, 'store'])->name('kiosk.store');
 Route::get('/kiosco/{branch}/turno/{ticket}', [KioskController::class, 'status'])->name('kiosk.status');
-
-// 2. Ruta de prueba rápida para confirmar el log
 
 // ══════════════════════════════════════════
 // Pantalla pública de display (sin auth)

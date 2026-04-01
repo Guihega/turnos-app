@@ -6,45 +6,61 @@ namespace App\Http\Controllers;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Events\TicketCalled;
+use App\Events\TicketCompleted;
+use App\Events\TicketTransferred;
 use App\Models\Branch;
 use App\Models\Counter;
 use App\Models\Queue;
-use App\Models\Service;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OperatorController extends Controller
 {
-    /**
-     * Vista principal del operador.
-     */
     public function index(Request $request): Response
     {
         $user = $request->user();
         $tenantId = $user->tenant_id;
 
-        // Sucursales asignadas al operador
-        $branches = $user->isTenantAdmin()
-            ? Branch::where('tenant_id', $tenantId)->active()->get()
-            : $user->branches()->active()->get();
+        // Obtener sucursales según rol
+        $branches = ($user->isSuperAdmin() || $user->isTenantAdmin())
+            ? Branch::where('tenant_id', $tenantId)->where('is_active', true)->get()
+            : Branch::where('is_active', true)
+                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->get();
 
         $branchId = $request->input('branch_id', $branches->first()?->id);
         $branch = $branches->firstWhere('id', $branchId);
 
-        // Ventanilla actual del operador
-        $counter = $branch ? Counter::where('branch_id', $branch->id)
-            ->where('current_operator_id', $user->id)
-            ->first() : null;
+        if (!$branch) {
+            return Inertia::render('Operator/Index', [
+                'branches' => collect(), 'currentBranch' => null, 'counter' => null,
+                'availableCounters' => collect(), 'currentTicket' => null,
+                'waitingTickets' => collect(), 'queues' => collect(),
+                'allQueues' => collect(), 'myStats' => ['served' => 0, 'avg_service' => 0, 'avg_rating' => null],
+                'error' => 'No tiene sucursales asignadas.',
+            ]);
+        }
 
-        // Ventanillas disponibles para asignarse
-        $availableCounters = $branch ? Counter::where('branch_id', $branch->id)
-            ->where(function ($q) use ($user) {
-                $q->whereNull('current_operator_id')
-                  ->orWhere('current_operator_id', $user->id);
-            })
+        Log::info('OperatorController::index', [
+            'user' => $user->name,
+            'role' => $user->role->value ?? $user->role,
+            'branch' => $branch->name,
+            'branch_id' => $branch->id,
+        ]);
+
+        // ── Ventanilla del operador ──
+        $counter = Counter::where('branch_id', $branch->id)
+            ->where('current_operator_id', $user->id)
+            ->first();
+
+        // Ventanillas disponibles (sin operador asignado + la propia)
+        $availableCounters = Counter::where('branch_id', $branch->id)
+            ->where(fn($q) => $q->whereNull('current_operator_id')->orWhere('current_operator_id', $user->id))
             ->orderBy('number')
             ->get()
             ->map(fn($c) => [
@@ -53,39 +69,46 @@ class OperatorController extends Controller
                 'number' => $c->number,
                 'status' => $c->status,
                 'is_mine' => $c->current_operator_id === $user->id,
-            ]) : collect();
+            ]);
 
-        // Ticket que el operador tiene actualmente
-        $currentTicket = Ticket::with(['queue:id,name,prefix', 'service:id,name,color'])
+        // ── Turno actual del operador (llamado o en atención) ──
+        $currentTicket = Ticket::with(['queue:id,name,prefix', 'service:id,name,color', 'counter:id,name,number'])
             ->where('served_by', $user->id)
             ->whereIn('status', [TicketStatus::CALLED, TicketStatus::IN_PROGRESS])
             ->first();
 
-        $currentTicketData = $currentTicket ? [
-            'id' => $currentTicket->id,
-            'display_number' => $currentTicket->display_number,
-            'customer_name' => $currentTicket->customer_name,
-            'customer_phone' => $currentTicket->customer_phone,
-            'status' => $currentTicket->status->value,
-            'status_label' => $currentTicket->status->label(),
-            'priority' => $currentTicket->priority->value,
-            'priority_label' => $currentTicket->priority->label(),
-            'queue_name' => $currentTicket->queue?->name,
-            'service_name' => $currentTicket->service?->name,
-            'service_color' => $currentTicket->service?->color,
-            'issued_at' => $currentTicket->issued_at?->toIso8601String(),
-            'called_at' => $currentTicket->called_at?->toIso8601String(),
-            'started_at' => $currentTicket->started_at?->toIso8601String(),
-            'notes' => $currentTicket->notes,
-        ] : null;
+        $currentTicketData = null;
+        if ($currentTicket) {
+            $currentTicketData = [
+                'id' => $currentTicket->id,
+                'display_number' => $currentTicket->display_number,
+                'customer_name' => $currentTicket->customer_name,
+                'customer_phone' => $currentTicket->customer_phone,
+                'status' => $currentTicket->status->value,
+                'status_label' => $currentTicket->status->label(),
+                'priority' => $currentTicket->priority->value,
+                'priority_label' => $currentTicket->priority->label(),
+                'queue_id' => $currentTicket->queue_id,
+                'queue_name' => $currentTicket->queue?->name,
+                'queue_prefix' => $currentTicket->queue?->prefix,
+                'service_name' => $currentTicket->service?->name,
+                'service_color' => $currentTicket->service?->color,
+                'counter_number' => $currentTicket->counter?->number,
+                'issued_at' => $currentTicket->issued_at?->toIso8601String(),
+                'called_at' => $currentTicket->called_at?->toIso8601String(),
+                'started_at' => $currentTicket->started_at?->toIso8601String(),
+                'notes' => $currentTicket->notes,
+            ];
+        }
 
-        // Cola de espera
-        $waitingTickets = $branch ? Ticket::with(['queue:id,name,prefix', 'service:id,name,color'])
+        // ── Cola de espera: TODOS los tickets waiting de esta sucursal ──
+        // NO filtra por fecha — muestra todos los que están en status waiting
+        $waitingTickets = Ticket::with(['queue:id,name,prefix', 'service:id,name,color'])
             ->where('branch_id', $branch->id)
             ->where('status', TicketStatus::WAITING)
             ->orderByDesc('priority_score')
             ->orderBy('issued_at')
-            ->limit(30)
+            ->limit(50)
             ->get()
             ->map(fn($t) => [
                 'id' => $t->id,
@@ -97,36 +120,55 @@ class OperatorController extends Controller
                 'queue_prefix' => $t->queue?->prefix,
                 'service_name' => $t->service?->name,
                 'service_color' => $t->service?->color,
-                'wait_minutes' => $t->issued_at ? (int) now()->diffInMinutes($t->issued_at) : 0,
+                'wait_minutes' => $t->issued_at ? max(0, (int) now()->diffInMinutes($t->issued_at)) : 0,
                 'issued_at' => $t->issued_at?->toIso8601String(),
-            ]) : collect();
+            ]);
 
-        // Colas disponibles
-        $queues = $branch ? Queue::where('branch_id', $branch->id)
-            ->active()
-            ->withCount(['tickets as waiting_count' => fn($q) => $q->where('status', TicketStatus::WAITING)->whereDate('created_at', today())])
+        Log::info('Waiting tickets found', [
+            'branch_id' => $branch->id,
+            'count' => $waitingTickets->count(),
+            'tickets' => $waitingTickets->pluck('display_number')->toArray(),
+        ]);
+
+        // ── Colas con conteo de espera (sin filtro de fecha) ──
+        $queues = Queue::where('branch_id', $branch->id)
+            ->where('is_active', true)
+            ->withCount([
+                'tickets as waiting_count' => fn($q) => $q->where('status', TicketStatus::WAITING),
+            ])
             ->get()
             ->map(fn($q) => [
                 'id' => $q->id,
                 'name' => $q->name,
                 'prefix' => $q->prefix,
                 'waiting' => $q->waiting_count,
-            ]) : collect();
+            ]);
 
-        // Todos los queues para transferencia
-        $allQueues = $branch ? Queue::where('branch_id', $branch->id)->active()->get()
-            ->map(fn($q) => ['id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix]) : collect();
+        // Todas las colas para el selector de transferencia
+        $allQueues = Queue::where('branch_id', $branch->id)
+            ->where('is_active', true)
+            ->get()
+            ->map(fn($q) => ['id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix]);
 
-        // Stats del operador hoy
+        // ── Stats personales del operador hoy ──
         $myStats = [
-            'served' => Ticket::where('served_by', $user->id)->where('status', TicketStatus::COMPLETED)->whereDate('created_at', today())->count(),
-            'avg_service' => (int) Ticket::where('served_by', $user->id)->where('status', TicketStatus::COMPLETED)->whereDate('created_at', today())->avg('service_time_seconds'),
-            'avg_rating' => Ticket::where('served_by', $user->id)->whereDate('created_at', today())->whereNotNull('rating')->avg('rating'),
+            'served' => Ticket::where('served_by', $user->id)
+                ->where('status', TicketStatus::COMPLETED)
+                ->whereDate('completed_at', today())
+                ->count(),
+            'avg_service' => (int) Ticket::where('served_by', $user->id)
+                ->where('status', TicketStatus::COMPLETED)
+                ->whereDate('completed_at', today())
+                ->avg('service_time_seconds'),
+            'avg_rating' => Ticket::where('served_by', $user->id)
+                ->whereDate('created_at', today())
+                ->whereNotNull('rating')
+                ->avg('rating'),
         ];
 
         return Inertia::render('Operator/Index', [
             'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
-            'currentBranch' => $branch ? ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code] : null,
+            'currentBranch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'counter' => $counter ? ['id' => $counter->id, 'name' => $counter->name, 'number' => $counter->number] : null,
             'availableCounters' => $availableCounters,
             'currentTicket' => $currentTicketData,
@@ -137,9 +179,6 @@ class OperatorController extends Controller
         ]);
     }
 
-    /**
-     * Llamar al siguiente turno.
-     */
     public function callNext(Request $request)
     {
         $request->validate([
@@ -167,7 +206,7 @@ class OperatorController extends Controller
                 'status' => 'open',
             ]);
 
-            // Buscar siguiente ticket
+            // Buscar siguiente ticket — SIN filtro de fecha
             $query = Ticket::where('branch_id', $counter->branch_id)
                 ->where('status', TicketStatus::WAITING);
 
@@ -184,7 +223,7 @@ class OperatorController extends Controller
                 return back()->with('info', 'No hay turnos en espera.');
             }
 
-            // Transicionar
+            // Transicionar status
             $ticket->transitionTo(TicketStatus::CALLED, $user->id);
             $ticket->update([
                 'served_by' => $user->id,
@@ -196,13 +235,23 @@ class OperatorController extends Controller
                 'status' => 'serving',
             ]);
 
+            Log::info('Ticket called', [
+                'ticket' => $ticket->display_number,
+                'operator' => $user->name,
+                'counter' => $counter->number,
+            ]);
+
+            // Dispatch broadcast event
+            try {
+                TicketCalled::dispatch($ticket->fresh(['queue', 'service', 'counter', 'servedBy']));
+            } catch (\Throwable $e) {
+                Log::warning('TicketCalled dispatch failed', ['error' => $e->getMessage()]);
+            }
+
             return back()->with('success', "Turno {$ticket->display_number} llamado en ventanilla {$counter->number}.");
         });
     }
 
-    /**
-     * Iniciar atención del turno llamado.
-     */
     public function startServing(Request $request, Ticket $ticket)
     {
         $user = $request->user();
@@ -220,9 +269,6 @@ class OperatorController extends Controller
         return back()->with('success', "Atención iniciada para {$ticket->display_number}.");
     }
 
-    /**
-     * Completar turno.
-     */
     public function complete(Request $request, Ticket $ticket)
     {
         $request->validate([
@@ -252,19 +298,20 @@ class OperatorController extends Controller
                 'status' => 'open',
             ]);
 
+            try {
+                TicketCompleted::dispatch($ticket->fresh(['queue', 'service', 'servedBy', 'branch']));
+            } catch (\Throwable $e) {
+                Log::warning('TicketCompleted dispatch failed', ['error' => $e->getMessage()]);
+            }
+
             return back()->with('success', "Turno {$ticket->display_number} completado.");
         });
     }
 
-    /**
-     * Cancelar turno.
-     */
     public function cancel(Request $request, Ticket $ticket)
     {
-        $user = $request->user();
-
-        return DB::transaction(function () use ($ticket, $user) {
-            $ticket->transitionTo(TicketStatus::CANCELLED, $user->id);
+        return DB::transaction(function () use ($ticket, $request) {
+            $ticket->transitionTo(TicketStatus::CANCELLED, $request->user()->id);
 
             if ($ticket->counter_id) {
                 Counter::where('id', $ticket->counter_id)->update([
@@ -277,15 +324,10 @@ class OperatorController extends Controller
         });
     }
 
-    /**
-     * Marcar como no-show.
-     */
     public function noShow(Request $request, Ticket $ticket)
     {
-        $user = $request->user();
-
-        return DB::transaction(function () use ($ticket, $user) {
-            $ticket->transitionTo(TicketStatus::NO_SHOW, $user->id);
+        return DB::transaction(function () use ($ticket, $request) {
+            $ticket->transitionTo(TicketStatus::NO_SHOW, $request->user()->id);
 
             if ($ticket->counter_id) {
                 Counter::where('id', $ticket->counter_id)->update([
@@ -298,9 +340,6 @@ class OperatorController extends Controller
         });
     }
 
-    /**
-     * Transferir turno a otra cola.
-     */
     public function transfer(Request $request, Ticket $ticket)
     {
         $request->validate([
@@ -312,11 +351,8 @@ class OperatorController extends Controller
 
         return DB::transaction(function () use ($request, $ticket, $user) {
             $oldNumber = $ticket->display_number;
-
-            // Marcar como transferido
             $ticket->transitionTo(TicketStatus::TRANSFERRED, $user->id);
 
-            // Liberar counter
             if ($ticket->counter_id) {
                 Counter::where('id', $ticket->counter_id)->update([
                     'current_ticket_id' => null,
@@ -324,10 +360,8 @@ class OperatorController extends Controller
                 ]);
             }
 
-            // Crear nuevo ticket en cola destino
             $targetQueue = Queue::findOrFail($request->target_queue_id);
             $branch = Branch::findOrFail($ticket->branch_id);
-
             $seq = Ticket::where('branch_id', $branch->id)->whereDate('created_at', today())->max('daily_sequence') + 1;
             $ticketNumber = sprintf('%s-%03d', $targetQueue->prefix, $seq);
 
@@ -350,21 +384,27 @@ class OperatorController extends Controller
                 'notes' => $request->reason,
             ]);
 
+            try {
+                TicketTransferred::dispatch($newTicket, $ticket);
+            } catch (\Throwable $e) {
+                Log::warning('TicketTransferred dispatch failed', ['error' => $e->getMessage()]);
+            }
+
             return back()->with('success', "Turno {$oldNumber} transferido → {$newTicket->display_number}");
         });
     }
 
-    /**
-     * Re-llamar turno (audio de pantalla).
-     */
     public function recall(Request $request, Ticket $ticket)
     {
         if ($ticket->status !== TicketStatus::CALLED) {
             return back()->withErrors(['ticket' => 'Solo se pueden rellamar turnos en estado "llamado".']);
         }
 
-        // Aquí se dispararía un evento de broadcasting para la pantalla
-        // event(new \App\Events\TicketCalled($ticket->load(['queue', 'service', 'counter', 'servedBy'])));
+        try {
+            TicketCalled::dispatch($ticket->load(['queue', 'service', 'counter', 'servedBy']));
+        } catch (\Throwable $e) {
+            Log::warning('TicketCalled recall dispatch failed', ['error' => $e->getMessage()]);
+        }
 
         return back()->with('success', "Turno {$ticket->display_number} rellamado.");
     }

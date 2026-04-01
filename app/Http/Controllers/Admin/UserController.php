@@ -32,7 +32,7 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'roles' => collect(UserRole::cases())->map(fn($r) => ['value' => $r->value, 'label' => $r->label()]),
+            'roles' => collect(UserRole::cases())->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
         ]);
     }
 
@@ -41,8 +41,8 @@ class UserController extends Controller
         $tenantId = $request->user()->tenant_id;
         return Inertia::render('Admin/Users/Form', [
             'user' => null,
-            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()]),
-            'branches' => Branch::where('tenant_id', $tenantId)->active()->get(['id', 'name', 'code']),
+            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
+            'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'code']),
         ]);
     }
 
@@ -90,8 +90,8 @@ class UserController extends Controller
                 'phone' => $user->phone, 'role' => $user->role->value, 'is_active' => $user->is_active,
                 'branch_ids' => $user->branches->pluck('id'),
             ],
-            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()]),
-            'branches' => Branch::where('tenant_id', $tenantId)->active()->get(['id', 'name', 'code']),
+            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
+            'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'code']),
         ]);
     }
 

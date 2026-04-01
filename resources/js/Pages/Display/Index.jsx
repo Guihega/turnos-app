@@ -1,79 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
-import Echo from 'laravel-echo';
+// resources/js/Pages/Display/Index.jsx
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+import { T, theme } from '@/Components/TurnosUI';
 
-export default function Display({ branch }) {
-    const [serving, setServing] = useState([]);
-    const [waitingCount, setWaitingCount] = useState(0);
-
-    // Función para traer datos iniciales
-    const fetchDisplayData = async () => {
-        const response = await fetch(`/api/v1/public/branches/${branch.id}/display`);
-        const result = await response.json();
-        setServing(result.now_serving || []);
-        setWaitingCount(result.waiting_count || 0);
-    };
-
-    useEffect(() => {
-        fetchDisplayData();
-
-        // Escuchar cambios en tiempo real vía WebSockets (Reverb)
-        if (window.Echo) {
-            window.Echo.channel(`branch.${branch.id}`)
-                .listen('TicketCalled', (e) => {
-                    fetchDisplayData(); // Refrescar al llamar nuevo turno
-                    new Audio('/sounds/notification.mp3').play().catch(() => {});
-                });
-        }
-    }, []);
-
+export default function DisplayIndex({ branches = [] }) {
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-8 font-sans">
-            <Head title={`Pantalla - ${branch.name}`} />
-            
-            <header className="flex justify-between items-center mb-12 border-b border-slate-800 pb-6">
-                <div>
-                    <h1 className="text-4xl font-bold text-blue-500">TurnosPro</h1>
-                    <p className="text-slate-400 text-xl">{branch.name}</p>
-                </div>
-                <div className="text-right">
-                    <div className="text-5xl font-mono">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                </div>
-            </header>
+        <AuthenticatedLayout>
+            <Head title="Pantalla de Turnos" />
+            <div style={{ background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text, padding: '40px 28px' }}>
+                <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }}>▣</div>
+                    <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Pantalla de Sala de Espera</h1>
+                    <p style={{ fontSize: 14, color: T.textMuted, marginBottom: 40 }}>Seleccione la sucursal para mostrar en la pantalla</p>
 
-            <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Columna Principal: Turnos siendo llamados */}
-                <div className="lg:col-span-2 bg-slate-900 rounded-3xl p-10 border border-slate-800 shadow-2xl">
-                    <h2 className="text-2xl text-slate-500 uppercase tracking-widest mb-8">Llamando Ahora</h2>
-                    <div className="space-y-6">
-                        {serving.map((ticket, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-800/50 p-8 rounded-2xl border-l-8 border-green-500 animate-pulse">
-                                <div className="text-8xl font-black text-white">{ticket.display_number}</div>
-                                <div className="text-right">
-                                    <div className="text-3xl text-slate-400 uppercase">Ventanilla</div>
-                                    <div className="text-7xl font-bold text-green-400">{ticket.counter_number}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+                        {branches.map((b, i) => (
+                            <Link key={b.id} href={route('display.show', b.id)} style={{ textDecoration: 'none' }}>
+                                <div className={`t-fade-up t-stagger-${i + 1}`} style={{
+                                    background: T.card, border: `1px solid ${T.border}`, borderRadius: 16,
+                                    padding: '32px 20px', textAlign: 'center', cursor: 'pointer',
+                                    transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', position: 'relative', overflow: 'hidden',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = T.blue; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 12px 40px ${T.blue}15`; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}>
+                                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${T.blue}, ${T.purple})` }} />
+                                    <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>▣</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 4 }}>{b.name}</div>
+                                    <div style={{ fontSize: 12, color: T.textMuted, fontFamily: T.mono }}>{b.code}</div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
-                        {serving.length === 0 && (
-                            <div className="text-center py-20 text-slate-600 text-3xl italic">Esperando turnos...</div>
-                        )}
                     </div>
-                </div>
 
-                {/* Columna Lateral: Info de la Cola */}
-                <div className="space-y-8">
-                    <div className="bg-blue-600 rounded-3xl p-10 text-center shadow-lg">
-                        <div className="text-2xl uppercase font-bold mb-2">En Espera</div>
-                        <div className="text-9xl font-black">{waitingCount}</div>
-                    </div>
-                    
-                    <div className="bg-slate-900 rounded-3xl p-10 border border-slate-800 h-full">
-                        <h3 className="text-xl text-slate-500 mb-6 uppercase">Próximos</h3>
-                        <p className="text-slate-400 italic">Prepare su ticket impreso o digital.</p>
+                    {branches.length === 0 && (
+                        <div style={{ padding: 48, color: T.textMuted }}>No hay sucursales disponibles</div>
+                    )}
+
+                    <div style={{ marginTop: 40, padding: '20px', background: T.card, borderRadius: 12, border: `1px solid ${T.border}` }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.textSoft, marginBottom: 8 }}>Pantalla pública (sin login)</div>
+                        <p style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.5 }}>
+                            Para TVs de sala de espera use la URL pública: <code style={{ background: T.surface, padding: '2px 6px', borderRadius: 4, fontFamily: T.mono, fontSize: 11 }}>/pantalla-publica/{'{'}<span style={{ color: T.blue }}>branch_id</span>{'}'}</code>
+                        </p>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </AuthenticatedLayout>
     );
 }

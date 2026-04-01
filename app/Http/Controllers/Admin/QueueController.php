@@ -1,7 +1,4 @@
 <?php
-// ═══════════════════════════════════════════
-// app/Http/Controllers/Admin/QueueController.php
-// ═══════════════════════════════════════════
 
 declare(strict_types=1);
 
@@ -19,18 +16,20 @@ class QueueController extends Controller
     public function index(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
-        $branches = Branch::where('tenant_id', $tenantId)->active()->get();
+        $branches = Branch::where('tenant_id', $tenantId)->where('is_active', true)->get();
         $branchId = $request->input('branch_id', $branches->first()?->id);
 
         $queues = $branchId ? Queue::where('branch_id', $branchId)
-            ->with('services:id,name,color')
-            ->withCount(['tickets as waiting_count' => fn($q) => $q->where('status', 'waiting')->whereDate('created_at', today())])
-            ->orderBy('sort_order')->get()
+            ->with(['services:id,name,color'])
+            ->withCount(['tickets as waiting_count' => fn($q) => $q->where('status', 'waiting')])
+            ->orderBy('prefix')
+            ->get()
             ->map(fn($q) => [
                 'id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix,
-                'priority_algorithm' => $q->priority_algorithm, 'max_capacity' => $q->max_capacity,
-                'is_active' => $q->is_active, 'waiting_count' => $q->waiting_count,
-                'services' => $q->services->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'color' => $s->color]),
+                'priority_algorithm' => ucfirst($q->priority_algorithm ?? 'FIFO'),
+                'max_capacity' => $q->max_capacity, 'waiting' => $q->waiting_count,
+                'is_active' => $q->is_active,
+                'services' => $q->services->map(fn($s) => ['name' => $s->name, 'color' => $s->color]),
             ]) : collect();
 
         return Inertia::render('Admin/Queues/Index', [
@@ -45,8 +44,8 @@ class QueueController extends Controller
         $tenantId = $request->user()->tenant_id;
         return Inertia::render('Admin/Queues/Form', [
             'queue' => null,
-            'branches' => Branch::where('tenant_id', $tenantId)->active()->get(['id', 'name']),
-            'services' => Service::where('tenant_id', $tenantId)->active()->get(['id', 'name', 'color']),
+            'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name']),
+            'services' => Service::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -72,10 +71,10 @@ class QueueController extends Controller
         ]);
 
         if (!empty($data['service_ids'])) {
-            $queue->services()->attach($data['service_ids']);
+            $queue->services()->sync($data['service_ids']);
         }
 
-        return redirect()->route('admin.colas.index', ['branch_id' => $data['branch_id']])->with('success', 'Cola creada.');
+        return redirect()->route('admin.colas.index')->with('success', "Cola {$queue->name} creada.");
     }
 
     public function edit(Queue $queue)
@@ -86,10 +85,10 @@ class QueueController extends Controller
                 'id' => $queue->id, 'branch_id' => $queue->branch_id, 'name' => $queue->name,
                 'prefix' => $queue->prefix, 'priority_algorithm' => $queue->priority_algorithm,
                 'max_capacity' => $queue->max_capacity, 'is_active' => $queue->is_active,
-                'service_ids' => $queue->services->pluck('id'),
+                'service_ids' => $queue->services->pluck('id')->toArray(),
             ],
-            'branches' => Branch::where('tenant_id', $tenantId)->active()->get(['id', 'name']),
-            'services' => Service::where('tenant_id', $tenantId)->active()->get(['id', 'name', 'color']),
+            'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name']),
+            'services' => Service::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -104,18 +103,19 @@ class QueueController extends Controller
             'service_ids' => 'nullable|array',
         ]);
 
-        $queue->update($data);
-        if (isset($data['service_ids'])) {
-            $queue->services()->sync($data['service_ids']);
-        }
+        $serviceIds = $data['service_ids'] ?? [];
+        unset($data['service_ids']);
 
-        return redirect()->route('admin.colas.index', ['branch_id' => $queue->branch_id])->with('success', 'Cola actualizada.');
+        $queue->update($data);
+        $queue->services()->sync($serviceIds);
+
+        return redirect()->route('admin.colas.index')->with('success', "Cola {$queue->name} actualizada.");
     }
 
     public function destroy(Queue $queue)
     {
-        $branchId = $queue->branch_id;
+        $queue->services()->detach();
         $queue->delete();
-        return redirect()->route('admin.colas.index', ['branch_id' => $branchId])->with('success', 'Cola eliminada.');
+        return redirect()->route('admin.colas.index')->with('success', 'Cola eliminada.');
     }
 }

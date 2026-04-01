@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\TicketStatus;
 use App\Models\Branch;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
@@ -13,13 +12,12 @@ use Inertia\Response;
 
 class DisplayController extends Controller
 {
-    /**
-     * Selector de pantalla (con auth).
-     */
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $branches = Branch::where('tenant_id', $user->tenant_id)->active()->get();
+        $branches = Branch::where('tenant_id', $user->tenant_id)
+            ->where('is_active', true)
+            ->get();
 
         return Inertia::render('Display/Index', [
             'branches' => $branches->map(fn($b) => [
@@ -30,46 +28,28 @@ class DisplayController extends Controller
         ]);
     }
 
-    /**
-     * Pantalla de sala de espera para una sucursal (con auth).
-     */
     public function show(Request $request, Branch $branch): Response
     {
         return Inertia::render('Display/Screen', [
-            'branch' => [
-                'id' => $branch->id,
-                'name' => $branch->name,
-                'code' => $branch->code,
-            ],
+            'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
         ]);
     }
 
-    /**
-     * Pantalla pública (sin auth) — para TVs de sala de espera.
-     */
     public function public(Request $request, Branch $branch): Response
     {
         return Inertia::render('Display/Screen', [
-            'branch' => [
-                'id' => $branch->id,
-                'name' => $branch->name,
-                'code' => $branch->code,
-            ],
+            'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
             'isPublic' => true,
         ]);
     }
 
-    /**
-     * Datos para la pantalla de display (también usado como API).
-     */
     private function getDisplayData(Branch $branch): array
     {
-        // Turnos llamados y en atención (mostrar en pantalla grande)
         $serving = Ticket::with(['queue:id,name,prefix', 'counter:id,name,number', 'service:id,name,color'])
             ->where('branch_id', $branch->id)
-            ->whereIn('status', [TicketStatus::CALLED, TicketStatus::IN_PROGRESS])
+            ->whereIn('status', ['called', 'in_progress'])
             ->whereDate('created_at', today())
             ->orderByDesc('called_at')
             ->limit(8)
@@ -81,14 +61,13 @@ class DisplayController extends Controller
                 'queue_name' => $t->queue?->name,
                 'service_name' => $t->service?->name,
                 'service_color' => $t->service?->color,
-                'status' => $t->status->value,
+                'status' => is_object($t->status) ? $t->status->value : $t->status,
                 'called_at' => $t->called_at?->toIso8601String(),
             ]);
 
-        // Últimos completados (historial reciente)
         $recent = Ticket::with(['counter:id,number'])
             ->where('branch_id', $branch->id)
-            ->where('status', TicketStatus::COMPLETED)
+            ->where('status', 'completed')
             ->whereDate('created_at', today())
             ->orderByDesc('completed_at')
             ->limit(5)
@@ -98,15 +77,12 @@ class DisplayController extends Controller
                 'counter_number' => $t->counter?->number,
             ]);
 
-        // Conteo de espera
         $waitingCount = Ticket::where('branch_id', $branch->id)
-            ->where('status', TicketStatus::WAITING)
-            ->whereDate('created_at', today())
+            ->where('status', 'waiting')
             ->count();
 
-        // Tiempo estimado de espera
         $avgWait = (int) Ticket::where('branch_id', $branch->id)
-            ->where('status', TicketStatus::COMPLETED)
+            ->where('status', 'completed')
             ->whereDate('created_at', today())
             ->whereNotNull('wait_time_seconds')
             ->avg('wait_time_seconds');

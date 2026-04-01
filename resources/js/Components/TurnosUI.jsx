@@ -1,177 +1,233 @@
 // resources/js/Components/TurnosUI.jsx
-// ── Shared Design System for TurnosPro ──
+// ══ TurnosPro Design System v2 — Refined Industrial ══
 
 import { Link, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 
+// ── Google Fonts injection ──
+if (typeof document !== 'undefined' && !document.getElementById('turnos-fonts')) {
+    const link = document.createElement('link');
+    link.id = 'turnos-fonts';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap';
+    document.head.appendChild(link);
+}
+
 // ── Design Tokens ──
-export const theme = {
-    bg: '#0B0E14',
-    cardBg: '#12161F',
-    border: '#1E2432',
-    textPrimary: '#E8ECF4',
-    textSecondary: '#9BA3B5',
-    textMuted: '#5C6478',
-    accent: '#3B82F6',
-    accentSoft: 'rgba(59,130,246,0.12)',
-    success: '#10B981',
-    warning: '#F59E0B',
-    danger: '#EF4444',
-    purple: '#8B5CF6',
+export const T = {
+    bg: '#06080D',
+    surface: '#0C0F16',
+    card: '#111520',
+    cardHover: '#161B28',
+    border: '#1A2035',
+    borderLight: '#243050',
+    glass: 'rgba(17,21,32,0.72)',
+    glassBorder: 'rgba(255,255,255,0.06)',
+
+    text: '#E4E8F1',
+    textSoft: '#8B95AD',
+    textMuted: '#4D5672',
+
+    blue: '#3D7AFF',
+    blueGlow: 'rgba(61,122,255,0.15)',
+    green: '#00D68F',
+    greenGlow: 'rgba(0,214,143,0.15)',
+    amber: '#FFB020',
+    amberGlow: 'rgba(255,176,32,0.15)',
+    red: '#FF4757',
+    redGlow: 'rgba(255,71,87,0.15)',
+    purple: '#9D5CFF',
+    purpleGlow: 'rgba(157,92,255,0.15)',
+    cyan: '#00D4FF',
+    cyanGlow: 'rgba(0,212,255,0.15)',
+
+    font: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
+    mono: "'JetBrains Mono', monospace",
+
+    radius: 14,
+    radiusSm: 8,
+    radiusLg: 20,
+    radiusXl: 28,
+    shadow: '0 8px 32px rgba(0,0,0,0.3)',
+    shadowLg: '0 16px 64px rgba(0,0,0,0.4)',
 };
 
 export const statusMap = {
-    waiting: { bg: 'rgba(234,179,8,0.12)', text: '#CA8A04', label: 'En espera' },
-    called: { bg: 'rgba(59,130,246,0.12)', text: '#2563EB', label: 'Llamado' },
-    in_progress: { bg: 'rgba(99,102,241,0.12)', text: '#4F46E5', label: 'En atención' },
-    completed: { bg: 'rgba(16,185,129,0.12)', text: '#059669', label: 'Completado' },
-    cancelled: { bg: 'rgba(239,68,68,0.12)', text: '#DC2626', label: 'Cancelado' },
-    no_show: { bg: 'rgba(249,115,22,0.12)', text: '#EA580C', label: 'No presentado' },
-    transferred: { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED', label: 'Transferido' },
+    waiting:     { bg: T.amberGlow, text: T.amber, label: 'En espera', icon: '◷' },
+    called:      { bg: T.blueGlow,  text: T.blue,  label: 'Llamado',   icon: '◈' },
+    in_progress: { bg: T.purpleGlow,text: T.purple, label: 'En atención', icon: '◉' },
+    completed:   { bg: T.greenGlow, text: T.green,  label: 'Completado', icon: '◆' },
+    cancelled:   { bg: T.redGlow,   text: T.red,    label: 'Cancelado',  icon: '◇' },
+    no_show:     { bg: 'rgba(249,115,22,0.12)', text: '#F97316', label: 'No presentado', icon: '◌' },
+    transferred: { bg: T.cyanGlow,  text: T.cyan,   label: 'Transferido', icon: '↻' },
 };
 
-// ── Format helpers ──
-export const fmtSeconds = (s) => {
-    if (!s) return '0:00';
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${String(sec).padStart(2, '0')}`;
-};
-
+// ── Formatters ──
+export const fmtSeconds = (s) => { if (!s) return '0:00'; const m = Math.floor(s / 60); return `${m}:${String(s % 60).padStart(2, '0')}`; };
 export const fmtMinutes = (s) => `${Math.round((s || 0) / 60)} min`;
 
+// ── CSS injection ──
+if (typeof document !== 'undefined' && !document.getElementById('turnos-styles')) {
+    const style = document.createElement('style');
+    style.id = 'turnos-styles';
+    style.textContent = `
+        @keyframes tFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes tPulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        @keyframes tShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes tGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(61,122,255,0.2); } 50% { box-shadow: 0 0 20px 4px rgba(61,122,255,0.08); } }
+        @keyframes tSlideIn { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform: translateX(0); } }
+        @keyframes tScaleIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+        @keyframes tCounterPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(61,122,255,0.3); } 50% { box-shadow: 0 0 30px 8px rgba(61,122,255,0.1); } }
+        .t-hover:hover { background: ${T.cardHover} !important; }
+        .t-glass { backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); }
+        .t-fade-up { animation: tFadeUp 0.5s ease both; }
+        .t-stagger-1 { animation-delay: 0.05s; } .t-stagger-2 { animation-delay: 0.1s; }
+        .t-stagger-3 { animation-delay: 0.15s; } .t-stagger-4 { animation-delay: 0.2s; }
+        .t-stagger-5 { animation-delay: 0.25s; } .t-stagger-6 { animation-delay: 0.3s; }
+        .t-stagger-7 { animation-delay: 0.35s; } .t-stagger-8 { animation-delay: 0.4s; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${T.border}; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${T.borderLight}; }
+        @media (max-width: 768px) { .t-grid-responsive { grid-template-columns: 1fr !important; } }
+    `;
+    document.head.appendChild(style);
+}
+
 // ── Card ──
-export function Card({ children, className = '', style = {}, ...props }) {
+export function Card({ children, glow, accent, className = '', style = {}, ...props }) {
     return (
-        <div style={{
-            background: theme.cardBg, borderRadius: 12, border: `1px solid ${theme.border}`,
-            padding: 20, ...style,
-        }} className={className} {...props}>
+        <div className={`t-fade-up ${className}`} style={{
+            background: T.card, borderRadius: T.radius, border: `1px solid ${T.border}`,
+            padding: 20, position: 'relative', overflow: 'hidden',
+            ...(glow ? { boxShadow: `0 0 40px ${glow}` } : {}),
+            ...style,
+        }} {...props}>
+            {accent && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${accent}, transparent)` }} />}
             {children}
         </div>
     );
 }
 
-// ── Badge ──
-export function StatusBadge({ status }) {
+// ── Glass Card ──
+export function GlassCard({ children, style = {}, ...props }) {
+    return (
+        <div className="t-glass t-fade-up" style={{
+            background: T.glass, borderRadius: T.radius, border: `1px solid ${T.glassBorder}`,
+            padding: 20, ...style,
+        }} {...props}>{children}</div>
+    );
+}
+
+// ── Status Badge ──
+export function StatusBadge({ status, size = 'md' }) {
     const s = statusMap[status] || statusMap.waiting;
+    const sizes = { sm: { padding: '2px 8px', fontSize: 10 }, md: { padding: '4px 12px', fontSize: 11 }, lg: { padding: '6px 16px', fontSize: 13 } };
     return (
         <span style={{
-            background: s.bg, color: s.text, padding: '3px 10px', borderRadius: 5,
-            fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-        }}>{s.label}</span>
+            background: s.bg, color: s.text, borderRadius: 20, fontWeight: 600,
+            fontFamily: T.font, display: 'inline-flex', alignItems: 'center', gap: 5,
+            letterSpacing: '0.02em', ...sizes[size],
+        }}>
+            <span style={{ fontSize: size === 'sm' ? 8 : 10 }}>{s.icon}</span> {s.label}
+        </span>
     );
 }
 
 // ── Button ──
-export function Btn({ children, variant = 'primary', size = 'md', onClick, disabled, type = 'button', style: extraStyle = {}, ...props }) {
+export function Btn({ children, variant = 'primary', size = 'md', onClick, disabled, type = 'button', style: sx = {}, ...props }) {
     const base = {
-        border: 'none', borderRadius: 8, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 6,
-        opacity: disabled ? 0.5 : 1, fontFamily: 'inherit',
+        border: 'none', borderRadius: T.radiusSm, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)', display: 'inline-flex', alignItems: 'center', gap: 7,
+        opacity: disabled ? 0.4 : 1, fontFamily: T.font, letterSpacing: '0.01em', whiteSpace: 'nowrap',
+        position: 'relative', overflow: 'hidden',
     };
-    const sizes = {
-        sm: { padding: '6px 12px', fontSize: 11 },
-        md: { padding: '8px 16px', fontSize: 12 },
-        lg: { padding: '12px 24px', fontSize: 14 },
-    };
+    const sizes = { sm: { padding: '7px 14px', fontSize: 12 }, md: { padding: '10px 20px', fontSize: 13 }, lg: { padding: '14px 28px', fontSize: 15 } };
     const variants = {
-        primary: { background: theme.accent, color: '#fff' },
-        success: { background: theme.success, color: '#fff' },
-        danger: { background: theme.danger, color: '#fff' },
-        warning: { background: theme.warning, color: '#000' },
-        ghost: { background: 'transparent', color: theme.textSecondary, border: `1px solid ${theme.border}` },
-        outline: { background: 'transparent', color: theme.accent, border: `1px solid ${theme.accent}` },
+        primary: { background: `linear-gradient(135deg, ${T.blue}, #2B5FD9)`, color: '#fff', boxShadow: `0 4px 16px ${T.blueGlow}` },
+        success: { background: `linear-gradient(135deg, ${T.green}, #00B377)`, color: '#fff', boxShadow: `0 4px 16px ${T.greenGlow}` },
+        danger:  { background: `linear-gradient(135deg, ${T.red}, #E63946)`, color: '#fff', boxShadow: `0 4px 16px ${T.redGlow}` },
+        warning: { background: `linear-gradient(135deg, ${T.amber}, #E6A000)`, color: '#000', boxShadow: `0 4px 16px ${T.amberGlow}` },
+        ghost:   { background: 'transparent', color: T.textSoft, border: `1px solid ${T.border}` },
+        outline: { background: 'transparent', color: T.blue, border: `1px solid ${T.blue}40` },
     };
-
     return (
         <button type={type} onClick={onClick} disabled={disabled}
-            style={{ ...base, ...sizes[size], ...variants[variant], ...extraStyle }} {...props}>
-            {children}
-        </button>
+            style={{ ...base, ...sizes[size], ...variants[variant], ...sx }}
+            onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+            {...props}>{children}</button>
     );
 }
 
 // ── Input ──
-export function Input({ label, error, style: extraStyle = {}, ...props }) {
+export function Input({ label, error, style: sx = {}, ...props }) {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {label && <label style={{ fontSize: 11, fontWeight: 500, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {label && <label style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: T.font }}>{label}</label>}
             <input style={{
-                background: theme.bg, color: theme.textPrimary, border: `1px solid ${error ? theme.danger : theme.border}`,
-                borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                transition: 'border-color 0.2s', ...extraStyle,
-            }} {...props} />
-            {error && <span style={{ fontSize: 11, color: theme.danger }}>{error}</span>}
+                background: T.surface, color: T.text, border: `1px solid ${error ? T.red : T.border}`,
+                borderRadius: T.radiusSm, padding: '11px 14px', fontSize: 13, outline: 'none', fontFamily: T.font,
+                transition: 'border-color 0.2s, box-shadow 0.2s', ...sx,
+            }}
+            onFocus={e => { e.target.style.borderColor = T.blue; e.target.style.boxShadow = `0 0 0 3px ${T.blueGlow}`; }}
+            onBlur={e => { e.target.style.borderColor = error ? T.red : T.border; e.target.style.boxShadow = 'none'; }}
+            {...props} />
+            {error && <span style={{ fontSize: 11, color: T.red, fontFamily: T.font }}>{error}</span>}
         </div>
     );
 }
 
 // ── Select ──
-export function Select({ label, options = [], error, style: extraStyle = {}, ...props }) {
+export function Select({ label, options = [], error, disabled, style: sx = {}, ...props }) {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {label && <label style={{ fontSize: 11, fontWeight: 500, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>}
-            <select style={{
-                background: theme.bg, color: theme.textPrimary, border: `1px solid ${error ? theme.danger : theme.border}`,
-                borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                cursor: 'pointer', ...extraStyle,
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {label && <label style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: T.font }}>{label}</label>}
+            <select disabled={disabled} style={{
+                background: T.surface, color: T.text, border: `1px solid ${T.border}`,
+                borderRadius: T.radiusSm, padding: '11px 14px', fontSize: 13, outline: 'none', fontFamily: T.font,
+                cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+                transition: 'border-color 0.2s', ...sx,
             }} {...props}>
-                {options.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            {error && <span style={{ fontSize: 11, color: theme.danger }}>{error}</span>}
         </div>
     );
 }
 
-// ── PageHeader ──
+// ── Page Header ──
 export function PageHeader({ title, subtitle, actions }) {
     return (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
             <div>
-                <h1 style={{ fontSize: 22, fontWeight: 700, color: theme.textPrimary, margin: 0 }}>{title}</h1>
-                {subtitle && <p style={{ fontSize: 13, color: theme.textMuted, margin: '4px 0 0' }}>{subtitle}</p>}
+                <h1 style={{ fontSize: 24, fontWeight: 800, color: T.text, margin: 0, fontFamily: T.font, letterSpacing: '-0.02em' }}>{title}</h1>
+                {subtitle && <p style={{ fontSize: 13, color: T.textMuted, margin: '4px 0 0', fontFamily: T.font }}>{subtitle}</p>}
             </div>
             {actions && <div style={{ display: 'flex', gap: 8 }}>{actions}</div>}
         </div>
     );
 }
 
-// ── DataTable ──
+// ── Data Table ──
 export function DataTable({ columns, rows, onRowClick }) {
     return (
-        <div style={{ overflowX: 'auto', borderRadius: 12, border: `1px solid ${theme.border}`, background: theme.cardBg }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <div className="t-fade-up" style={{ overflowX: 'auto', borderRadius: T.radius, border: `1px solid ${T.border}`, background: T.card }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: T.font }}>
                 <thead>
-                    <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                         {columns.map(col => (
-                            <th key={col.key} style={{
-                                padding: '12px 16px', textAlign: col.align || 'left', fontWeight: 500,
-                                color: theme.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em',
-                            }}>{col.label}</th>
+                            <th key={col.key} style={{ padding: '14px 16px', textAlign: col.align || 'left', fontWeight: 600, color: T.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{col.label}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.length === 0 && (
-                        <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: theme.textMuted }}>Sin datos</td></tr>
-                    )}
+                    {rows.length === 0 && <tr><td colSpan={columns.length} style={{ padding: 48, textAlign: 'center', color: T.textMuted }}>Sin datos disponibles</td></tr>}
                     {rows.map((row, i) => (
-                        <tr key={row.id || i}
+                        <tr key={row.id || i} className="t-hover"
                             onClick={() => onRowClick?.(row)}
-                            style={{
-                                borderBottom: i < rows.length - 1 ? `1px solid ${theme.border}` : 'none',
-                                cursor: onRowClick ? 'pointer' : 'default',
-                                transition: 'background 0.15s',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.04)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            style={{ borderBottom: i < rows.length - 1 ? `1px solid ${T.border}` : 'none', cursor: onRowClick ? 'pointer' : 'default', transition: 'background 0.15s' }}>
                             {columns.map(col => (
-                                <td key={col.key} style={{
-                                    padding: '12px 16px', color: theme.textSecondary, textAlign: col.align || 'left',
-                                }}>{col.render ? col.render(row) : row[col.key]}</td>
+                                <td key={col.key} style={{ padding: '14px 16px', color: T.textSoft, textAlign: col.align || 'left' }}>{col.render ? col.render(row) : row[col.key]}</td>
                             ))}
                         </tr>
                     ))}
@@ -181,69 +237,70 @@ export function DataTable({ columns, rows, onRowClick }) {
     );
 }
 
-// ── KPI Stat ──
-export function Stat({ label, value, suffix, color, icon }) {
+// ── KPI Stat Card ──
+export function Stat({ label, value, suffix, color, icon, glow }) {
     return (
-        <Card style={{ textAlign: 'center', padding: 16 }}>
-            {icon && <div style={{ fontSize: 18, marginBottom: 4 }}>{icon}</div>}
-            <div style={{ fontSize: 28, fontWeight: 700, color: color || theme.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
-                {value}{suffix && <span style={{ fontSize: 13, color: theme.textMuted, marginLeft: 2 }}>{suffix}</span>}
+        <Card style={{ textAlign: 'center', padding: '14px 12px', minWidth: 90 }} glow={glow}>
+            {icon && <div style={{ fontSize: 16, marginBottom: 2 }}>{icon}</div>}
+            <div style={{ fontSize: 26, fontWeight: 800, color: color || T.text, fontVariantNumeric: 'tabular-nums', fontFamily: T.mono, letterSpacing: '-0.02em' }}>
+                {value}{suffix && <span style={{ fontSize: 12, color: T.textMuted, fontWeight: 400, marginLeft: 2, fontFamily: T.font }}>{suffix}</span>}
             </div>
-            <div style={{ fontSize: 10, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 4 }}>{label}</div>
+            <div style={{ fontSize: 9, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 3, fontFamily: T.font }}>{label}</div>
         </Card>
-    );
-}
-
-// ── Empty State ──
-export function EmptyState({ icon = '📋', title, description, action }) {
-    return (
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>{icon}</div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: theme.textPrimary, margin: '0 0 8px' }}>{title}</h3>
-            {description && <p style={{ fontSize: 13, color: theme.textMuted, margin: '0 0 16px' }}>{description}</p>}
-            {action}
-        </div>
     );
 }
 
 // ── Flash Messages ──
 export function FlashMessages({ flash }) {
     if (!flash?.success && !flash?.error && !flash?.info) return null;
-
     const msg = flash.success || flash.error || flash.info;
-    const color = flash.success ? theme.success : flash.error ? theme.danger : theme.accent;
-
+    const color = flash.success ? T.green : flash.error ? T.red : T.blue;
     return (
-        <div style={{
-            background: `${color}15`, border: `1px solid ${color}30`, borderRadius: 8,
-            padding: '10px 16px', marginBottom: 16, fontSize: 13, color,
+        <div className="t-fade-up" style={{
+            background: `${color}10`, border: `1px solid ${color}25`, borderRadius: T.radiusSm,
+            padding: '12px 18px', marginBottom: 18, fontSize: 13, color, fontFamily: T.font,
+            display: 'flex', alignItems: 'center', gap: 8,
         }}>
-            {msg}
+            <span style={{ fontSize: 16 }}>{flash.success ? '✓' : flash.error ? '✕' : 'ℹ'}</span> {msg}
         </div>
     );
 }
 
 // ── Auto-refresh hook ──
-export function useAutoRefresh(intervalMs = 10000) {
+export function useAutoRefresh(intervalMs = 8000) {
     useEffect(() => {
         const id = setInterval(() => {
-            router.reload({ only: ['activeTickets', 'todayStats', 'queues', 'waitingTickets', 'currentTicket', 'myStats'] });
+            router.reload({ only: ['activeTickets', 'todayStats', 'queues', 'waitingTickets', 'currentTicket', 'myStats', 'operators', 'branchStats'], preserveScroll: true });
         }, intervalMs);
         return () => clearInterval(id);
     }, [intervalMs]);
 }
 
-// ── Page Layout wrapper ──
-export function PageLayout({ children }) {
+// ── Live indicator dot ──
+export function LiveDot({ size = 8 }) {
+    return <span style={{ width: size, height: size, borderRadius: '50%', background: T.green, boxShadow: `0 0 ${size}px ${T.greenGlow}`, display: 'inline-block', animation: 'tPulse 2s ease-in-out infinite' }} />;
+}
+
+// ── Metric bar ──
+export function MetricBar({ value, max, color, height = 4 }) {
+    const pct = Math.min((value / (max || 1)) * 100, 100);
     return (
-        <div style={{
-            fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
-            background: theme.bg, color: theme.textPrimary, minHeight: '100vh',
-            padding: '24px 32px',
-        }}>
+        <div style={{ height, borderRadius: height, background: T.border, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: height, width: `${pct}%`, background: color || T.blue, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)' }} />
+        </div>
+    );
+}
+
+// ── Page wrapper ──
+export function PageShell({ children }) {
+    return (
+        <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', padding: '24px 28px' }}>
             {children}
         </div>
     );
 }
 
-export default { theme, statusMap, Card, StatusBadge, Btn, Input, Select, PageHeader, DataTable, Stat, EmptyState, FlashMessages, PageLayout, fmtSeconds, fmtMinutes, useAutoRefresh };
+// Backward compatibility alias — old pages import 'theme', new ones use 'T'
+export const theme = T;
+
+export default { T, theme: T, statusMap, Card, GlassCard, StatusBadge, Btn, Input, Select, PageHeader, DataTable, Stat, FlashMessages, useAutoRefresh, LiveDot, MetricBar, PageShell, fmtSeconds, fmtMinutes };
