@@ -1,21 +1,16 @@
 // resources/js/Pages/Public/TicketStatus.jsx
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-
-const T = {
-    bg: '#06080D', card: '#111520', border: '#1A2035', text: '#E4E8F1', textMuted: '#4D5672',
-    blue: '#3D7AFF', green: '#00D68F', amber: '#FFB020', red: '#FF4757', purple: '#9D5CFF', cyan: '#00D4FF',
-    font: "'Outfit', sans-serif", mono: "'JetBrains Mono', monospace",
-};
+import { T } from '@/Components/TurnosUI';
 
 const statusCfg = {
-    waiting:     { icon: '◷', color: T.amber,  msg: 'Estás en la fila. Te llamaremos pronto.', ms: 5000 },
-    called:      { icon: '◈', color: T.blue,   msg: '¡Dirígete a la ventanilla ahora!', ms: 3000 },
-    in_progress: { icon: '◉', color: T.purple, msg: 'Estás siendo atendido.', ms: 10000 },
-    completed:   { icon: '◆', color: T.green,  msg: 'Tu atención ha finalizado. ¡Gracias!', ms: 0 },
-    cancelled:   { icon: '◇', color: T.red,    msg: 'Este turno fue cancelado.', ms: 0 },
-    no_show:     { icon: '◌', color: '#F97316', msg: 'No se presentó a la ventanilla.', ms: 0 },
-    transferred: { icon: '↻', color: T.cyan,   msg: 'Tu turno fue reasignado.', ms: 5000 },
+    waiting:     { icon: '◷', color: 'var(--t-amber)',  msg: 'Estás en la fila. Te llamaremos pronto.', ms: 5000 },
+    called:      { icon: '◈', color: 'var(--t-blue)',   msg: '¡Dirígete a la ventanilla ahora!', ms: 3000 },
+    in_progress: { icon: '◉', color: 'var(--t-purple)', msg: 'Estás siendo atendido.', ms: 10000 },
+    completed:   { icon: '◆', color: 'var(--t-green)',  msg: 'Tu atención ha finalizado. ¡Gracias!', ms: 0 },
+    cancelled:   { icon: '◇', color: 'var(--t-red)',    msg: 'Este turno fue cancelado.', ms: 0 },
+    no_show:     { icon: '◌', color: '#F97316',         msg: 'No se presentó a la ventanilla.', ms: 0 },
+    transferred: { icon: '↻', color: 'var(--t-cyan)',   msg: 'Tu turno fue reasignado.', ms: 5000 },
 };
 
 export default function TicketStatus({ branch, ticket }) {
@@ -41,19 +36,15 @@ export default function TicketStatus({ branch, ticket }) {
         }
     }, [ticket.status, ticket.new_ticket?.url]);
 
-    const R = 42, C = 2 * Math.PI * R; // ring for called state
-
     return (<>
         <Head title={`Turno ${ticket.display_number}`} />
         <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
                 <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28, letterSpacing: '0.05em' }}>{branch.name}</div>
 
-                {/* Main card */}
                 <div className="t-fade-up" style={{
                     background: T.card, borderRadius: 28, padding: '44px 32px 36px', border: `1px solid ${T.border}`,
                     position: 'relative', overflow: 'hidden', marginBottom: 20,
-                    boxShadow: `0 0 80px ${cfg.color}10`,
                 }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${cfg.color}, transparent 80%)`, transition: 'background 0.5s' }} />
 
@@ -71,14 +62,14 @@ export default function TicketStatus({ branch, ticket }) {
 
                     <div style={{
                         display: 'inline-block', padding: '8px 22px', borderRadius: 24,
-                        background: `${cfg.color}15`, color: cfg.color, fontSize: 14, fontWeight: 700, marginBottom: 20, letterSpacing: '0.02em',
+                        background: `color-mix(in srgb, ${cfg.color} 12%, transparent)`, color: cfg.color,
+                        fontSize: 14, fontWeight: 700, marginBottom: 20, letterSpacing: '0.02em',
                     }}>
                         {ticket.status_label}
                     </div>
 
                     <p style={{ fontSize: 14, color: T.textMuted, lineHeight: 1.6, marginBottom: 24 }}>{cfg.msg}</p>
 
-                    {/* Called/InProgress: counter */}
                     {(ticket.status === 'called' || ticket.status === 'in_progress') && ticket.counter_number && (
                         <div style={{ background: T.bg, borderRadius: 20, padding: 24, marginBottom: 16, animation: ticket.status === 'called' ? 'tCounterPulse 2s ease-in-out infinite' : 'none' }}>
                             <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Ventanilla</div>
@@ -86,7 +77,6 @@ export default function TicketStatus({ branch, ticket }) {
                         </div>
                     )}
 
-                    {/* Waiting: position */}
                     {ticket.status === 'waiting' && (
                         <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
                             {ticket.position != null && (
@@ -104,30 +94,27 @@ export default function TicketStatus({ branch, ticket }) {
                         </div>
                     )}
 
-                    {/* Transferred: new ticket */}
                     {ticket.status === 'transferred' && ticket.new_ticket && (
-                        <div style={{ background: T.bg, borderRadius: 18, padding: 22, border: `1px solid ${T.cyan}20`, marginBottom: 12 }}>
+                        <div style={{ background: T.bg, borderRadius: 18, padding: 22, border: `1px solid color-mix(in srgb, ${T.cyan} 15%, transparent)`, marginBottom: 12 }}>
                             <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Nuevo turno</div>
                             <div style={{ fontSize: 34, fontWeight: 900, color: T.cyan, fontFamily: T.mono, marginBottom: 6 }}>{ticket.new_ticket.display_number}</div>
                             <div style={{ fontSize: 12, color: T.textMuted }}>Cola: {ticket.new_ticket.queue_name}</div>
                             <div style={{ fontSize: 11, color: T.textMuted, marginTop: 10 }}>Redirigiendo...</div>
                             <button onClick={() => window.location.href = ticket.new_ticket.url}
-                                style={{ marginTop: 12, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg, ${T.cyan}, #0099CC)`, color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: T.font }}>
+                                style={{ marginTop: 12, padding: '10px 24px', borderRadius: 10, background: `linear-gradient(135deg, ${T.cyan}, color-mix(in srgb, ${T.cyan} 70%, black))`, color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: T.font }}>
                                 Ver nuevo turno →
                             </button>
                         </div>
                     )}
 
-                    {/* Completed: CTA */}
                     {ticket.status === 'completed' && (
                         <button onClick={() => window.location.href = `/kiosco/${branch.id}`}
-                            style={{ padding: '14px 32px', borderRadius: 12, background: `linear-gradient(135deg, ${T.green}, #00B377)`, color: '#fff', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: T.font, boxShadow: `0 4px 20px ${T.green}30` }}>
+                            style={{ padding: '14px 32px', borderRadius: 12, background: `linear-gradient(135deg, ${T.green}, color-mix(in srgb, ${T.green} 70%, black))`, color: '#fff', border: 'none', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: T.font }}>
                             Tomar otro turno
                         </button>
                     )}
                 </div>
 
-                {/* Details */}
                 <div className="t-fade-up" style={{ background: T.card, borderRadius: 18, padding: 20, border: `1px solid ${T.border}`, textAlign: 'left' }}>
                     {[
                         { l: 'Servicio', v: ticket.service_name },

@@ -59,16 +59,6 @@ export const T = {
     radiusXl: 28,
     shadow:   V('--t-shadow'),
     shadowLg: V('--t-shadow-lg'),
-
-    // ── Semantic Aliases (used by admin pages) ──
-    accent:       V('--t-blue'),
-    accentSoft:   V('--t-blue-glow'),
-    success:      V('--t-green'),
-    danger:       V('--t-red'),
-    warning:      V('--t-amber'),
-    textSecondary: V('--t-text-soft'),
-    textPrimary:  V('--t-text'),
-    cardBg:       V('--t-card'),
 };
 
 // Backward-compatible alias

@@ -15,83 +15,87 @@ use App\Http\Controllers\TicketActionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+/*
+|--------------------------------------------------------------------------
+| Public Routes (no auth)
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return Inertia::render('Welcome');
 });
 
-// ══════════════════════════════════════════
-// Dashboard principal
-// ══════════════════════════════════════════
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Kiosco público (rate limited)
+Route::prefix('kiosco/{branch}')->group(function () {
+    Route::get('/', [KioskController::class, 'index'])
+        ->middleware('throttle:kiosk-view')
+        ->name('kiosk.public');
+    Route::post('/turno', [KioskController::class, 'store'])
+        ->middleware('throttle:kiosk-issue')
+        ->name('kiosk.store');
+    Route::get('/turno/{ticket}', [KioskController::class, 'status'])
+        ->middleware('throttle:kiosk-view')
+        ->name('kiosk.status');
+});
 
-// ══════════════════════════════════════════
-// Perfil de usuario
-// ══════════════════════════════════════════
-Route::middleware('auth')->group(function () {
+// Pantalla pública de display (TVs de sala de espera, rate limited)
+Route::get('/pantalla-publica/{branch}', [DisplayController::class, 'public'])
+    ->middleware('throttle:display-public')
+    ->name('display.public');
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes (tenant-scoped)
+|--------------------------------------------------------------------------
+| All authenticated routes enforce tenant isolation via middleware.
+*/
+
+Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
+
+    // ── Dashboard ──
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // ── Perfil ──
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
-// ══════════════════════════════════════════
-// Rutas autenticadas de TurnosPro
-// ══════════════════════════════════════════
-Route::middleware(['auth', 'verified'])->group(function () {
+    // ── Operador (requiere permiso tickets.call) ──
+    Route::middleware('role:operator')->group(function () {
+        Route::get('/atencion', [OperatorController::class, 'index'])->name('operator.index');
+        Route::post('/atencion/llamar', [OperatorController::class, 'callNext'])->name('operator.call');
+        Route::post('/atencion/iniciar/{ticket}', [OperatorController::class, 'startServing'])->name('operator.start');
+        Route::post('/atencion/completar/{ticket}', [OperatorController::class, 'complete'])->name('operator.complete');
+        Route::post('/atencion/cancelar/{ticket}', [OperatorController::class, 'cancel'])->name('operator.cancel');
+        Route::post('/atencion/transferir/{ticket}', [OperatorController::class, 'transfer'])->name('operator.transfer');
+        Route::post('/atencion/no-show/{ticket}', [OperatorController::class, 'noShow'])->name('operator.noshow');
+        Route::post('/atencion/rellamar/{ticket}', [OperatorController::class, 'recall'])->name('operator.recall');
+    });
 
-    // ── Vista del Operador (Atención de turnos) ──
-    Route::get('/atencion', [OperatorController::class, 'index'])->name('operator.index');
-    Route::post('/atencion/llamar', [OperatorController::class, 'callNext'])->name('operator.call');
-    Route::post('/atencion/iniciar/{ticket}', [OperatorController::class, 'startServing'])->name('operator.start');
-    Route::post('/atencion/completar/{ticket}', [OperatorController::class, 'complete'])->name('operator.complete');
-    Route::post('/atencion/cancelar/{ticket}', [OperatorController::class, 'cancel'])->name('operator.cancel');
-    Route::post('/atencion/transferir/{ticket}', [OperatorController::class, 'transfer'])->name('operator.transfer');
-    Route::post('/atencion/no-show/{ticket}', [OperatorController::class, 'noShow'])->name('operator.noshow');
-    Route::post('/atencion/rellamar/{ticket}', [OperatorController::class, 'recall'])->name('operator.recall');
-
-    // ── Pantalla de Sala de Espera ──
+    // ── Pantalla de Sala de Espera (auth) ──
     Route::get('/pantalla', [DisplayController::class, 'index'])->name('display.index');
     Route::get('/pantalla/{branch}', [DisplayController::class, 'show'])->name('display.show');
 
-    // ── Administración ──
-    Route::prefix('administracion')->name('admin.')->group(function () {
+    // ── Tickets (emisión rápida + detalle) ──
+    Route::middleware('role:staff')->prefix('tickets')->name('tickets.')->group(function () {
+        Route::post('/emitir', [TicketActionController::class, 'issue'])->name('issue');
+        Route::get('/{ticket}', [TicketActionController::class, 'show'])->name('show');
+    });
 
-        // Dashboard admin
+    // ── Administración (requiere rol admin) ──
+    Route::middleware('role:admin')->prefix('administracion')->name('admin.')->group(function () {
         Route::get('/', [DashboardController::class, 'admin'])->name('dashboard');
 
-        // CRUD Sucursales
-        Route::resource('sucursales', BranchController::class)->parameters([
-            'sucursales' => 'branch',
-        ]);
+        Route::resource('sucursales', BranchController::class)->parameters(['sucursales' => 'branch']);
+        Route::resource('servicios', ServiceController::class)->parameters(['servicios' => 'service']);
+        Route::resource('colas', QueueController::class)->parameters(['colas' => 'queue']);
+        Route::resource('ventanillas', CounterController::class)->parameters(['ventanillas' => 'counter']);
+        Route::resource('usuarios', UserController::class)->parameters(['usuarios' => 'user']);
 
-        // CRUD Servicios
-        Route::resource('servicios', ServiceController::class)->parameters([
-            'servicios' => 'service',
-        ]);
-
-        // CRUD Colas
-        Route::resource('colas', QueueController::class)->parameters([
-            'colas' => 'queue',
-        ]);
-
-        // CRUD Ventanillas
-        Route::resource('ventanillas', CounterController::class)->parameters([
-            'ventanillas' => 'counter',
-        ]);
-
-        // CRUD Usuarios
-        Route::resource('usuarios', UserController::class)->parameters([
-            'usuarios' => 'user',
-        ]);
-
-        // Reportes
         Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reportes/exportar', [ReportController::class, 'export'])->name('reports.export');
 
-        // Métricas API (JSON para gráficas)
+        // Métricas API (JSON)
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('/metrics/realtime/{branch}', [DashboardController::class, 'realtime'])->name('metrics.realtime');
             Route::get('/metrics/hourly/{branch}', [DashboardController::class, 'hourly'])->name('metrics.hourly');
@@ -101,24 +105,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/metrics/branches', [DashboardController::class, 'branchComparison'])->name('metrics.branches');
         });
     });
-
-    // ── Acciones rápidas sobre tickets (AJAX/Inertia) ──
-    Route::prefix('tickets')->name('tickets.')->group(function () {
-        Route::post('/emitir', [TicketActionController::class, 'issue'])->name('issue');
-        Route::get('/{ticket}', [TicketActionController::class, 'show'])->name('show');
-    });
 });
-
-// ══════════════════════════════════════════
-// Ruta Pública para el Kiosco
-// ══════════════════════════════════════════
-Route::get('/kiosco/{branch}', [KioskController::class, 'index'])->name('kiosk.public');
-Route::post('/kiosco/{branch}/turno', [KioskController::class, 'store'])->name('kiosk.store');
-Route::get('/kiosco/{branch}/turno/{ticket}', [KioskController::class, 'status'])->name('kiosk.status');
-
-// ══════════════════════════════════════════
-// Pantalla pública de display (sin auth)
-// ══════════════════════════════════════════
-Route::get('/pantalla-publica/{branch}', [DisplayController::class, 'public'])->name('display.public');
 
 require __DIR__ . '/auth.php';

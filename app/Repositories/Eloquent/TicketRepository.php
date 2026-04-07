@@ -7,6 +7,7 @@ namespace App\Repositories\Eloquent;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Repositories\Contracts\TicketRepositoryInterface;
+use Illuminate\Cache\ArrayStore;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -112,17 +113,34 @@ class TicketRepository implements TicketRepositoryInterface
         return $query->orderBy($sortBy, $sortDir)->paginate($perPage);
     }
 
+    /**
+     * Generate next daily sequence number for a branch.
+     *
+     * Compatible with both Redis (production) and array (testing) cache drivers.
+     * The array driver doesn't support atomic locks with block(), so we
+     * fall back to simple get/put which is safe in single-process test runs.
+     */
     public function getDailySequence(string $branchId): int
     {
         $key = "branch:{$branchId}:daily_seq:" . today()->format('Y-m-d');
 
-        // Use Redis atomic increment for concurrency safety
-        return (int) Cache::lock("{$key}:lock", 5)->block(3, function () use ($branchId, $key) {
-            $current = Cache::get($key, 0);
-            $next = $current + 1;
-            Cache::put($key, $next, now()->endOfDay());
-            return $next;
-        });
+        $store = Cache::getStore();
+
+        if (!$store instanceof ArrayStore) {
+            // Redis / Memcached / Database — use atomic lock
+            return (int) Cache::lock("{$key}:lock", 5)->block(3, function () use ($key) {
+                $current = Cache::get($key, 0);
+                $next = $current + 1;
+                Cache::put($key, $next, now()->endOfDay());
+                return $next;
+            });
+        }
+
+        // Array driver (tests) — no lock needed in single-process
+        $current = Cache::get($key, 0);
+        $next = $current + 1;
+        Cache::put($key, $next, now()->endOfDay());
+        return $next;
     }
 
     public function getTodayStats(string $branchId): array
@@ -132,7 +150,7 @@ class TicketRepository implements TicketRepositoryInterface
         return Cache::remember($cacheKey, 30, function () use ($branchId) {
             $today = today();
 
-            return DB::table('tickets')
+            return (array) DB::table('tickets')
                 ->where('branch_id', $branchId)
                 ->whereDate('created_at', $today)
                 ->selectRaw("
@@ -149,8 +167,7 @@ class TicketRepository implements TicketRepositoryInterface
                     COALESCE(AVG(rating) FILTER (WHERE rating IS NOT NULL), 0) as avg_rating,
                     COUNT(rating) as ratings_count
                 ")
-                ->first()
-                ?->toArray() ?? [];
+                ->first();
         });
     }
 

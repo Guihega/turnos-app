@@ -1,21 +1,12 @@
 // resources/js/Pages/Public/Kiosk.jsx
 import { useForm, Head } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
+import { T } from '@/Components/TurnosUI';
 
-const T = {
-    bg: '#06080D', surface: '#0C0F16', card: '#111520', border: '#1A2035',
-    text: '#E4E8F1', textMuted: '#4D5672', blue: '#3D7AFF', green: '#00D68F',
-    amber: '#FFB020', purple: '#9D5CFF', font: "'Outfit', sans-serif", mono: "'JetBrains Mono', monospace",
-    radius: 20,
-};
-
-// Simple QR Code generator using canvas (no external lib needed)
 function QRDisplay({ url, size = 160 }) {
-    const canvasRef = useRef(null);
     const [qrUrl, setQrUrl] = useState('');
 
     useEffect(() => {
-        // Use Google Charts API for QR generation (works without external packages)
         setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&bgcolor=111520&color=E4E8F1&format=svg`);
     }, [url, size]);
 
@@ -76,18 +67,16 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                         <div style={{ fontSize: 20, fontWeight: 900, fontFamily: T.mono }}>~{avgWaitMinutes}</div>
                         <div style={{ fontSize: 8, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>min. aprox.</div>
                     </div>
-                    {/* QR toggle */}
                     <button onClick={() => setShowQR(!showQR)} style={{
-                        background: showQR ? `${T.blue}20` : 'transparent', border: `1px solid ${T.border}`,
-                        borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: showQR ? T.blue : T.textMuted,
-                        fontSize: 11, fontFamily: T.font, fontWeight: 600, transition: 'all 0.2s',
+                        background: showQR ? `color-mix(in srgb, ${T.blue} 15%, transparent)` : 'transparent',
+                        border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
+                        color: showQR ? T.blue : T.textMuted, fontSize: 11, fontFamily: T.font, fontWeight: 600, transition: 'all 0.2s',
                     }}>
                         ⬡ QR
                     </button>
                 </div>
             </div>
 
-            {/* QR Code overlay */}
             {showQR && (
                 <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, animation: 'tFadeUp 0.3s ease' }}>
                     <QRDisplay url={kioskUrl} size={140} />
@@ -104,7 +93,6 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
             )}
 
             <div style={{ flex: 1, padding: 24, maxWidth: 880, margin: '0 auto', width: '100%' }}>
-                {/* ── Step 1: Select Service ── */}
                 {step === 'select' && (
                     <div className="t-fade-up">
                         <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4, letterSpacing: '-0.02em' }}>Seleccione su servicio</h2>
@@ -120,7 +108,6 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                                         transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', position: 'relative', overflow: 'hidden',
                                         color: T.text, fontFamily: T.font,
                                         transform: hovered === svc.id ? 'translateY(-4px)' : 'none',
-                                        boxShadow: hovered === svc.id ? `0 12px 40px ${svc.color}15` : 'none',
                                     }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: svc.color }} />
                                     <div style={{ fontSize: 28, marginBottom: 14, opacity: hovered === svc.id ? 1 : 0.6, transition: 'opacity 0.3s' }}>⬡</div>
@@ -133,7 +120,6 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                     </div>
                 )}
 
-                {/* ── Step 2: Confirm ── */}
                 {step === 'confirm' && selected && (
                     <div className="t-fade-up" style={{ maxWidth: 460, margin: '0 auto' }}>
                         <button onClick={() => setStep('select')} style={{ background: 'none', border: 'none', color: T.blue, cursor: 'pointer', fontSize: 13, marginBottom: 24, fontFamily: T.font, fontWeight: 600 }}>← Volver</button>
@@ -158,29 +144,21 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                             </div>
                         </div>
                         {Object.keys(errors).length > 0 && (
-                            <div style={{ background: 'rgba(255,71,87,0.08)', border: '1px solid rgba(255,71,87,0.2)', borderRadius: 10, padding: 14, marginBottom: 16 }}>
-                                {Object.values(errors).map((e, i) => <div key={i} style={{ fontSize: 13, color: '#FF4757' }}>{e}</div>)}
+                            <div style={{ background: `color-mix(in srgb, ${T.red} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${T.red} 20%, transparent)`, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                                {Object.values(errors).map((e, i) => <div key={i} style={{ fontSize: 13, color: T.red }}>{e}</div>)}
                             </div>
                         )}
                         <button onClick={submit} disabled={processing} style={{
-                            width: '100%', padding: 18, background: `linear-gradient(135deg, ${selected.color}, ${selected.color}CC)`,
+                            width: '100%', padding: 18, background: `linear-gradient(135deg, ${selected.color}, color-mix(in srgb, ${selected.color} 80%, black))`,
                             color: '#fff', border: 'none', borderRadius: 14, fontSize: 18, fontWeight: 800,
                             cursor: processing ? 'wait' : 'pointer', opacity: processing ? 0.6 : 1,
-                            transition: 'all 0.3s', fontFamily: T.font, boxShadow: `0 8px 32px ${selected.color}30`,
+                            transition: 'all 0.3s', fontFamily: T.font,
                         }}>
                             {processing ? 'Emitiendo...' : '⬡ Tomar Turno'}
                         </button>
                     </div>
                 )}
             </div>
-            <style>{`
-                @keyframes tFadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-                .t-fade-up { animation: tFadeUp .5s ease both; }
-                .t-stagger-1{animation-delay:.05s} .t-stagger-2{animation-delay:.1s} .t-stagger-3{animation-delay:.15s}
-                .t-stagger-4{animation-delay:.2s} .t-stagger-5{animation-delay:.25s} .t-stagger-6{animation-delay:.3s}
-                .t-stagger-7{animation-delay:.35s} .t-stagger-8{animation-delay:.4s}
-                * { margin:0; padding:0; box-sizing:border-box; }
-            `}</style>
         </div>
     </>);
 }

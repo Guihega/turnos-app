@@ -1,25 +1,18 @@
 // resources/js/Pages/Display/Screen.jsx
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-
-const T = {
-    bg: '#040609', card: '#0C1018', border: '#162035', text: '#E8ECF4', textMuted: '#4D5672',
-    blue: '#3D7AFF', green: '#00D68F', amber: '#FFB020', purple: '#9D5CFF',
-    font: "'Outfit', sans-serif", mono: "'JetBrains Mono', monospace",
-};
+import { T } from '@/Components/TurnosUI';
 
 export default function DisplayScreen({ branch, initialData, isPublic = false }) {
     const [data, setData] = useState(initialData || { serving: [], recent: [], waitingCount: 0, avgWaitMinutes: 0 });
     const [clock, setClock] = useState(new Date());
     const [flash, setFlash] = useState(null);
 
-    // Clock update
     useEffect(() => {
         const id = setInterval(() => setClock(new Date()), 1000);
         return () => clearInterval(id);
     }, []);
 
-    // Auto-refresh via Inertia reload every 5 seconds
     useEffect(() => {
         const id = setInterval(() => {
             router.reload({
@@ -28,7 +21,6 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                 onSuccess: (page) => {
                     const newData = page.props.initialData;
                     if (newData) {
-                        // Flash when new ticket appears
                         if (newData.serving?.length > data.serving?.length) setFlash(true);
                         setData(newData);
                         setTimeout(() => setFlash(false), 2000);
@@ -84,7 +76,6 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                                     border: `1px solid ${T.border}`, borderLeft: `5px solid ${ticket.service_color || T.green}`,
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                     animation: flash && i === 0 ? 'screenPulse 1s ease-in-out' : 'none',
-                                    boxShadow: ticket.status === 'called' ? `0 0 40px ${T.blue}10` : 'none',
                                 }}>
                                     <div>
                                         <div style={{ fontSize: 56, fontWeight: 900, fontFamily: T.mono, letterSpacing: '-0.03em', lineHeight: 1, color: T.text }}>
@@ -108,7 +99,6 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
 
                 {/* Right: Stats + recent */}
                 <div style={{ borderLeft: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column' }}>
-                    {/* Waiting count */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${T.border}` }}>
                         <div style={{ padding: '24px 20px', textAlign: 'center', borderRight: `1px solid ${T.border}` }}>
                             <div style={{ fontSize: 42, fontWeight: 900, color: T.amber, fontFamily: T.mono }}>{data.waitingCount}</div>
@@ -120,7 +110,6 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                         </div>
                     </div>
 
-                    {/* Recently served */}
                     <div style={{ flex: 1, padding: '20px' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>Últimos Atendidos</div>
                         {recent.length === 0 ? (

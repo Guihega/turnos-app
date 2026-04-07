@@ -15,9 +15,28 @@ class DisplayController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $branches = Branch::where('tenant_id', $user->tenant_id)
-            ->where('is_active', true)
-            ->get();
+
+        // Super admin / tenant admin → all branches
+        // Everyone else → only assigned branches
+        $branches = ($user->isSuperAdmin() || $user->isTenantAdmin())
+            ? Branch::where('tenant_id', $user->tenant_id)
+                ->where('is_active', true)
+                ->get()
+            : Branch::where('is_active', true)
+                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->get();
+
+        // If user has only one branch, redirect directly to the screen
+        if ($branches->count() === 1) {
+            return Inertia::render('Display/Screen', [
+                'branch' => [
+                    'id' => $branches->first()->id,
+                    'name' => $branches->first()->name,
+                    'code' => $branches->first()->code,
+                ],
+                'initialData' => $this->getDisplayData($branches->first()),
+            ]);
+        }
 
         return Inertia::render('Display/Index', [
             'branches' => $branches->map(fn($b) => [
@@ -30,6 +49,15 @@ class DisplayController extends Controller
 
     public function show(Request $request, Branch $branch): Response
     {
+        // Verify user has access to this branch
+        $user = $request->user();
+        if (!$user->isSuperAdmin() && !$user->isTenantAdmin()) {
+            $hasAccess = $user->branches()->where('branches.id', $branch->id)->exists();
+            if (!$hasAccess) {
+                abort(403, 'No tiene acceso a esta sucursal.');
+            }
+        }
+
         return Inertia::render('Display/Screen', [
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
