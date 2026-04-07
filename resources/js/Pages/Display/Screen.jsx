@@ -1,35 +1,75 @@
 // resources/js/Pages/Display/Screen.jsx
 import { Head, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { T } from '@/Components/TurnosUI';
+import { useBranchChannel } from '@/hooks/useBranchChannel';
 
 export default function DisplayScreen({ branch, initialData, isPublic = false }) {
     const [data, setData] = useState(initialData || { serving: [], recent: [], waitingCount: 0, avgWaitMinutes: 0 });
     const [clock, setClock] = useState(new Date());
     const [flash, setFlash] = useState(null);
+    const [wsConnected, setWsConnected] = useState(false);
+    const lastEventRef = useRef(Date.now());
 
+    // Clock
     useEffect(() => {
         const id = setInterval(() => setClock(new Date()), 1000);
         return () => clearInterval(id);
     }, []);
 
-    useEffect(() => {
-        const id = setInterval(() => {
-            router.reload({
-                only: ['initialData'],
-                preserveScroll: true,
-                onSuccess: (page) => {
-                    const newData = page.props.initialData;
-                    if (newData) {
-                        if (newData.serving?.length > data.serving?.length) setFlash(true);
-                        setData(newData);
+    // Full data reload (used by both WS events and polling fallback)
+    const reloadData = useCallback(() => {
+        router.reload({
+            only: ['initialData'],
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const newData = page.props.initialData;
+                if (newData) {
+                    if (newData.serving?.length > data.serving?.length) {
+                        setFlash(true);
                         setTimeout(() => setFlash(false), 2000);
                     }
+                    setData(newData);
                 }
-            });
-        }, 5000);
-        return () => clearInterval(id);
+            }
+        });
     }, [data.serving?.length]);
+
+    // ─── WebSocket listeners (display channel = public, no auth required) ───
+    useBranchChannel(branch?.id, 'display', {
+        'TicketCalled': (eventData) => {
+            lastEventRef.current = Date.now();
+            setWsConnected(true);
+            setFlash(true);
+            setTimeout(() => setFlash(false), 2000);
+            // Reload full data to get consistent state
+            reloadData();
+        },
+        'TicketCompleted': (eventData) => {
+            lastEventRef.current = Date.now();
+            setWsConnected(true);
+            reloadData();
+        },
+    });
+
+    // ─── Echo connection status ───
+    useEffect(() => {
+        if (!window.Echo) return;
+        const check = () => {
+            const state = window.Echo?.connector?.pusher?.connection?.state;
+            setWsConnected(state === 'connected');
+        };
+        check();
+        const id = setInterval(check, 5000);
+        return () => clearInterval(id);
+    }, []);
+
+    // ─── Polling fallback: 30s if WebSocket connected, 5s if not ───
+    useEffect(() => {
+        const interval = wsConnected ? 30000 : 5000;
+        const id = setInterval(reloadData, interval);
+        return () => clearInterval(id);
+    }, [wsConnected, reloadData]);
 
     const serving = data.serving || [];
     const recent = data.recent || [];
@@ -48,11 +88,25 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                         <div style={{ fontSize: 12, color: T.textMuted }}>Sistema de Turnos</div>
                     </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 36, fontWeight: 800, fontFamily: T.mono, fontVariantNumeric: 'tabular-nums' }}>
-                        {clock.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                    {/* Connection indicator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{
+                            width: 8, height: 8, borderRadius: '50%',
+                            background: wsConnected ? T.green : T.amber,
+                            boxShadow: wsConnected ? `0 0 8px ${T.green}` : 'none',
+                            transition: 'all 0.3s',
+                        }} />
+                        <span style={{ fontSize: 10, color: T.textMuted }}>
+                            {wsConnected ? 'En vivo' : 'Polling'}
+                        </span>
                     </div>
-                    <div style={{ fontSize: 12, color: T.textMuted }}>{clock.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 36, fontWeight: 800, fontFamily: T.mono, fontVariantNumeric: 'tabular-nums' }}>
+                            {clock.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div style={{ fontSize: 12, color: T.textMuted }}>{clock.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    </div>
                 </div>
             </div>
 
