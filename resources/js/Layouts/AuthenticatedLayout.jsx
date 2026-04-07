@@ -33,7 +33,7 @@ export default function AuthenticatedLayout({ children }) {
                         {/* Left: Logo + Nav links */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <Link href={route('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginRight: 16 }}>
-                                <div style={{ width: 32, height: 32, borderRadius: 9, background: `linear-gradient(135deg, ${V('--t-blue')}, ${V('--t-purple')})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14, color: '#fff' }}>T</div>
+                                <div style={{ width: 32, height: 32, borderRadius: 9, background: `linear-gradient(135deg, ${V('--t-blue')}, ${V('--t-purple')})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14, color: '#fff' }}>O</div>
                             </Link>
 
                             {/* Desktop nav links */}

@@ -74,7 +74,7 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
                 {/* ── Sub-header: Branch + Clock ── */}
                 <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
                     <div>
-                        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>{currentBranch?.name || 'TurnosPro'}</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>{currentBranch?.name || 'Olinora'}</div>
                         <div style={{ fontSize: 11, color: T.textMuted }}>Resumen en tiempo real</div>
                     </div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

@@ -52,7 +52,7 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
             {/* Header */}
             <div style={{ padding: '16px 24px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>T</div>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>O</div>
                     <div>
                         <div style={{ fontSize: 16, fontWeight: 800 }}>{branch.name}</div>
                         <div style={{ fontSize: 11, color: T.textMuted }}>Toma tu turno</div>

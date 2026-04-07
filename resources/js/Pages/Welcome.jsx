@@ -15,7 +15,7 @@ export default function Welcome({ auth }) {
     ];
 
     return (<>
-        <Head title="TurnosPro — Sistema de Gestión de Turnos" />
+        <Head title="Olinora — Sistema Inteligente de Gestión de Turnos" />
         <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', overflow: 'hidden' }}>
 
             {/* ── Nav ── */}
@@ -30,7 +30,7 @@ export default function Welcome({ auth }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontWeight: 900, fontSize: 16, color: '#fff',
                     }}>T</div>
-                    <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.03em' }}>TurnosPro</span>
+                    <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.03em' }}>Olinora</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                     {auth.user ? (
@@ -84,7 +84,7 @@ export default function Welcome({ auth }) {
                 <p className="welcome-anim welcome-anim-3" style={{
                     fontSize: 17, color: T.textSoft, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 40px',
                 }}>
-                    TurnosPro organiza la atención al cliente con colas inteligentes, kioscos públicos, pantallas de sala de espera y métricas en tiempo real.
+                    Olinora organiza la atención al cliente con colas inteligentes, kioscos públicos, pantallas de sala de espera y métricas en tiempo real.
                 </p>
 
                 <div className="welcome-anim welcome-anim-4" style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -155,7 +155,7 @@ export default function Welcome({ auth }) {
                 padding: '32px', textAlign: 'center', borderTop: `1px solid ${T.border}`,
             }}>
                 <span style={{ fontSize: 12, color: T.textMuted }}>
-                    TurnosPro · Sistema de Gestión de Turnos Multi-Sucursal · {new Date().getFullYear()}
+                    Olinora · Sistema Inteligente de Gestión de Turnos Multi-Sucursal · {new Date().getFullYear()}
                 </span>
             </footer>
 

@@ -1,5 +1,5 @@
 // resources/js/Theme/ThemeContext.jsx
-// ══ TurnosPro Theme System ══
+// ══ Olinora Theme System ══
 // Provides theme switching (dark/light/presets) + tenant customization
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -215,7 +215,7 @@ const ThemeContext = createContext(null);
 export function ThemeProvider({ children, defaultTheme = 'refined-dark' }) {
     const [themeId, setThemeId] = useState(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('turnos-theme') || defaultTheme;
+            return localStorage.getItem('olinora-theme') || defaultTheme;
         }
         return defaultTheme;
     });
@@ -223,7 +223,7 @@ export function ThemeProvider({ children, defaultTheme = 'refined-dark' }) {
     const [customOverrides, setCustomOverrides] = useState(() => {
         if (typeof window !== 'undefined') {
             try {
-                return JSON.parse(localStorage.getItem('turnos-theme-overrides') || '{}');
+                return JSON.parse(localStorage.getItem('olinora-theme-overrides') || '{}');
             } catch { return {}; }
         }
         return {};
@@ -252,23 +252,23 @@ export function ThemeProvider({ children, defaultTheme = 'refined-dark' }) {
 
     const setTheme = useCallback((id) => {
         setThemeId(id);
-        localStorage.setItem('turnos-theme', id);
+        localStorage.setItem('olinora-theme', id);
         // Clear overrides when switching presets
         setCustomOverrides({});
-        localStorage.removeItem('turnos-theme-overrides');
+        localStorage.removeItem('olinora-theme-overrides');
     }, []);
 
     const setOverride = useCallback((varName, value) => {
         setCustomOverrides(prev => {
             const next = { ...prev, [varName]: value };
-            localStorage.setItem('turnos-theme-overrides', JSON.stringify(next));
+            localStorage.setItem('olinora-theme-overrides', JSON.stringify(next));
             return next;
         });
     }, []);
 
     const resetOverrides = useCallback(() => {
         setCustomOverrides({});
-        localStorage.removeItem('turnos-theme-overrides');
+        localStorage.removeItem('olinora-theme-overrides');
     }, []);
 
     const currentTheme = themes[themeId] || themes['refined-dark'];

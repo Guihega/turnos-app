@@ -1,5 +1,5 @@
 // resources/js/Components/TurnosUI.jsx
-// ══ TurnosPro Design System v3 — Theme-Aware ══
+// ══ Olinora Design System v3 — Theme-Aware ══
 //
 // Migration: T tokens now resolve to CSS custom properties via var().
 // All existing code using T.blue, T.bg etc. continues to work unchanged.

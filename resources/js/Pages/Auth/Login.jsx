@@ -18,8 +18,15 @@ export default function Login({ status, canResetPassword }) {
         <Head title="Iniciar Sesión" />
         <div style={{
             fontFamily: T.font, background: T.bg, color: T.text,
-            minHeight: '100vh', display: 'flex', position: 'relative', overflow: 'hidden',
+            minHeight: '100vh', display: 'flex', justifyContent: 'center',
+            position: 'relative', overflow: 'hidden',
         }}>
+            {/* Inner container — caps width on ultrawide */}
+            <div style={{
+                display: 'flex', width: '100%', maxWidth: 1280,
+                margin: '0 auto', position: 'relative',
+            }}>
+
             {/* Background ambient elements */}
             <div style={{
                 position: 'absolute', top: '-20%', right: '-10%', width: 600, height: 600,
@@ -35,7 +42,7 @@ export default function Login({ status, canResetPassword }) {
             {/* Left panel — Branding */}
             <div className="login-brand-panel" style={{
                 flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                padding: '60px 80px', position: 'relative',
+                padding: '60px 80px', position: 'relative', minWidth: 0,
             }}>
                 <div style={{ maxWidth: 480 }}>
                     {/* Logo */}
@@ -46,9 +53,9 @@ export default function Login({ status, canResetPassword }) {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 900, fontSize: 22, color: '#fff',
                             boxShadow: `0 8px 32px color-mix(in srgb, ${T.blue} 30%, transparent)`,
-                        }}>T</div>
+                        }}>O</div>
                         <div>
-                            <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em' }}>TurnosPro</div>
+                            <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em' }}>Olinora</div>
                             <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Sistema de Gestión</div>
                         </div>
                     </div>
@@ -91,7 +98,8 @@ export default function Login({ status, canResetPassword }) {
 
             {/* Right panel — Login form */}
             <div style={{
-                width: 460, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                width: '100%', maxWidth: 480, minWidth: 320,
+                display: 'flex', flexDirection: 'column', justifyContent: 'center',
                 padding: '40px 48px', position: 'relative',
             }}>
                 <div className="login-anim login-anim-2" style={{
@@ -106,7 +114,7 @@ export default function Login({ status, canResetPassword }) {
                             background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`,
                             display: 'none', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 900, fontSize: 18, color: '#fff',
-                        }}>T</div>
+                        }}>O</div>
                         <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Iniciar Sesión</h2>
                         <p style={{ fontSize: 13, color: T.textMuted }}>Ingresa tus credenciales</p>
                     </div>
@@ -213,10 +221,12 @@ export default function Login({ status, canResetPassword }) {
                 {/* Footer */}
                 <div className="login-anim login-anim-4" style={{ textAlign: 'center', marginTop: 24 }}>
                     <span style={{ fontSize: 11, color: T.textMuted }}>
-                        TurnosPro · Sistema de Gestión de Turnos
+                        Olinora · Sistema Inteligente de Gestión de Turnos
                     </span>
                 </div>
             </div>
+
+            </div>{/* end inner container */}
 
             {/* Animations + responsive */}
             <style>{`

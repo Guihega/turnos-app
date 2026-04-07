@@ -42,7 +42,7 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
             {/* Header */}
             <div style={{ padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, color: '#fff' }}>T</div>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, color: '#fff' }}>O</div>
                     <div>
                         <div style={{ fontSize: 20, fontWeight: 800 }}>{branch.name}</div>
                         <div style={{ fontSize: 12, color: T.textMuted }}>Sistema de Turnos</div>

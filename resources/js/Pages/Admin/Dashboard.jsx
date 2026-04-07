@@ -24,7 +24,7 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
 
     return (
         <AuthenticatedLayout>
-            <Head title="Admin - TurnosPro" />
+            <Head title="Admin - Olinora" />
             <div style={{ background: T.bg, minHeight: '100vh', padding: '24px 28px', fontFamily: T.font, color: T.text }}>
 
                 {/* ── Header ── */}
