@@ -36,10 +36,17 @@ class ProductionSeeder extends Seeder
 
         // ── Create Tenant ──
         $tenant = Tenant::firstOrCreate(
-            ['name' => $tenantName],
+            ['slug' => Str::slug($tenantName)],
             [
                 'id' => (string) Str::ulid(),
+                'name' => $tenantName,
                 'slug' => Str::slug($tenantName),
+                'legal_name' => $tenantName,
+                'email' => $adminEmail,
+                'phone' => '',
+                'timezone' => 'America/Mexico_City',
+                'locale' => 'es',
+                'plan' => 'basic',
                 'is_active' => true,
                 'settings' => $this->defaultSettings($tenantName),
             ]
