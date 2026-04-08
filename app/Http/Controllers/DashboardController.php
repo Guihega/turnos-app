@@ -93,7 +93,6 @@ class DashboardController extends Controller
 
         $todayStats = $branchId ? $this->getTodayStats($branchId) : [];
 
-        // FIX: Operadores filtrados por la sucursal seleccionada (via pivot branch_user)
         $operators = User::where('tenant_id', $tenantId)
             ->whereIn('role', ['operator', 'branch_manager'])
             ->where('is_active', true)
@@ -115,7 +114,6 @@ class DashboardController extends Controller
                 'today_served' => $u->today_served,
             ]);
 
-        // FIX: Servicios filtrados por las colas de la sucursal seleccionada
         $services = Service::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->when($branchId, function ($query) use ($branchId) {
@@ -126,7 +124,6 @@ class DashboardController extends Controller
 
         $branchStats = $this->getBranchComparison($tenantId);
 
-        // Counts for admin nav cards
         $countsForNav = [
             'branches' => $branches->count(),
             'services' => $services->count(),
@@ -143,6 +140,24 @@ class DashboardController extends Controller
             'services' => $services->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'color' => $s->color, 'code' => $s->code]),
             'branchStats' => $branchStats,
             'countsForNav' => $countsForNav,
+        ]);
+    }
+
+    /**
+     * Analytics Dashboard — Advanced metrics with charts.
+     */
+    public function analytics(Request $request): Response
+    {
+        $user = $request->user();
+        $tenantId = $user->tenant_id;
+        $branches = Branch::where('tenant_id', $tenantId)->where('is_active', true)->get();
+        $branchId = $request->input('branch_id', $branches->first()?->id);
+        $branch = $branches->firstWhere('id', $branchId) ?? $branches->first();
+
+        return Inertia::render('Admin/Analytics', [
+            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
+            'currentBranch' => $branch ? ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code] : null,
+            'todayStats' => $branchId ? $this->getTodayStats($branchId) : [],
         ]);
     }
 

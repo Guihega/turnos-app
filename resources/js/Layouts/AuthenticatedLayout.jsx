@@ -17,12 +17,14 @@ export default function AuthenticatedLayout({ children }) {
         { href: 'dashboard', label: 'Dashboard', icon: '◉' },
         { href: 'operator.index', label: 'Atención', icon: '◈' },
         { href: 'admin.dashboard', label: 'Admin', icon: '⬡' },
+        { href: 'admin.analytics', label: 'Analytics', icon: '◈' },
         { href: 'display.index', label: 'Pantalla', icon: '▣' },
         { href: 'admin.reports.index', label: 'Reportes', icon: '◧' },
     ];
 
     const isActive = (name) => {
-        if (name === 'admin.dashboard') return currentRoute?.startsWith('admin.') && !currentRoute?.startsWith('admin.settings');
+        if (name === 'admin.dashboard') return currentRoute === 'admin.dashboard';
+        if (name === 'admin.analytics') return currentRoute === 'admin.analytics';
         if (name === 'admin.settings.edit') return currentRoute?.startsWith('admin.settings');
         return currentRoute === name;
     };

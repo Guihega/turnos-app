@@ -96,6 +96,9 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
         Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reportes/exportar', [ReportController::class, 'export'])->name('reports.export');
 
+        // ── Analytics Dashboard ──
+        Route::get('/analytics', [DashboardController::class, 'analytics'])->name('analytics');
+
         // ── Personalización del Tenant (White-Label) ──
         Route::get('/personalizacion', [TenantSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/personalizacion/marca', [TenantSettingsController::class, 'updateBranding'])->name('settings.branding');
