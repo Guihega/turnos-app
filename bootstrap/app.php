@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\TelegramAlertService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,5 +28,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->report(function (\Throwable $e) {
+            if (app()->isProduction()
+                && !$e instanceof \Illuminate\Auth\AuthenticationException
+                && !$e instanceof \Illuminate\Validation\ValidationException
+                && !$e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+                && !$e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException
+                && !$e instanceof \Illuminate\Session\TokenMismatchException
+            ) {
+                try {
+                    app(TelegramAlertService::class)->sendError($e);
+                } catch (\Throwable) {
+                    // Never let alerting break the app
+                }
+            }
+        });
     })->create();

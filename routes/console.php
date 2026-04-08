@@ -16,7 +16,7 @@ Artisan::command('inspire', function () {
 
 /*
 |--------------------------------------------------------------------------
-| TurnosPro Scheduled Jobs
+| Olinora Scheduled Jobs
 |--------------------------------------------------------------------------
 |
 | turnos:auto-close    — Runs every 5 min during business hours.
@@ -28,6 +28,14 @@ Artisan::command('inspire', function () {
 |
 | turnos:cleanup-tickets — Runs weekly on Sunday at 03:00. Soft-deletes
 |                          completed/cancelled tickets older than 90 days.
+|
+| health:check         — Runs every 5 min. Validates PostgreSQL, Redis,
+|                        Reverb, disk space, queue. Alerts via Telegram
+|                        if any check fails.
+|
+| pilot:reset          — Runs daily at 03:30. Cleans transactional data
+|                        (tickets, metrics) for the pilot phase.
+|                        REMOVE THIS after pilot ends.
 |
 */
 
@@ -46,3 +54,23 @@ Schedule::command('turnos:cleanup-tickets --days=90')
     ->weeklyOn(0, '03:00') // Sunday at 3am
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cleanup.log'));
+
+// ── Health Check (every 5 min) ──
+Schedule::command('health:check')
+    ->everyFiveMinutes()
+    ->runInBackground()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/health-check.log'));
+
+// ── Pilot Reset (daily at 03:30 — REMOVE after pilot phase) ──
+Schedule::command('pilot:reset --force')
+    ->dailyAt('03:30')
+    ->runInBackground()
+    ->withoutOverlapping()
+    ->before(function () {
+        logger()->info('[Schedule] Starting daily pilot reset');
+    })
+    ->after(function () {
+        logger()->info('[Schedule] Daily pilot reset completed');
+    })
+    ->appendOutputTo(storage_path('logs/pilot-reset.log'));

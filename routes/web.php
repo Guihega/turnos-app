@@ -124,6 +124,7 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
             Route::get('/metrics/operators/{branch}', [DashboardController::class, 'operators'])->name('metrics.operators');
             Route::get('/metrics/trend/{branch}', [DashboardController::class, 'trend'])->name('metrics.trend');
             Route::get('/metrics/branches', [DashboardController::class, 'branchComparison'])->name('metrics.branches');
+            Route::get('/metrics/heatmap/{branch}', [DashboardController::class, 'heatmap'])->name('metrics.heatmap');
         });
     });
 });

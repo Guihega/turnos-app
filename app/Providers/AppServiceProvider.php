@@ -29,25 +29,30 @@ class AppServiceProvider extends ServiceProvider
         // Register policies
         Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
 
-        // ── Rate Limiters ──
+        // ── Rate Limiters (production-tuned) ──
 
-        // Kiosk ticket issuance: 5 per minute per IP
+        // Kiosk ticket issuance: 15/min per IP (peak hours, multiple people on same kiosk)
         RateLimiter::for('kiosk-issue', function ($request) {
-            return Limit::perMinute(5)
+            return Limit::perMinute(15)
                 ->by($request->ip())
                 ->response(function () {
                     return back()->withErrors(['branch' => 'Demasiados turnos emitidos. Espera un momento.']);
                 });
         });
 
-        // Kiosk page views: 30 per minute per IP
+        // Kiosk page views: 60/min per IP (status page auto-refreshes)
         RateLimiter::for('kiosk-view', function ($request) {
-            return Limit::perMinute(30)->by($request->ip());
+            return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Public display: 60 per minute per IP (auto-refreshes every 5s)
+        // Public display: 120/min per IP (TV screens refresh frequently)
         RateLimiter::for('display-public', function ($request) {
-            return Limit::perMinute(60)->by($request->ip());
+            return Limit::perMinute(120)->by($request->ip());
+        });
+
+        // API metrics: 30/min per user (admin dashboard auto-refresh)
+        RateLimiter::for('api-metrics', function ($request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

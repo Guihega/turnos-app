@@ -12,6 +12,7 @@ use App\Models\Service;
 use App\Models\Queue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -235,19 +236,74 @@ class DashboardController extends Controller
         return response()->json(['data' => $this->getBranchComparison($request->user()->tenant_id)]);
     }
 
+    /**
+     * Wait-time heatmap — avg wait by day_of_week × hour.
+     */
+    public function heatmap(Request $request, Branch $branch): JsonResponse
+    {
+        $days = $request->integer('days', 30);
+
+        $data = DB::table('tickets')
+            ->where('branch_id', $branch->id)
+            ->where('created_at', '>=', now()->subDays($days))
+            ->whereNotNull('wait_time_seconds')
+            ->selectRaw("
+                EXTRACT(ISODOW FROM created_at)::int as day_of_week,
+                EXTRACT(HOUR FROM created_at)::int as hour,
+                ROUND(AVG(wait_time_seconds))::int as avg_wait,
+                COUNT(*) as ticket_count
+            ")
+            ->groupByRaw('EXTRACT(ISODOW FROM created_at), EXTRACT(HOUR FROM created_at)')
+            ->orderBy('day_of_week')
+            ->orderBy('hour')
+            ->get();
+
+        return response()->json(['data' => $data]);
+    }
+
     private function getTodayStats(string $branchId): array
     {
-        $result = DB::table('tickets')->where('branch_id', $branchId)->whereDate('created_at', today())
-            ->selectRaw("COUNT(*) as total_issued, COUNT(CASE WHEN status = 'waiting' THEN 1 END) as waiting, COUNT(CASE WHEN status = 'called' THEN 1 END) as called, COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed, COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled, COUNT(CASE WHEN status = 'no_show' THEN 1 END) as no_show, COALESCE(ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL)),0)::int as avg_wait, COALESCE(ROUND(AVG(service_time_seconds) FILTER (WHERE service_time_seconds IS NOT NULL)),0)::int as avg_service, COALESCE(MAX(wait_time_seconds),0)::int as max_wait, ROUND(AVG(rating) FILTER (WHERE rating IS NOT NULL), 1) as avg_rating, COUNT(rating) as total_ratings")
-            ->first();
-        return $result ? (array) $result : [];
+        return Cache::remember("metrics:today:{$branchId}:" . today()->toDateString(), 30, function () use ($branchId) {
+            $result = DB::table('tickets')
+                ->where('branch_id', $branchId)
+                ->whereDate('created_at', today())
+                ->selectRaw("
+                    COUNT(*) as total_issued,
+                    COUNT(CASE WHEN status = 'waiting' THEN 1 END) as waiting,
+                    COUNT(CASE WHEN status = 'called' THEN 1 END) as called,
+                    COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+                    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled,
+                    COUNT(CASE WHEN status = 'no_show' THEN 1 END) as no_show,
+                    COALESCE(ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL)),0)::int as avg_wait,
+                    COALESCE(ROUND(AVG(service_time_seconds) FILTER (WHERE service_time_seconds IS NOT NULL)),0)::int as avg_service,
+                    COALESCE(MAX(wait_time_seconds),0)::int as max_wait,
+                    ROUND(AVG(rating) FILTER (WHERE rating IS NOT NULL), 1) as avg_rating,
+                    COUNT(rating) as total_ratings
+                ")
+                ->first();
+            return $result ? (array) $result : [];
+        });
     }
 
     private function getBranchComparison(string $tenantId): array
     {
-        return DB::table('tickets')->join('branches', 'tickets.branch_id', '=', 'branches.id')
-            ->where('branches.tenant_id', $tenantId)->whereDate('tickets.created_at', today())
-            ->selectRaw("branches.id, branches.name, branches.code, COUNT(*) as total, COUNT(CASE WHEN tickets.status = 'completed' THEN 1 END) as completed, COALESCE(ROUND(AVG(tickets.wait_time_seconds) FILTER (WHERE tickets.wait_time_seconds IS NOT NULL)),0)::int as avg_wait, ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as avg_rating")
-            ->groupBy('branches.id', 'branches.name', 'branches.code')->orderByDesc('total')->get()->toArray();
+        return Cache::remember("metrics:branches:{$tenantId}:" . today()->toDateString(), 30, function () use ($tenantId) {
+            return DB::table('tickets')
+                ->join('branches', 'tickets.branch_id', '=', 'branches.id')
+                ->where('branches.tenant_id', $tenantId)
+                ->whereDate('tickets.created_at', today())
+                ->selectRaw("
+                    branches.id, branches.name, branches.code,
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN tickets.status = 'completed' THEN 1 END) as completed,
+                    COALESCE(ROUND(AVG(tickets.wait_time_seconds) FILTER (WHERE tickets.wait_time_seconds IS NOT NULL)),0)::int as avg_wait,
+                    ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as avg_rating
+                ")
+                ->groupBy('branches.id', 'branches.name', 'branches.code')
+                ->orderByDesc('total')
+                ->get()
+                ->toArray();
+        });
     }
 }

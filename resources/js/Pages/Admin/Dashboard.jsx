@@ -9,6 +9,9 @@ const adminSections = [
     { route: 'admin.colas.index', label: 'Colas', icon: '▦', color: '#FFB020', gradient: 'linear-gradient(135deg, #FFB02015, #FFB02005)', countKey: null, desc: 'Filas y prioridades' },
     { route: 'admin.ventanillas.index', label: 'Ventanillas', icon: '▣', color: '#9D5CFF', gradient: 'linear-gradient(135deg, #9D5CFF15, #9D5CFF05)', countKey: null, desc: 'Puntos de atención' },
     { route: 'admin.usuarios.index', label: 'Usuarios', icon: '◉', color: '#00D4FF', gradient: 'linear-gradient(135deg, #00D4FF15, #00D4FF05)', countKey: 'operators', desc: 'Operadores y permisos' },
+    { route: 'admin.qr.index', label: 'Códigos QR', icon: '⬢', color: '#EC4899', gradient: 'linear-gradient(135deg, #EC489915, #EC489905)', countKey: null, desc: 'QR para kioscos móviles' },
+    { route: 'admin.analytics', label: 'Analytics', icon: '◧', color: '#6366F1', gradient: 'linear-gradient(135deg, #6366F115, #6366F105)', countKey: null, desc: 'Métricas y tendencias' },
+    { route: 'admin.settings.edit', label: 'Personalización', icon: '⚙', color: '#8B95AD', gradient: 'linear-gradient(135deg, #8B95AD15, #8B95AD05)', countKey: null, desc: 'Marca y configuración' },
 ];
 
 export default function AdminDashboard({ branches = [], currentBranchId, todayStats = {}, operators = [], services = [], branchStats = [] }) {
@@ -25,10 +28,10 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
     return (
         <AuthenticatedLayout>
             <Head title="Admin - Olinora" />
-            <div style={{ background: T.bg, minHeight: '100vh', padding: '24px 28px', fontFamily: T.font, color: T.text }}>
+            <div className="t-admin-wrapper" style={{ background: T.bg, minHeight: '100vh', padding: '24px 28px', fontFamily: T.font, color: T.text }}>
 
                 {/* ── Header ── */}
-                <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+                <div className="t-fade-up t-admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.03em', margin: 0 }}>Panel de Control</h1>
@@ -91,7 +94,7 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
                 </div>
 
                 {/* ── KPIs compact ── */}
-                <div className="t-fade-up t-stagger-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+                <div className="t-fade-up t-stagger-2 t-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
                     {[
                         { l: 'Emitidos', v: s.total_issued || 0, c: T.blue },
                         { l: 'Completados', v: s.completed || 0, c: T.green },
@@ -105,7 +108,7 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
                     ))}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }} className="t-grid-responsive">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }} className="t-kpi-grid-3">
                     {[
                         { l: 'Cancelados', v: s.cancelled || 0, c: T.red },
                         { l: 'Espera Prom.', v: fmtMinutes(s.avg_wait), c: T.text },
@@ -178,6 +181,20 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
                         </div>
                     </Card>
                 )}
+
+                {/* Responsive styles */}
+                <style>{`
+                    @media (max-width: 768px) {
+                        .t-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                        .t-kpi-grid-3 { grid-template-columns: 1fr !important; }
+                        .t-grid-responsive { grid-template-columns: 1fr !important; }
+                    }
+                    @media (max-width: 480px) {
+                        .t-admin-wrapper { padding: 16px 14px !important; }
+                        .t-admin-header { flex-direction: column; align-items: flex-start !important; }
+                        .t-admin-header select { width: 100%; }
+                    }
+                `}</style>
             </div>
         </AuthenticatedLayout>
     );
