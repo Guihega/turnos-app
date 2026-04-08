@@ -2,6 +2,7 @@
 import { useForm, Head } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { T } from '@/Components/TurnosUI';
+import useTenantBranding from '@/Hooks/useTenantBranding';
 
 function QRDisplay({ url, size = 160 }) {
     const [qrUrl, setQrUrl] = useState('');
@@ -25,6 +26,7 @@ function QRDisplay({ url, size = 160 }) {
 }
 
 export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }) {
+    const { branding, kiosk, tickets, logoUrl, tenantName, cssVars } = useTenantBranding();
     const [step, setStep] = useState('select');
     const [selected, setSelected] = useState(null);
     const [hovered, setHovered] = useState(null);
@@ -32,14 +34,25 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
     const { data, setData, post, processing, errors } = useForm({ service_id: '', queue_id: '', customer_name: '', customer_phone: '' });
     const kioskUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+    // Tenant branding colors (fallback to theme defaults)
+    const primaryColor = branding.primary_color || T.blue;
+    const secondaryColor = branding.secondary_color || T.purple;
+    const welcomeText = kiosk.welcome_text || 'Toma tu turno';
+    const showPriority = kiosk.show_priority_option ?? false;
+    const showEstimatedWait = kiosk.show_estimated_wait ?? true;
+
     const selectService = (svc) => { setSelected(svc); setData({ ...data, service_id: svc.id, queue_id: svc.queue_id }); setStep('confirm'); };
     const submit = () => post(route('kiosk.store', branch.id));
 
     if (!branch.is_open || !branch.accepts_walkins) {
         return (<>
             <Head title={`Kiosco — ${branch.name}`} />
-            <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: 40 }}>
-                <div style={{ fontSize: 56, marginBottom: 20, opacity: 0.4 }}>⬡</div>
+            <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: 40, ...cssVars }}>
+                {logoUrl ? (
+                    <img src={logoUrl} alt={tenantName} style={{ width: 56, height: 56, borderRadius: branding.logo_shape === 'circle' ? '50%' : branding.logo_shape === 'rounded' ? 14 : 4, objectFit: 'cover', marginBottom: 20 }} />
+                ) : (
+                    <div style={{ fontSize: 56, marginBottom: 20, opacity: 0.4 }}>⬡</div>
+                )}
                 <h1 style={{ fontSize: 24, fontWeight: 800 }}>{branch.name}</h1>
                 <p style={{ fontSize: 15, color: T.textMuted, marginTop: 8 }}>La sucursal no está disponible</p>
             </div>
@@ -48,14 +61,24 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
 
     return (<>
         <Head title={`Kiosco — ${branch.name}`} />
-        <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', display: 'flex', flexDirection: 'column', ...cssVars }}>
             {/* Header */}
             <div style={{ padding: '16px 24px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>O</div>
+                    {logoUrl ? (
+                        <img src={logoUrl} alt={tenantName} style={{
+                            width: 40, height: 40,
+                            borderRadius: branding.logo_shape === 'circle' ? '50%' : branding.logo_shape === 'rounded' ? 12 : 4,
+                            objectFit: 'cover',
+                        }} />
+                    ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, color: '#fff' }}>
+                            {(tenantName || 'O')[0]}
+                        </div>
+                    )}
                     <div>
                         <div style={{ fontSize: 16, fontWeight: 800 }}>{branch.name}</div>
-                        <div style={{ fontSize: 11, color: T.textMuted }}>Toma tu turno</div>
+                        <div style={{ fontSize: 11, color: T.textMuted }}>{welcomeText}</div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
@@ -63,14 +86,16 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                         <div style={{ fontSize: 20, fontWeight: 900, color: T.amber, fontFamily: T.mono }}>{waitingCount}</div>
                         <div style={{ fontSize: 8, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>en espera</div>
                     </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 20, fontWeight: 900, fontFamily: T.mono }}>~{avgWaitMinutes}</div>
-                        <div style={{ fontSize: 8, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>min. aprox.</div>
-                    </div>
+                    {showEstimatedWait && (
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 20, fontWeight: 900, fontFamily: T.mono }}>~{avgWaitMinutes}</div>
+                            <div style={{ fontSize: 8, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>min. aprox.</div>
+                        </div>
+                    )}
                     <button onClick={() => setShowQR(!showQR)} style={{
-                        background: showQR ? `color-mix(in srgb, ${T.blue} 15%, transparent)` : 'transparent',
+                        background: showQR ? `color-mix(in srgb, ${primaryColor} 15%, transparent)` : 'transparent',
                         border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                        color: showQR ? T.blue : T.textMuted, fontSize: 11, fontFamily: T.font, fontWeight: 600, transition: 'all 0.2s',
+                        color: showQR ? primaryColor : T.textMuted, fontSize: 11, fontFamily: T.font, fontWeight: 600, transition: 'all 0.2s',
                     }}>
                         ⬡ QR
                     </button>
@@ -113,7 +138,9 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
                                     <div style={{ fontSize: 28, marginBottom: 14, opacity: hovered === svc.id ? 1 : 0.6, transition: 'opacity 0.3s' }}>⬡</div>
                                     <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{svc.name}</div>
                                     {svc.description && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 10, lineHeight: 1.4 }}>{svc.description}</div>}
-                                    <div style={{ fontSize: 11, color: T.textMuted, fontFamily: T.mono }}>⏱ ~{svc.estimated_minutes}min · Cola: {svc.queue_prefix}</div>
+                                    <div style={{ fontSize: 11, color: T.textMuted, fontFamily: T.mono }}>
+                                        {showEstimatedWait && <>⏱ ~{svc.estimated_minutes}min · </>}Cola: {svc.queue_prefix}
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -122,11 +149,14 @@ export default function Kiosk({ branch, services, waitingCount, avgWaitMinutes }
 
                 {step === 'confirm' && selected && (
                     <div className="t-fade-up" style={{ maxWidth: 460, margin: '0 auto' }}>
-                        <button onClick={() => setStep('select')} style={{ background: 'none', border: 'none', color: T.blue, cursor: 'pointer', fontSize: 13, marginBottom: 24, fontFamily: T.font, fontWeight: 600 }}>← Volver</button>
+                        <button onClick={() => setStep('select')} style={{ background: 'none', border: 'none', color: primaryColor, cursor: 'pointer', fontSize: 13, marginBottom: 24, fontFamily: T.font, fontWeight: 600 }}>← Volver</button>
                         <div style={{ background: T.card, borderRadius: T.radius, padding: 28, border: `1px solid ${T.border}`, borderTop: `3px solid ${selected.color}`, marginBottom: 20 }}>
                             <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Servicio seleccionado</div>
                             <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 4 }}>{selected.name}</div>
-                            <div style={{ fontSize: 12, color: T.textMuted, fontFamily: T.mono }}>Cola: {selected.queue_name} · ~{selected.estimated_minutes}min</div>
+                            <div style={{ fontSize: 12, color: T.textMuted, fontFamily: T.mono }}>
+                                Cola: {selected.queue_name}
+                                {showEstimatedWait && <> · ~{selected.estimated_minutes}min</>}
+                            </div>
                         </div>
                         <div style={{ background: T.card, borderRadius: T.radius, padding: 28, border: `1px solid ${T.border}`, marginBottom: 20 }}>
                             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Datos opcionales</div>

@@ -12,6 +12,7 @@ use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\TicketActionController;
+use App\Http\Controllers\TenantSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -94,6 +95,15 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
 
         Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reportes/exportar', [ReportController::class, 'export'])->name('reports.export');
+
+        // ── Personalización del Tenant (White-Label) ──
+        Route::get('/personalizacion', [TenantSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/personalizacion/marca', [TenantSettingsController::class, 'updateBranding'])->name('settings.branding');
+        Route::put('/personalizacion/pantalla', [TenantSettingsController::class, 'updateDisplay'])->name('settings.display');
+        Route::put('/personalizacion/kiosco', [TenantSettingsController::class, 'updateKiosk'])->name('settings.kiosk');
+        Route::put('/personalizacion/turnos', [TenantSettingsController::class, 'updateTickets'])->name('settings.tickets');
+        Route::post('/personalizacion/logo', [TenantSettingsController::class, 'uploadLogo'])->name('settings.logo.upload');
+        Route::delete('/personalizacion/logo', [TenantSettingsController::class, 'removeLogo'])->name('settings.logo.remove');
 
         // Métricas API (JSON)
         Route::prefix('api')->name('api.')->group(function () {

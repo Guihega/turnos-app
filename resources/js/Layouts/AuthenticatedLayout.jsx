@@ -5,6 +5,8 @@ import ThemeSwitcher from '@/Theme/ThemeSwitcher';
 // Use CSS variables — these resolve to whatever the current theme sets
 const V = (name) => `var(${name})`;
 
+const isAdminRole = (role) => ['admin', 'tenant_admin', 'super_admin'].includes(role);
+
 export default function AuthenticatedLayout({ children }) {
     const user = usePage().props.auth.user;
     const [open, setOpen] = useState(false);
@@ -20,7 +22,8 @@ export default function AuthenticatedLayout({ children }) {
     ];
 
     const isActive = (name) => {
-        if (name === 'admin.dashboard') return currentRoute?.startsWith('admin.');
+        if (name === 'admin.dashboard') return currentRoute?.startsWith('admin.') && !currentRoute?.startsWith('admin.settings');
+        if (name === 'admin.settings.edit') return currentRoute?.startsWith('admin.settings');
         return currentRoute === name;
     };
 
@@ -98,6 +101,13 @@ export default function AuthenticatedLayout({ children }) {
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                             Perfil
                                         </Link>
+                                        {isAdminRole(user.role) && (
+                                            <Link href={route('admin.settings.edit')} style={{ display: 'block', padding: '10px 16px', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', transition: 'background 0.15s' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = V('--t-surface')}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                ⚙ Personalización
+                                            </Link>
+                                        )}
                                         <Link href={route('logout')} method="post" as="button" style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 13, color: V('--t-red'), background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", transition: 'background 0.15s' }}
                                             onMouseEnter={e => e.currentTarget.style.background = `color-mix(in srgb, ${V('--t-red')} 6%, transparent)`}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -147,6 +157,11 @@ export default function AuthenticatedLayout({ children }) {
                             <div style={{ fontSize: 14, fontWeight: 600, color: V('--t-text') }}>{user.name}</div>
                             <div style={{ fontSize: 12, color: V('--t-text-muted'), marginBottom: 10 }}>{user.email}</div>
                             <Link href={route('profile.edit')} onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', padding: '6px 0' }}>Perfil</Link>
+                            {isAdminRole(user.role) && (
+                                <Link href={route('admin.settings.edit')} onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', padding: '6px 0' }}>
+                                    ⚙ Personalización
+                                </Link>
+                            )}
                             <Link href={route('logout')} method="post" as="button" onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-red'), background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", padding: '6px 0', marginTop: 4 }}>Cerrar sesión</Link>
                         </div>
                     </div>

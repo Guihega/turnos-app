@@ -48,6 +48,7 @@ class KioskController extends Controller
             'services' => $services,
             'waitingCount' => $waitingCount,
             'avgWaitMinutes' => (int) round($avgWait / 60),
+            'branding' => $branch->tenant->getBrandingForFrontend(),
         ]);
     }
 
@@ -119,6 +120,7 @@ class KioskController extends Controller
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'new_ticket' => $newTicket,
             ],
+            'branding' => $branch->tenant->getBrandingForFrontend(),
         ]);
     }
 }

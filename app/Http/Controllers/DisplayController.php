@@ -35,6 +35,7 @@ class DisplayController extends Controller
                     'code' => $branches->first()->code,
                 ],
                 'initialData' => $this->getDisplayData($branches->first()),
+                'branding' => $user->tenant->getBrandingForFrontend(),
             ]);
         }
 
@@ -61,6 +62,7 @@ class DisplayController extends Controller
         return Inertia::render('Display/Screen', [
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
+            'branding' => $user->tenant->getBrandingForFrontend(),
         ]);
     }
 
@@ -70,6 +72,7 @@ class DisplayController extends Controller
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
             'isPublic' => true,
+            'branding' => $branch->tenant->getBrandingForFrontend(),
         ]);
     }
 
@@ -98,7 +101,7 @@ class DisplayController extends Controller
             ->where('status', 'completed')
             ->whereDate('created_at', today())
             ->orderByDesc('completed_at')
-            ->limit(5)
+            ->limit(10) // Fetch more than default; frontend slices to show_recent_count
             ->get()
             ->map(fn($t) => [
                 'display_number' => $t->display_number,

@@ -2,14 +2,43 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { T } from '@/Components/TurnosUI';
-import { useBranchChannel } from '@/hooks/useBranchChannel';
+import { useBranchChannel } from '@/Hooks/useBranchChannel';
+import useTenantBranding from '@/Hooks/useTenantBranding';
 
 export default function DisplayScreen({ branch, initialData, isPublic = false }) {
+    const { branding, display, tickets, logoUrl, tenantName, cssVars } = useTenantBranding();
     const [data, setData] = useState(initialData || { serving: [], recent: [], waitingCount: 0, avgWaitMinutes: 0 });
     const [clock, setClock] = useState(new Date());
     const [flash, setFlash] = useState(null);
     const [wsConnected, setWsConnected] = useState(false);
     const lastEventRef = useRef(Date.now());
+
+    // Tenant display settings
+    const primaryColor = branding.primary_color || T.blue;
+    const secondaryColor = branding.secondary_color || T.purple;
+    const showQueueName = display.show_queue_name ?? true;
+    const showServiceName = display.show_service_name ?? true;
+    const showWaitTime = display.show_wait_time ?? true;
+    const recentCount = display.show_recent_count || 5;
+    const announcementText = display.announcement_text || null;
+    const callSound = display.call_sound || 'chime';
+
+    // Sound map for ticket calls
+    const soundMap = {
+        chime: '/sounds/chime.mp3',
+        bell: '/sounds/bell.mp3',
+        ding: '/sounds/ding.mp3',
+        none: null,
+    };
+
+    const playCallSound = useCallback(() => {
+        const src = soundMap[callSound];
+        if (!src) return;
+        try {
+            const audio = new Audio(src);
+            audio.play().catch(() => {});
+        } catch {}
+    }, [callSound]);
 
     // Clock
     useEffect(() => {
@@ -41,8 +70,8 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
             lastEventRef.current = Date.now();
             setWsConnected(true);
             setFlash(true);
+            playCallSound();
             setTimeout(() => setFlash(false), 2000);
-            // Reload full data to get consistent state
             reloadData();
         },
         'TicketCompleted': (eventData) => {
@@ -72,20 +101,30 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
     }, [wsConnected, reloadData]);
 
     const serving = data.serving || [];
-    const recent = data.recent || [];
+    const recent = (data.recent || []).slice(0, recentCount);
     const now = serving.filter(t => t.status === 'called' || t.status === 'in_progress');
 
     return (<>
         <Head title={`Pantalla — ${branch.name}`} />
-        <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', padding: 0, overflow: 'hidden' }}>
+        <div style={{ fontFamily: T.font, background: T.bg, color: T.text, minHeight: '100vh', padding: 0, overflow: 'hidden', ...cssVars }}>
 
             {/* Header */}
             <div style={{ padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, color: '#fff' }}>O</div>
+                    {logoUrl ? (
+                        <img src={logoUrl} alt={tenantName} style={{
+                            width: 44, height: 44,
+                            borderRadius: branding.logo_shape === 'circle' ? '50%' : branding.logo_shape === 'rounded' ? 12 : 4,
+                            objectFit: 'cover',
+                        }} />
+                    ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, color: '#fff' }}>
+                            {(tenantName || 'O')[0]}
+                        </div>
+                    )}
                     <div>
                         <div style={{ fontSize: 20, fontWeight: 800 }}>{branch.name}</div>
-                        <div style={{ fontSize: 12, color: T.textMuted }}>Sistema de Turnos</div>
+                        <div style={{ fontSize: 12, color: T.textMuted }}>{tenantName}</div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
@@ -110,7 +149,21 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 0, minHeight: 'calc(100vh - 100px)' }}>
+            {/* Announcement banner */}
+            {announcementText && (
+                <div style={{
+                    padding: '10px 32px',
+                    background: `color-mix(in srgb, ${primaryColor} 8%, transparent)`,
+                    borderBottom: `1px solid color-mix(in srgb, ${primaryColor} 20%, transparent)`,
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    animation: 'tFadeUp 0.3s ease',
+                }}>
+                    <span style={{ fontSize: 14 }}>📢</span>
+                    <span style={{ fontSize: 13, color: primaryColor, fontWeight: 600 }}>{announcementText}</span>
+                </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 0, minHeight: announcementText ? 'calc(100vh - 145px)' : 'calc(100vh - 100px)' }}>
                 {/* Left: Now serving */}
                 <div style={{ padding: '28px 32px' }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 20 }}>
@@ -135,7 +188,7 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                                         <div style={{ fontSize: 56, fontWeight: 900, fontFamily: T.mono, letterSpacing: '-0.03em', lineHeight: 1, color: T.text }}>
                                             {ticket.display_number}
                                         </div>
-                                        {ticket.service_name && (
+                                        {showServiceName && ticket.service_name && (
                                             <div style={{ fontSize: 14, color: T.textMuted, marginTop: 8 }}>{ticket.service_name}</div>
                                         )}
                                     </div>
@@ -153,15 +206,17 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
 
                 {/* Right: Stats + recent */}
                 <div style={{ borderLeft: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${T.border}` }}>
-                        <div style={{ padding: '24px 20px', textAlign: 'center', borderRight: `1px solid ${T.border}` }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: showWaitTime ? '1fr 1fr' : '1fr', borderBottom: `1px solid ${T.border}` }}>
+                        <div style={{ padding: '24px 20px', textAlign: 'center', borderRight: showWaitTime ? `1px solid ${T.border}` : 'none' }}>
                             <div style={{ fontSize: 42, fontWeight: 900, color: T.amber, fontFamily: T.mono }}>{data.waitingCount}</div>
                             <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>En espera</div>
                         </div>
-                        <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-                            <div style={{ fontSize: 42, fontWeight: 900, fontFamily: T.mono }}>~{data.avgWaitMinutes}</div>
-                            <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Min. espera</div>
-                        </div>
+                        {showWaitTime && (
+                            <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+                                <div style={{ fontSize: 42, fontWeight: 900, fontFamily: T.mono }}>~{data.avgWaitMinutes}</div>
+                                <div style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Min. espera</div>
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ flex: 1, padding: '20px' }}>
@@ -172,7 +227,7 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
                             recent.map((t, i) => (
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < recent.length - 1 ? `1px solid ${T.border}` : 'none' }}>
                                     <span style={{ fontSize: 16, fontWeight: 700, fontFamily: T.mono, color: T.textMuted }}>{t.display_number}</span>
-                                    <span style={{ fontSize: 13, color: T.textMuted }}>V{t.counter_number || '—'}</span>
+                                    {showQueueName && <span style={{ fontSize: 13, color: T.textMuted }}>V{t.counter_number || '—'}</span>}
                                 </div>
                             ))
                         )}
@@ -182,6 +237,7 @@ export default function DisplayScreen({ branch, initialData, isPublic = false })
 
             <style>{`
                 @keyframes screenPulse { 0%{box-shadow:0 0 0 0 rgba(0,214,143,0.4)} 50%{box-shadow:0 0 40px 8px rgba(0,214,143,0.1)} 100%{box-shadow:0 0 0 0 rgba(0,214,143,0)} }
+                @keyframes tFadeUp { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
                 * { margin:0; padding:0; box-sizing:border-box; }
             `}</style>
         </div>

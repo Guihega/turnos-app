@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTenantSettings;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use HasFactory, HasUlids, SoftDeletes;
+    use HasFactory, HasUlids, HasTenantSettings, SoftDeletes;
 
     protected $fillable = [
         'name', 'slug', 'legal_name', 'tax_id', 'email', 'phone',
@@ -64,10 +65,5 @@ class Tenant extends Model
     public function isOnTrial(): bool
     {
         return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
-    }
-
-    public function setting(string $key, mixed $default = null): mixed
-    {
-        return data_get($this->settings, $key, $default);
     }
 }
