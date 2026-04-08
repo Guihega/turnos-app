@@ -5,7 +5,7 @@ import { T } from '@/Components/TurnosUI';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '', password: '', remember: false,
+        email: 'admin@empresa.com', password: 'Olinora2026!', remember: false,
     });
     const [focused, setFocused] = useState(null);
 
