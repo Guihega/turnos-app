@@ -78,9 +78,9 @@ class HealthCheck extends Command
         try {
             $result = DB::selectOne('SELECT 1 as ok, version() as version');
             $version = explode(' ', $result->version)[1] ?? 'unknown';
-            $this->pass($name, "Connected (v{$version})");
+            $this->checkPassed($name, "Connected (v{$version})");
         } catch (\Throwable $e) {
-            $this->fail($name, "Connection failed: {$e->getMessage()}");
+            $this->checkFailed($name, "Connection failed: {$e->getMessage()}");
         }
     }
 
@@ -91,9 +91,9 @@ class HealthCheck extends Command
             $pong = Redis::ping();
             $info = Redis::info('memory');
             $usedMb = round(($info['used_memory'] ?? 0) / 1024 / 1024, 1);
-            $this->pass($name, "Connected — {$usedMb}MB used");
+            $this->checkPassed($name, "Connected — {$usedMb}MB used");
         } catch (\Throwable $e) {
-            $this->fail($name, "Connection failed: {$e->getMessage()}");
+            $this->checkFailed($name, "Connection failed: {$e->getMessage()}");
         }
     }
 
@@ -107,12 +107,12 @@ class HealthCheck extends Command
             $socket = @fsockopen($host, (int) $port, $errno, $errstr, 3);
             if ($socket) {
                 fclose($socket);
-                $this->pass($name, "Listening on {$host}:{$port}");
+                $this->checkPassed($name, "Listening on {$host}:{$port}");
             } else {
-                $this->fail($name, "Not reachable at {$host}:{$port} — {$errstr}");
+                $this->checkFailed($name, "Not reachable at {$host}:{$port} — {$errstr}");
             }
         } catch (\Throwable $e) {
-            $this->fail($name, "Check failed: {$e->getMessage()}");
+            $this->checkFailed($name, "Check failed: {$e->getMessage()}");
         }
     }
 
@@ -127,14 +127,14 @@ class HealthCheck extends Command
             $freeGb = round($free / 1024 / 1024 / 1024, 2);
 
             if ($usedPct > 90) {
-                $this->fail($name, "CRITICAL — {$usedPct}% used, {$freeGb}GB free");
+                $this->checkFailed($name, "CRITICAL — {$usedPct}% used, {$freeGb}GB free");
             } elseif ($usedPct > 80) {
-                $this->warn($name, "WARNING — {$usedPct}% used, {$freeGb}GB free");
+                $this->checkWarning($name, "WARNING — {$usedPct}% used, {$freeGb}GB free");
             } else {
-                $this->pass($name, "{$usedPct}% used, {$freeGb}GB free");
+                $this->checkPassed($name, "{$usedPct}% used, {$freeGb}GB free");
             }
         } catch (\Throwable $e) {
-            $this->fail($name, "Check failed: {$e->getMessage()}");
+            $this->checkFailed($name, "Check failed: {$e->getMessage()}");
         }
     }
 
@@ -148,14 +148,14 @@ class HealthCheck extends Command
                 ->count();
 
             if ($recentFailed > 10) {
-                $this->fail($name, "CRITICAL — {$recentFailed} failures in the last hour ({$failedCount} total)");
+                $this->checkFailed($name, "CRITICAL — {$recentFailed} failures in the last hour ({$failedCount} total)");
             } elseif ($recentFailed > 0) {
-                $this->warn($name, "{$recentFailed} failures in the last hour ({$failedCount} total)");
+                $this->checkWarning($name, "{$recentFailed} failures in the last hour ({$failedCount} total)");
             } else {
-                $this->pass($name, "Healthy — {$failedCount} total failed jobs");
+                $this->checkPassed($name, "Healthy — {$failedCount} total failed jobs");
             }
         } catch (\Throwable $e) {
-            $this->fail($name, "Check failed: {$e->getMessage()}");
+            $this->checkFailed($name, "Check failed: {$e->getMessage()}");
         }
     }
 
@@ -169,31 +169,31 @@ class HealthCheck extends Command
             unlink($testFile);
 
             if ($content === 'ok') {
-                $this->pass($name, 'Read/write OK');
+                $this->checkPassed($name, 'Read/write OK');
             } else {
-                $this->fail($name, 'Write succeeded but read failed');
+                $this->checkFailed($name, 'Write succeeded but read failed');
             }
         } catch (\Throwable $e) {
-            $this->fail($name, "Not writable: {$e->getMessage()}");
+            $this->checkFailed($name, "Not writable: {$e->getMessage()}");
         }
     }
 
     // ── Output helpers ──
 
-    private function pass(string $name, string $detail): void
+    private function checkPassed(string $name, string $detail): void
     {
         $this->results[] = ['name' => $name, 'status' => true, 'detail' => $detail, 'level' => 'ok'];
         $this->info("  ✓ {$name}: {$detail}");
     }
 
-    private function warn(string $name, string $detail): void
+    private function checkWarning(string $name, string $detail): void
     {
         $this->results[] = ['name' => $name, 'status' => false, 'detail' => $detail, 'level' => 'warning'];
         $this->hasFailures = true;
-        $this->warn("  ⚠ {$name}: {$detail}");
+        $this->checkWarning("  ⚠ {$name}: {$detail}");
     }
 
-    private function fail(string $name, string $detail): void
+    private function checkFailed(string $name, string $detail): void
     {
         $this->results[] = ['name' => $name, 'status' => false, 'detail' => $detail, 'level' => 'critical'];
         $this->hasFailures = true;
