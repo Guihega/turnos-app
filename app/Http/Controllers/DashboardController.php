@@ -161,6 +161,34 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * QR Codes page — Generate printable QR posters for each branch.
+     */
+    public function qrCodes(Request $request): Response
+    {
+        $user = $request->user();
+        $tenant = $user->tenant;
+        $branches = Branch::where('tenant_id', $user->tenant_id)
+            ->where('is_active', true)
+            ->get()
+            ->map(fn($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'slug' => $b->slug,
+                'code' => $b->code,
+                'address' => $b->address,
+            ]);
+
+        return Inertia::render('Admin/QRCodes', [
+            'branches' => $branches,
+            'tenant' => [
+                'name' => $tenant->name,
+                'logo_url' => $tenant->logo_url ? asset('storage/' . $tenant->logo_url) : null,
+            ],
+            'baseUrl' => config('app.url'),
+        ]);
+    }
+
     public function realtime(Request $request, Branch $branch): JsonResponse
     {
         return response()->json($this->getTodayStats($branch->id));

@@ -44,6 +44,11 @@ Route::get('/pantalla-publica/{branch}', [DisplayController::class, 'public'])
     ->middleware('throttle:display-public')
     ->name('display.public');
 
+// Ruta corta para QR → redirige al kiosco (ej: olinora.com.mx/t/sede-centro)
+Route::get('/t/{branch:slug}', function (App\Models\Branch $branch) {
+    return redirect()->route('kiosk.public', $branch);
+})->middleware('throttle:kiosk-view')->name('kiosk.shorturl');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes (tenant-scoped)
@@ -98,6 +103,9 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
 
         // ── Analytics Dashboard ──
         Route::get('/analytics', [DashboardController::class, 'analytics'])->name('analytics');
+
+        // ── QR Codes para sucursales ──
+        Route::get('/codigos-qr', [DashboardController::class, 'qrCodes'])->name('qr.index');
 
         // ── Personalización del Tenant (White-Label) ──
         Route::get('/personalizacion', [TenantSettingsController::class, 'edit'])->name('settings.edit');
