@@ -104,6 +104,27 @@ class TenantSettingsController extends Controller
     }
 
     /**
+     * Update security / rate-limiting settings.
+     */
+    public function updateSecurity(Request $request)
+    {
+        $tenant = $request->user()->tenant;
+
+        $validated = $request->validate([
+            'max_tickets_per_hour'      => ['required', 'integer', 'min:10', 'max:500'],
+            'max_tickets_per_ip_minute' => ['required', 'integer', 'min:1', 'max:30'],
+            'max_concurrent_waiting'    => ['required', 'integer', 'min:5', 'max:200'],
+            'max_daily_tickets'         => ['required', 'integer', 'min:50', 'max:5000'],
+            'bot_protection'            => ['required', 'boolean'],
+            'require_customer_name'     => ['required', 'boolean'],
+        ]);
+
+        $tenant->updateSettingsSection('security', $validated);
+
+        return back()->with('success', 'Configuración de seguridad actualizada.');
+    }
+
+    /**
      * Upload tenant logo.
      */
     public function uploadLogo(Request $request)
@@ -114,7 +135,6 @@ class TenantSettingsController extends Controller
             'logo' => ['required', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
         ]);
 
-        // Delete old logo if exists
         if ($tenant->logo_url) {
             Storage::disk('public')->delete($tenant->logo_url);
         }

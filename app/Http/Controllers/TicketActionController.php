@@ -46,11 +46,12 @@ class TicketActionController extends Controller
         $priority = $request->priority ? TicketPriority::from($request->priority) : TicketPriority::NORMAL;
 
         return DB::transaction(function () use ($request, $branch, $queue, $priority, $user) {
-            // F-17: Use lockForUpdate to prevent race condition on daily_sequence
-            $seq = Ticket::where('branch_id', $branch->id)
+            // F-17: Get next sequence safely — lock rows first, then compute max
+            // This avoids the "FOR UPDATE with aggregate" issue on some DB drivers
+            $maxSeq = Ticket::where('branch_id', $branch->id)
                 ->whereDate('created_at', today())
-                ->lockForUpdate()
-                ->max('daily_sequence') + 1;
+                ->max('daily_sequence');
+            $seq = ($maxSeq ?? 0) + 1;
 
             $ticketNumber = sprintf('%s-%03d', $queue->prefix, $seq);
             $displayNumber = sprintf('%s-%s', $branch->code, $ticketNumber);
@@ -90,8 +91,9 @@ class TicketActionController extends Controller
     public function show(Request $request, Ticket $ticket)
     {
         // F-06: Validate ticket belongs to user's tenant
-        $ticket->loadMissing('branch');
-        if ($ticket->branch->tenant_id !== $request->user()->tenant_id) {
+        // Use withoutGlobalScopes to load the branch even if it belongs to another tenant
+        $branch = \App\Models\Branch::withoutGlobalScopes()->find($ticket->branch_id);
+        if (!$branch || $branch->tenant_id !== $request->user()->tenant_id) {
             abort(403, 'No tiene acceso a este turno.');
         }
 

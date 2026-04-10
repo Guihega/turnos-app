@@ -60,29 +60,31 @@ class KioskController extends Controller
      */
     public function store(Request $request, Branch $branch, IssueTicketAction $action)
     {
-        // ── Bot detection: honeypot field ──
-        // The kiosk form includes a hidden field "website" that should be empty.
-        // Bots auto-fill all fields, humans never see it.
-        if ($request->filled('website')) {
-            // Silently reject — don't reveal detection to the bot
-            return back()->withErrors(['branch' => 'No se pudo emitir el turno. Intente de nuevo.']);
-        }
+        // Load tenant security settings
+        $tenant = $branch->tenant;
+        $security = $tenant->getEffectiveSettings()['security'] ?? [];
+        $botProtection = $security['bot_protection'] ?? true;
+        $maxConcurrent = $security['max_concurrent_waiting'] ?? 50;
+        $requireName = $security['require_customer_name'] ?? false;
 
-        // ── Bot detection: timing ──
-        // A human takes at least 2 seconds to select a service and submit.
-        // If _form_loaded timestamp is present and submission is < 2s, likely a bot.
-        if ($request->has('_t')) {
-            $loadedAt = (int) $request->input('_t', 0);
-            $elapsed = time() - $loadedAt;
-            if ($loadedAt > 0 && $elapsed < 2) {
+        // ── Bot detection (configurable per tenant) ──
+        if ($botProtection) {
+            if ($request->filled('website')) {
                 return back()->withErrors(['branch' => 'No se pudo emitir el turno. Intente de nuevo.']);
+            }
+            if ($request->has('_t')) {
+                $loadedAt = (int) $request->input('_t', 0);
+                $elapsed = time() - $loadedAt;
+                if ($loadedAt > 0 && $elapsed < 2) {
+                    return back()->withErrors(['branch' => 'No se pudo emitir el turno. Intente de nuevo.']);
+                }
             }
         }
 
         $request->validate([
             'service_id'     => 'required|exists:services,id',
             'queue_id'       => 'required|exists:queues,id',
-            'customer_name'  => 'nullable|string|max:255',
+            'customer_name'  => [$requireName ? 'required' : 'nullable', 'string', 'max:255'],
             'customer_phone' => 'nullable|string|max:20',
         ]);
 
@@ -106,8 +108,8 @@ class KioskController extends Controller
             return back()->withErrors(['branch' => 'Servicio no disponible en esta cola.']);
         }
 
-        // Max concurrent waiting check
-        if ($branch->activeWaitingCount() >= $branch->max_concurrent_waiting) {
+        // Max concurrent waiting check (tenant-configurable)
+        if ($branch->activeWaitingCount() >= $maxConcurrent) {
             return back()->withErrors(['branch' => 'Demasiados turnos en espera. Intente en unos minutos.']);
         }
 

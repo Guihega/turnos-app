@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Branch;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -26,23 +27,23 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
 
         // ══════════════════════════════════════════════════════════════
-        // Rate Limiters — Defense in Depth against mass ticket generation
+        // Rate Limiters — Tenant-configurable defense layers
+        // Settings are read from tenant.settings.security via cache
+        // Admins can adjust these in /administracion/personalizacion
         // ══════════════════════════════════════════════════════════════
 
-        // ── Layer 1: Per-IP rate limit for kiosk ticket issuance ──
-        // 5/min per IP (reduced from 15 — a real kiosk tablet only needs ~2-3/min)
+        // ── Kiosk ticket issuance: per-IP + per-branch ──
         RateLimiter::for('kiosk-issue', function ($request) {
+            $settings = $this->getBranchSecuritySettings($request->route('branch'));
+            $perIpMin = $settings['max_tickets_per_ip_minute'] ?? 3;
+
             return [
-                // Per IP: 5 tickets per minute
-                Limit::perMinute(5)
+                Limit::perMinute($perIpMin + 2)
                     ->by($request->ip())
                     ->response(function () {
                         return back()->withErrors(['branch' => 'Demasiados turnos emitidos. Espera un momento.']);
                     }),
-
-                // Per IP + Branch: 3 tickets per minute per branch
-                // Prevents one IP from flooding a specific branch
-                Limit::perMinute(3)
+                Limit::perMinute($perIpMin)
                     ->by($request->ip() . '|' . $request->route('branch'))
                     ->response(function () {
                         return back()->withErrors(['branch' => 'Demasiados turnos para esta sucursal. Espera un momento.']);
@@ -50,40 +51,66 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
-        // ── Layer 2: Per-branch global rate limit (all IPs combined) ──
-        // Max 60 tickets/hour per branch — configurable via branch settings
-        // This is the CRITICAL defense: even with rotating IPs, a branch
-        // can't receive more than this limit per hour
+        // ── Branch hourly limit (all IPs combined) ──
         RateLimiter::for('kiosk-branch-hourly', function ($request) {
-            $branchId = $request->route('branch');
-            return Limit::perHour(60)
-                ->by('branch-hourly:' . $branchId)
+            $settings = $this->getBranchSecuritySettings($request->route('branch'));
+            $maxPerHour = $settings['max_tickets_per_hour'] ?? 60;
+
+            return Limit::perHour($maxPerHour)
+                ->by('branch-hourly:' . $request->route('branch'))
                 ->response(function () {
-                    return back()->withErrors(['branch' => 'Se alcanzó el límite de turnos por hora para esta sucursal.']);
+                    return back()->withErrors(['branch' => 'Se alcanzó el límite de turnos por hora. Intente más tarde.']);
                 });
         });
 
-        // Kiosk page views: 30/min per IP (reduced from 60)
+        // ── Kiosk page views ──
         RateLimiter::for('kiosk-view', function ($request) {
             return Limit::perMinute(30)->by($request->ip());
         });
 
-        // Public display: 60/min per IP (TV screens)
+        // ── Public display ──
         RateLimiter::for('display-public', function ($request) {
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // API metrics: 30/min per user
+        // ── API metrics ──
         RateLimiter::for('api-metrics', function ($request) {
             return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
 
-        // API public ticket issuance: stricter than kiosk (3/min per IP)
+        // ── API public ticket issuance ──
         RateLimiter::for('api-public-issue', function ($request) {
+            $settings = $this->getBranchSecuritySettings($request->route('branchId'));
+            $perIpMin = $settings['max_tickets_per_ip_minute'] ?? 3;
+            $maxPerHour = $settings['max_tickets_per_hour'] ?? 60;
+
             return [
-                Limit::perMinute(3)->by($request->ip()),
-                Limit::perHour(60)->by('api-branch-hourly:' . $request->route('branchId')),
+                Limit::perMinute($perIpMin)->by($request->ip()),
+                Limit::perHour($maxPerHour)->by('api-branch-hourly:' . $request->route('branchId')),
             ];
         });
+    }
+
+    /**
+     * Load security settings for a branch's tenant.
+     * Cached 60s to avoid DB hits on every rate-limited request.
+     */
+    private function getBranchSecuritySettings(mixed $branchId): array
+    {
+        if (!$branchId) {
+            return [];
+        }
+
+        return cache()->remember(
+            "security_settings:{$branchId}",
+            60,
+            function () use ($branchId) {
+                $branch = Branch::withoutGlobalScopes()->with('tenant')->find($branchId);
+                if (!$branch || !$branch->tenant) {
+                    return [];
+                }
+                return $branch->tenant->getEffectiveSettings()['security'] ?? [];
+            }
+        );
     }
 }

@@ -115,6 +115,7 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
         Route::put('/personalizacion/pantalla', [TenantSettingsController::class, 'updateDisplay'])->name('settings.display');
         Route::put('/personalizacion/kiosco', [TenantSettingsController::class, 'updateKiosk'])->name('settings.kiosk');
         Route::put('/personalizacion/turnos', [TenantSettingsController::class, 'updateTickets'])->name('settings.tickets');
+        Route::put('/personalizacion/seguridad', [TenantSettingsController::class, 'updateSecurity'])->name('settings.security');
         Route::post('/personalizacion/logo', [TenantSettingsController::class, 'uploadLogo'])->name('settings.logo.upload');
         Route::delete('/personalizacion/logo', [TenantSettingsController::class, 'removeLogo'])->name('settings.logo.remove');
 

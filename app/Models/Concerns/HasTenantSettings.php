@@ -38,6 +38,14 @@ trait HasTenantSettings
                 'auto_close_minutes' => 120,
                 'no_show_minutes'    => 15,
             ],
+            'security' => [
+                'max_tickets_per_hour'      => 60,   // Per branch, all IPs combined
+                'max_tickets_per_ip_minute' => 3,    // Per IP per branch per minute
+                'max_concurrent_waiting'    => 50,    // Max tickets in waiting status
+                'max_daily_tickets'         => 500,   // Per branch per day
+                'bot_protection'            => true,  // Honeypot + timing check
+                'require_customer_name'     => false, // Force name field on kiosk
+            ],
         ];
     }
 
@@ -57,6 +65,7 @@ trait HasTenantSettings
      * Always falls back to default if not set.
      *
      * Usage: $tenant->setting('branding.primary_color')
+     *        $tenant->setting('security.max_tickets_per_hour')
      */
     public function setting(string $key, mixed $default = null): mixed
     {
@@ -66,7 +75,7 @@ trait HasTenantSettings
     }
 
     /**
-     * Update a specific settings section (e.g., 'branding', 'display').
+     * Update a specific settings section (e.g., 'branding', 'security').
      * Merges with existing settings rather than replacing everything.
      */
     public function updateSettingsSection(string $section, array $values): void
