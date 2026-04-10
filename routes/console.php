@@ -4,12 +4,6 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-/*
-|--------------------------------------------------------------------------
-| Console Routes & Scheduled Tasks
-|--------------------------------------------------------------------------
-*/
-
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
@@ -20,6 +14,7 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 
+// ── Ticket Management ──
 Schedule::command('turnos:auto-close')
     ->everyFiveMinutes()
     ->between('06:00', '22:00')
@@ -36,16 +31,31 @@ Schedule::command('turnos:cleanup-tickets --days=90')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cleanup.log'));
 
+// ── Health & Monitoring ──
 Schedule::command('health:check')
     ->everyFiveMinutes()
     ->runInBackground()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/health-check.log'));
 
-// ┌──────────────────────────────────────────────────────────┐
-// │ pilot:reset REMOVED for production (F-16)                │
-// │ Was: Schedule::command('pilot:reset --force')             │
-// │      ->dailyAt('03:30')                                  │
-// │ If needed for testing, run manually:                      │
-// │   php artisan pilot:reset --force                         │
-// └──────────────────────────────────────────────────────────┘
+// System status: full report every 6 hours, alerts-only every hour
+Schedule::command('system:status')
+    ->everySixHours()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/system-status.log'));
+
+Schedule::command('system:status --alert-only')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/system-status.log'));
+
+// ── Weekly Report (Monday 8am) ──
+Schedule::command('report:weekly')
+    ->weeklyOn(1, '08:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/weekly-report.log'));
+
+// ── Log Cleanup (daily at 4am) ──
+Schedule::command('logs:clean --days=7')
+    ->dailyAt('04:00')
+    ->withoutOverlapping();
