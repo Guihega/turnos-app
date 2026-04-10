@@ -21,6 +21,8 @@ const TABS = [
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg> },
     { id: 'tickets', label: 'Turnos', desc: 'Prefijos, numeración y tiempos',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg> },
+    { id: 'security', label: 'Seguridad', desc: 'Límites, protección anti-bots y control de acceso',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg> },
 ];
 
 const SOUNDS = [
@@ -457,6 +459,15 @@ export default function TenantSettings({ tenant, settings: initialSettings, logo
         no_show_minutes: initialSettings.tickets?.no_show_minutes || 15,
     });
 
+    const securityForm = useForm({
+        max_tickets_per_hour: initialSettings.security?.max_tickets_per_hour || 60,
+        max_tickets_per_ip_minute: initialSettings.security?.max_tickets_per_ip_minute || 3,
+        max_concurrent_waiting: initialSettings.security?.max_concurrent_waiting || 50,
+        max_daily_tickets: initialSettings.security?.max_daily_tickets || 500,
+        bot_protection: initialSettings.security?.bot_protection ?? true,
+        require_customer_name: initialSettings.security?.require_customer_name ?? false,
+    });
+
     // Live preview sync
     const sync = (section, form, field, value) => {
         form.setData(field, value);
@@ -467,12 +478,14 @@ export default function TenantSettings({ tenant, settings: initialSettings, logo
     const sd = (f, v) => sync('display', displayForm, f, v);
     const sk = (f, v) => sync('kiosk', kioskForm, f, v);
     const st = (f, v) => sync('tickets', ticketsForm, f, v);
+    const ss = (f, v) => sync('security', securityForm, f, v);
 
     // Submits
     const submitBranding = () => brandingForm.put(route('admin.settings.branding'), { preserveScroll: true });
     const submitDisplay = () => displayForm.put(route('admin.settings.display'), { preserveScroll: true });
     const submitKiosk = () => kioskForm.put(route('admin.settings.kiosk'), { preserveScroll: true });
     const submitTickets = () => ticketsForm.put(route('admin.settings.tickets'), { preserveScroll: true });
+    const submitSecurity = () => securityForm.put(route('admin.settings.security'), { preserveScroll: true });
 
     // Logo
     const handleLogoUpload = (e) => {
@@ -714,6 +727,55 @@ export default function TenantSettings({ tenant, settings: initialSettings, logo
                             </Field>
 
                             <SaveButton processing={ticketsForm.processing} onClick={submitTickets} />
+                        </>)}
+
+                        {/* ═══ SECURITY ═══ */}
+                        {activeTab === 'security' && (<>
+                            <div style={{
+                                padding: '12px 16px', borderRadius: 10, marginBottom: 20,
+                                background: `color-mix(in srgb, ${V('--t-amber')} 8%, transparent)`,
+                                border: `1px solid color-mix(in srgb, ${V('--t-amber')} 20%, transparent)`,
+                            }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: V('--t-amber'), marginBottom: 4 }}>Protección contra abuso</div>
+                                <div style={{ fontSize: 11, color: V('--t-text-muted'), lineHeight: 1.5 }}>
+                                    Estos límites controlan cuántos turnos pueden generarse desde el kiosco y la API pública.
+                                    Ajústalos según el volumen real de tu operación.
+                                </div>
+                            </div>
+
+                            <Field label="Máximo turnos por hora (por sucursal)"
+                                hint="Límite global: aplica a todas las IPs combinadas. Si 100 personas escanean el QR, no se generarán más de este número por hora."
+                                error={securityForm.errors.max_tickets_per_hour}>
+                                <InputNumber value={securityForm.data.max_tickets_per_hour} onChange={v => ss('max_tickets_per_hour', v)} min={10} max={500} />
+                            </Field>
+
+                            <Field label="Máximo turnos por minuto (por IP)"
+                                hint="Cuántos turnos puede generar una misma IP por minuto para cada sucursal"
+                                error={securityForm.errors.max_tickets_per_ip_minute}>
+                                <InputNumber value={securityForm.data.max_tickets_per_ip_minute} onChange={v => ss('max_tickets_per_ip_minute', v)} min={1} max={30} />
+                            </Field>
+
+                            <Field label="Máximo turnos en espera simultánea"
+                                hint="Si se alcanza este número, el kiosco dejará de emitir turnos hasta que se atiendan los actuales"
+                                error={securityForm.errors.max_concurrent_waiting}>
+                                <InputNumber value={securityForm.data.max_concurrent_waiting} onChange={v => ss('max_concurrent_waiting', v)} min={5} max={200} />
+                            </Field>
+
+                            <Field label="Límite diario de turnos (por sucursal)"
+                                hint="Máximo absoluto de turnos que puede emitir una sucursal en un día"
+                                error={securityForm.errors.max_daily_tickets}>
+                                <InputNumber value={securityForm.data.max_daily_tickets} onChange={v => ss('max_daily_tickets', v)} min={50} max={5000} />
+                            </Field>
+
+                            <Divider />
+
+                            <Toggle label="Protección anti-bots" hint="Detecta y rechaza solicitudes automatizadas (honeypot + validación de tiempo)"
+                                value={securityForm.data.bot_protection} onChange={v => ss('bot_protection', v)} />
+
+                            <Toggle label="Nombre obligatorio en kiosco" hint="Los clientes deben ingresar su nombre para tomar turno"
+                                value={securityForm.data.require_customer_name} onChange={v => ss('require_customer_name', v)} />
+
+                            <SaveButton processing={securityForm.processing} onClick={submitSecurity} />
                         </>)}
                     </div>
 
