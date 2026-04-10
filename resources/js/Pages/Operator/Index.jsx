@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, Btn, StatusBadge, Stat, Select, FlashMessages, LiveDot, Badge, useAutoRefresh, fmtSeconds, fmtMinutes, T } from '@/Components/TurnosUI';
+import { useBranchChannel } from '@/Hooks/useBranchChannel';
 
 export default function OperatorIndex({ branches, currentBranch, counter, availableCounters, currentTicket, waitingTickets, queues, allQueues, myStats, error }) {
     const { flash } = usePage().props;
@@ -15,8 +16,30 @@ export default function OperatorIndex({ branches, currentBranch, counter, availa
     const [rating, setRating] = useState(0);
     const [notes, setNotes] = useState('');
     const [elapsed, setElapsed] = useState(0);
+    const [wsConnected, setWsConnected] = useState(false);
 
-    useAutoRefresh(5000);
+    // WebSocket: real-time updates when tickets change in this branch
+    useBranchChannel(currentBranch?.id, 'branch', {
+        'TicketIssued': () => {
+            setWsConnected(true);
+            router.reload({ only: ['waitingTickets', 'queues'], preserveScroll: true });
+        },
+        'TicketCalled': () => {
+            setWsConnected(true);
+            router.reload({ only: ['waitingTickets', 'queues', 'currentTicket'], preserveScroll: true });
+        },
+        'TicketCompleted': () => {
+            setWsConnected(true);
+            router.reload({ only: ['waitingTickets', 'queues', 'currentTicket', 'myStats'], preserveScroll: true });
+        },
+        'TicketTransferred': () => {
+            setWsConnected(true);
+            router.reload({ only: ['waitingTickets', 'queues'], preserveScroll: true });
+        },
+    });
+
+    // Polling fallback: 30s if WS connected, 5s if not
+    useAutoRefresh(wsConnected ? 30000 : 5000);
 
     useEffect(() => { if (counter?.id) setSelectedCounter(counter.id); else if (availableCounters?.length > 0 && !selectedCounter) setSelectedCounter(availableCounters[0].id); }, [counter?.id]);
     useEffect(() => { if (!currentTicket) setSelectedQueue(''); }, [currentTicket?.id]);
