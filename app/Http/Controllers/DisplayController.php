@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,8 +17,6 @@ class DisplayController extends Controller
     {
         $user = $request->user();
 
-        // Super admin / tenant admin → all branches
-        // Everyone else → only assigned branches
         $branches = ($user->isSuperAdmin() || $user->isTenantAdmin())
             ? Branch::where('tenant_id', $user->tenant_id)
                 ->where('is_active', true)
@@ -26,7 +25,6 @@ class DisplayController extends Controller
                 ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
                 ->get();
 
-        // If user has only one branch, redirect directly to the screen
         if ($branches->count() === 1) {
             return Inertia::render('Display/Screen', [
                 'branch' => [
@@ -50,7 +48,6 @@ class DisplayController extends Controller
 
     public function show(Request $request, Branch $branch): Response
     {
-        // Verify user has access to this branch
         $user = $request->user();
         if (!$user->isSuperAdmin() && !$user->isTenantAdmin()) {
             $hasAccess = $user->branches()->where('branches.id', $branch->id)->exists();
@@ -68,6 +65,16 @@ class DisplayController extends Controller
 
     public function public(Request $request, Branch $branch): Response
     {
+        // F-08: Validate branch is active and belongs to an active tenant
+        if (!$branch->is_active) {
+            abort(404, 'Sucursal no disponible.');
+        }
+
+        $branch->loadMissing('tenant');
+        if (!$branch->tenant || !$branch->tenant->is_active) {
+            abort(404, 'Organización no disponible.');
+        }
+
         return Inertia::render('Display/Screen', [
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
@@ -76,54 +83,64 @@ class DisplayController extends Controller
         ]);
     }
 
+    /**
+     * F-08: Cached display data to reduce DB load from TV screen polling.
+     * Cache TTL: 5 seconds — frequent enough for near-real-time display.
+     */
     private function getDisplayData(Branch $branch): array
     {
-        $serving = Ticket::with(['queue:id,name,prefix', 'counter:id,name,number', 'service:id,name,color'])
-            ->where('branch_id', $branch->id)
-            ->whereIn('status', ['called', 'in_progress'])
-            ->whereDate('created_at', today())
-            ->orderByDesc('called_at')
-            ->limit(8)
-            ->get()
-            ->map(fn($t) => [
-                'display_number' => $t->display_number,
-                'counter_number' => $t->counter?->number,
-                'counter_name' => $t->counter?->name,
-                'queue_name' => $t->queue?->name,
-                'service_name' => $t->service?->name,
-                'service_color' => $t->service?->color,
-                'status' => is_object($t->status) ? $t->status->value : $t->status,
-                'called_at' => $t->called_at?->toIso8601String(),
-            ]);
+        return Cache::remember(
+            "display:data:{$branch->id}",
+            5, // seconds
+            function () use ($branch) {
+                $serving = Ticket::with(['queue:id,name,prefix', 'counter:id,name,number', 'service:id,name,color'])
+                    ->where('branch_id', $branch->id)
+                    ->whereIn('status', ['called', 'in_progress'])
+                    ->whereDate('created_at', today())
+                    ->orderByDesc('called_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(fn($t) => [
+                        'display_number' => $t->display_number,
+                        'counter_number' => $t->counter?->number,
+                        'counter_name' => $t->counter?->name,
+                        'queue_name' => $t->queue?->name,
+                        'service_name' => $t->service?->name,
+                        'service_color' => $t->service?->color,
+                        'status' => is_object($t->status) ? $t->status->value : $t->status,
+                        'called_at' => $t->called_at?->toIso8601String(),
+                    ]);
 
-        $recent = Ticket::with(['counter:id,number'])
-            ->where('branch_id', $branch->id)
-            ->where('status', 'completed')
-            ->whereDate('created_at', today())
-            ->orderByDesc('completed_at')
-            ->limit(10) // Fetch more than default; frontend slices to show_recent_count
-            ->get()
-            ->map(fn($t) => [
-                'display_number' => $t->display_number,
-                'counter_number' => $t->counter?->number,
-            ]);
+                $recent = Ticket::with(['counter:id,number'])
+                    ->where('branch_id', $branch->id)
+                    ->where('status', 'completed')
+                    ->whereDate('created_at', today())
+                    ->orderByDesc('completed_at')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn($t) => [
+                        'display_number' => $t->display_number,
+                        'counter_number' => $t->counter?->number,
+                    ]);
 
-        $waitingCount = Ticket::where('branch_id', $branch->id)
-            ->where('status', 'waiting')
-            ->count();
+                $waitingCount = Ticket::where('branch_id', $branch->id)
+                    ->where('status', 'waiting')
+                    ->count();
 
-        $avgWait = (int) Ticket::where('branch_id', $branch->id)
-            ->where('status', 'completed')
-            ->whereDate('created_at', today())
-            ->whereNotNull('wait_time_seconds')
-            ->avg('wait_time_seconds');
+                $avgWait = (int) Ticket::where('branch_id', $branch->id)
+                    ->where('status', 'completed')
+                    ->whereDate('created_at', today())
+                    ->whereNotNull('wait_time_seconds')
+                    ->avg('wait_time_seconds');
 
-        return [
-            'serving' => $serving,
-            'recent' => $recent,
-            'waitingCount' => $waitingCount,
-            'avgWaitMinutes' => (int) round($avgWait / 60),
-            'timestamp' => now()->toIso8601String(),
-        ];
+                return [
+                    'serving' => $serving,
+                    'recent' => $recent,
+                    'waitingCount' => $waitingCount,
+                    'avgWaitMinutes' => (int) round($avgWait / 60),
+                    'timestamp' => now()->toIso8601String(),
+                ];
+            }
+        );
     }
 }

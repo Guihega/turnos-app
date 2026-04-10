@@ -65,6 +65,9 @@ class OperatorController extends Controller
             'queue_id'   => 'nullable|exists:queues,id',
         ]);
 
+        // F-15: Validate counter belongs to operator's branch/tenant
+        $this->ensureCounterBelongsToOperator($request->input('counter_id'), $request->user());
+
         try {
             $ticket = $action->execute(
                 $request->input('counter_id'),
@@ -99,6 +102,8 @@ class OperatorController extends Controller
      */
     public function complete(Request $request, Ticket $ticket, CompleteTicketAction $action)
     {
+        $this->ensureTicketBelongsToOperator($ticket, $request->user());
+
         $request->validate([
             'rating' => 'nullable|integer|min:1|max:5',
             'notes'  => 'nullable|string|max:1000',
@@ -123,6 +128,9 @@ class OperatorController extends Controller
      */
     public function cancel(Request $request, Ticket $ticket)
     {
+        // F-15: Validate ticket belongs to operator's tenant/branch
+        $this->ensureTicketInOperatorScope($ticket, $request->user());
+
         $ticket->transitionTo(TicketStatus::CANCELLED, $request->user()->id);
         $this->freeCounter($ticket);
 
@@ -134,6 +142,9 @@ class OperatorController extends Controller
      */
     public function noShow(Request $request, Ticket $ticket)
     {
+        // F-15: Validate ticket belongs to operator's tenant/branch
+        $this->ensureTicketInOperatorScope($ticket, $request->user());
+
         $ticket->transitionTo(TicketStatus::NO_SHOW, $request->user()->id);
         $this->freeCounter($ticket);
 
@@ -145,10 +156,18 @@ class OperatorController extends Controller
      */
     public function transfer(Request $request, Ticket $ticket, TransferTicketAction $action)
     {
+        $this->ensureTicketBelongsToOperator($ticket, $request->user());
+
         $request->validate([
             'target_queue_id' => 'required|exists:queues,id',
             'reason'          => 'nullable|string|max:500',
         ]);
+
+        // F-15: Validate target queue belongs to same branch
+        $targetQueue = Queue::findOrFail($request->input('target_queue_id'));
+        if ($targetQueue->branch_id !== $ticket->branch_id) {
+            return back()->withErrors(['ticket' => 'La cola destino no pertenece a la misma sucursal.']);
+        }
 
         try {
             $newTicket = $action->execute(
@@ -169,6 +188,9 @@ class OperatorController extends Controller
      */
     public function recall(Request $request, Ticket $ticket)
     {
+        // F-15: Validate ticket belongs to operator
+        $this->ensureTicketBelongsToOperator($ticket, $request->user());
+
         if ($ticket->status !== TicketStatus::CALLED) {
             return back()->withErrors(['ticket' => 'Solo se pueden rellamar turnos en estado "llamado".']);
         }
@@ -182,10 +204,49 @@ class OperatorController extends Controller
 
     // ── Private helpers ──
 
+    /**
+     * F-15: Ensure ticket is assigned to this operator (for actions requiring ownership).
+     */
     private function ensureTicketBelongsToOperator(Ticket $ticket, $user): void
     {
         if ($ticket->served_by !== $user->id) {
             abort(403, 'Este turno no está asignado a usted.');
+        }
+    }
+
+    /**
+     * F-15: Ensure ticket belongs to a branch the operator has access to.
+     * Used for cancel/no-show which don't require the ticket to be assigned to the operator
+     * but must belong to the same tenant and an accessible branch.
+     */
+    private function ensureTicketInOperatorScope(Ticket $ticket, $user): void
+    {
+        // Load branch to check tenant
+        $ticket->loadMissing('branch');
+
+        if (!$ticket->branch || $ticket->branch->tenant_id !== $user->tenant_id) {
+            abort(403, 'No tiene acceso a este turno.');
+        }
+
+        if (!$user->isSuperAdmin() && !$user->isTenantAdmin() && !$user->belongsToBranch($ticket->branch_id)) {
+            abort(403, 'No tiene acceso a esta sucursal.');
+        }
+    }
+
+    /**
+     * F-15: Ensure counter belongs to operator's accessible branches.
+     */
+    private function ensureCounterBelongsToOperator(string $counterId, $user): void
+    {
+        $counter = Counter::findOrFail($counterId);
+        $counter->loadMissing('branch');
+
+        if (!$counter->branch || $counter->branch->tenant_id !== $user->tenant_id) {
+            abort(403, 'No tiene acceso a esta ventanilla.');
+        }
+
+        if (!$user->isSuperAdmin() && !$user->isTenantAdmin() && !$user->belongsToBranch($counter->branch_id)) {
+            abort(403, 'No tiene acceso a esta sucursal.');
         }
     }
 

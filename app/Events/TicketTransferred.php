@@ -7,6 +7,7 @@ namespace App\Events;
 use App\Models\Ticket;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -22,16 +23,28 @@ class TicketTransferred implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [new Channel("branch.{$this->newTicket->branch_id}")];
+        return [
+            new PrivateChannel("branch.{$this->newTicket->branch_id}"),
+            new Channel("kiosk.{$this->newTicket->branch_id}"),
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'ticket.transferred';
     }
 
     public function broadcastWith(): array
     {
         return [
-            'new_ticket_id' => $this->newTicket->id,
-            'new_display_number' => $this->newTicket->display_number,
+            'new_ticket' => [
+                'id' => $this->newTicket->id,
+                'display_number' => $this->newTicket->display_number,
+                'queue_name' => $this->newTicket->queue?->name,
+            ],
             'original_display_number' => $this->originalTicket->display_number,
-            'target_queue' => $this->newTicket->queue?->name,
+            'status' => 'transferred',
+            'timestamp' => now()->toIso8601String(),
         ];
     }
 }

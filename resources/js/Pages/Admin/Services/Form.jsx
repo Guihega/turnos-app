@@ -56,7 +56,8 @@ export default function ServiceForm({ service }) {
     return (
         <AuthenticatedLayout>
             <Head title={isEdit ? `Editar: ${service.name}` : 'Nuevo Servicio'} />
-            <div style={{ padding: '24px 28px', background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
                 {/* Header */}
                 <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
@@ -249,6 +250,7 @@ export default function ServiceForm({ service }) {
                         </div>
                     </div>
                 </div>
+                </div>{/* end maxWidth */}
             </div>
         </AuthenticatedLayout>
     );

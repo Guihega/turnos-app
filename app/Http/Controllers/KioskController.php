@@ -42,7 +42,7 @@ class KioskController extends Controller
         return Inertia::render('Public/Kiosk', [
             'branch' => [
                 'id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code,
-                'is_open' => true, // TODO: restore $branch->isOpen() for production
+                'is_open' => $branch->isOpen(),
                 'accepts_walkins' => $branch->accepts_walkins ?? true,
             ],
             'services' => $services,
@@ -54,9 +54,31 @@ class KioskController extends Controller
 
     /**
      * Issue ticket — delegates to IssueTicketAction for consistent business logic.
+     *
+     * Security: validates that queue belongs to this branch and service belongs
+     * to the queue, preventing cross-branch ticket injection.
      */
     public function store(Request $request, Branch $branch, IssueTicketAction $action)
     {
+        // ── Bot detection: honeypot field ──
+        // The kiosk form includes a hidden field "website" that should be empty.
+        // Bots auto-fill all fields, humans never see it.
+        if ($request->filled('website')) {
+            // Silently reject — don't reveal detection to the bot
+            return back()->withErrors(['branch' => 'No se pudo emitir el turno. Intente de nuevo.']);
+        }
+
+        // ── Bot detection: timing ──
+        // A human takes at least 2 seconds to select a service and submit.
+        // If _form_loaded timestamp is present and submission is < 2s, likely a bot.
+        if ($request->has('_t')) {
+            $loadedAt = (int) $request->input('_t', 0);
+            $elapsed = time() - $loadedAt;
+            if ($loadedAt > 0 && $elapsed < 2) {
+                return back()->withErrors(['branch' => 'No se pudo emitir el turno. Intente de nuevo.']);
+            }
+        }
+
         $request->validate([
             'service_id'     => 'required|exists:services,id',
             'queue_id'       => 'required|exists:queues,id',
@@ -64,10 +86,35 @@ class KioskController extends Controller
             'customer_phone' => 'nullable|string|max:20',
         ]);
 
+        // Cross-entity validation: queue must belong to THIS branch
+        $queue = Queue::where('id', $request->input('queue_id'))
+            ->where('branch_id', $branch->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$queue) {
+            return back()->withErrors(['branch' => 'Cola no válida para esta sucursal.']);
+        }
+
+        // Cross-entity validation: service must be linked to this queue
+        $serviceLinked = $queue->services()
+            ->where('services.id', $request->input('service_id'))
+            ->where('services.is_active', true)
+            ->exists();
+
+        if (!$serviceLinked) {
+            return back()->withErrors(['branch' => 'Servicio no disponible en esta cola.']);
+        }
+
+        // Max concurrent waiting check
+        if ($branch->activeWaitingCount() >= $branch->max_concurrent_waiting) {
+            return back()->withErrors(['branch' => 'Demasiados turnos en espera. Intente en unos minutos.']);
+        }
+
         try {
             $data = new IssueTicketData(
                 branchId: $branch->id,
-                queueId: $request->input('queue_id'),
+                queueId: $queue->id,
                 serviceId: $request->input('service_id'),
                 customerName: $request->input('customer_name'),
                 customerPhone: $request->input('customer_phone'),

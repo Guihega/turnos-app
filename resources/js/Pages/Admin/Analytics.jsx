@@ -38,35 +38,30 @@ function ACard({ title, subtitle, children, span, style: extraStyle }) {
     );
 }
 
-// ── KPI Card ────────────────────────────────────────────────────
-function KPI({ label, value, suffix, icon, color, delta: d }) {
+// ── KPI Card (compact) ─────────────────────────────────────────
+function KPI({ label, value, suffix, color, delta: d }) {
     return (
         <div style={{
-            background: V('--t-card'), border: `1px solid ${V('--t-border')}`, borderRadius: 14,
-            padding: '18px 20px', position: 'relative', overflow: 'hidden',
+            background: V('--t-card'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
+            padding: '12px 14px', textAlign: 'center', position: 'relative', overflow: 'hidden',
         }}>
-            {/* Accent bar */}
-            <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: color, borderRadius: '14px 0 0 14px', opacity: 0.6 }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.08em',
-                        fontFamily: "'JetBrains Mono', monospace" }}>{label}</div>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: color || V('--t-text'), fontFamily: "'JetBrains Mono', monospace",
-                        letterSpacing: '-0.03em', marginTop: 4, lineHeight: 1 }}>
-                        {value}<span style={{ fontSize: 14, fontWeight: 600, opacity: 0.6 }}>{suffix}</span>
-                    </div>
-                </div>
-                {d && (
-                    <div style={{
-                        fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-                        background: d.positive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                        color: d.positive ? COLORS.green : COLORS.red,
-                        fontFamily: "'JetBrains Mono', monospace",
-                    }}>
-                        {d.positive ? '↑' : '↓'} {d.value}%
-                    </div>
-                )}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${color}, transparent)`, opacity: 0.5 }} />
+            <div style={{ fontSize: 9, fontWeight: 600, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.08em',
+                fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>{label}</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: color || V('--t-text'), fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '-0.03em', lineHeight: 1 }}>
+                {value}<span style={{ fontSize: 11, fontWeight: 600, opacity: 0.6 }}>{suffix}</span>
             </div>
+            {d && (
+                <div style={{
+                    fontSize: 9, fontWeight: 700, marginTop: 4, display: 'inline-block', padding: '2px 6px', borderRadius: 4,
+                    background: d.positive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    color: d.positive ? COLORS.green : COLORS.red,
+                    fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                    {d.positive ? '↑' : '↓'} {d.value}%
+                </div>
+            )}
         </div>
     );
 }
@@ -203,7 +198,7 @@ export default function Analytics({ branches = [], currentBranch, todayStats = {
         <AuthenticatedLayout>
             <Head title="Analytics" />
 
-            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px', fontFamily: "'Outfit', sans-serif" }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 28px', fontFamily: "'Outfit', sans-serif" }}>
 
                 {/* ── Header ── */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -228,7 +223,7 @@ export default function Analytics({ branches = [], currentBranch, todayStats = {
                 </div>
 
                 {/* ── KPI Row ── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+                <div className="t-analytics-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 20 }}>
                     <KPI label="Emitidos hoy" value={s.total_issued || 0} color={COLORS.blue} />
                     <KPI label="Completados" value={s.completed || 0} suffix={` (${fmtPct(s.completed, s.total_issued)})`} color={COLORS.green} />
                     <KPI label="Espera promedio" value={fmtMin(s.avg_wait)} color={COLORS.amber} />
@@ -304,6 +299,12 @@ export default function Analytics({ branches = [], currentBranch, todayStats = {
                 @keyframes shimmer {
                     0% { background-position: 200% 0; }
                     100% { background-position: -200% 0; }
+                }
+                @media (max-width: 900px) {
+                    .t-analytics-kpi { grid-template-columns: repeat(3, 1fr) !important; }
+                }
+                @media (max-width: 768px) {
+                    .t-analytics-kpi { grid-template-columns: repeat(2, 1fr) !important; }
                 }
             `}</style>
         </AuthenticatedLayout>

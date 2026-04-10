@@ -2,21 +2,23 @@
 
 namespace Tests\Feature\Auth;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function test_registration_screen_can_be_rendered(): void
+    /**
+     * Registration routes are disabled in Olinora.
+     * Users are created by tenant admins via /admin/usuarios.
+     * These tests verify the routes return 404 (not accessible).
+     */
+    public function test_registration_screen_is_not_accessible(): void
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertStatus(404);
     }
 
-    public function test_new_users_can_register(): void
+    public function test_registration_post_is_not_accessible(): void
     {
         $response = $this->post('/register', [
             'name' => 'Test User',
@@ -25,7 +27,6 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertStatus(404);
     }
 }

@@ -1,37 +1,30 @@
+// resources/js/Pages/Profile/Edit.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { Card, PageHeader, T } from '@/Components/TurnosUI';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
 export default function Edit({ mustVerifyEmail, status }) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
-            <Head title="Profile" />
+        <AuthenticatedLayout>
+            <Head title="Perfil" />
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <PageHeader title="Mi Perfil" subtitle="Administra tu información personal y seguridad" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdateProfileInformationForm
-                            mustVerifyEmail={mustVerifyEmail}
-                            status={status}
-                            className="max-w-xl"
-                        />
-                    </div>
+                <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <Card accent={T.blue}>
+                        <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} />
+                    </Card>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
-                    </div>
+                    <Card accent={T.purple}>
+                        <UpdatePasswordForm />
+                    </Card>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
+                    <Card accent={T.red}>
+                        <DeleteUserForm />
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>

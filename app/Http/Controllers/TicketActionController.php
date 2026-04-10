@@ -30,13 +30,26 @@ class TicketActionController extends Controller
             'priority' => 'nullable|string|in:low,normal,high,urgent,vip',
         ]);
 
-        $branch = Branch::findOrFail($request->branch_id);
-        $queue = Queue::findOrFail($request->queue_id);
+        $user = $request->user();
+
+        // F-06/F-15: Validate branch belongs to user's tenant
+        $branch = Branch::where('id', $request->branch_id)
+            ->where('tenant_id', $user->tenant_id)
+            ->firstOrFail();
+
+        // Validate queue belongs to this branch
+        $queue = Queue::where('id', $request->queue_id)
+            ->where('branch_id', $branch->id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
         $priority = $request->priority ? TicketPriority::from($request->priority) : TicketPriority::NORMAL;
 
-        return DB::transaction(function () use ($request, $branch, $queue, $priority) {
+        return DB::transaction(function () use ($request, $branch, $queue, $priority, $user) {
+            // F-17: Use lockForUpdate to prevent race condition on daily_sequence
             $seq = Ticket::where('branch_id', $branch->id)
                 ->whereDate('created_at', today())
+                ->lockForUpdate()
                 ->max('daily_sequence') + 1;
 
             $ticketNumber = sprintf('%s-%03d', $queue->prefix, $seq);
@@ -46,7 +59,7 @@ class TicketActionController extends Controller
                 'branch_id' => $branch->id,
                 'queue_id' => $queue->id,
                 'service_id' => $request->service_id,
-                'created_by' => $request->user()->id,
+                'created_by' => $user->id,
                 'ticket_number' => $ticketNumber,
                 'daily_sequence' => $seq,
                 'display_number' => $displayNumber,
@@ -61,7 +74,7 @@ class TicketActionController extends Controller
 
             $ticket->events()->create([
                 'event_type' => 'ticket_issued',
-                'user_id' => $request->user()->id,
+                'user_id' => $user->id,
                 'to_status' => TicketStatus::WAITING->value,
                 'occurred_at' => now(),
                 'payload' => ['source' => 'admin', 'priority' => $priority->value],
@@ -76,6 +89,12 @@ class TicketActionController extends Controller
      */
     public function show(Request $request, Ticket $ticket)
     {
+        // F-06: Validate ticket belongs to user's tenant
+        $ticket->loadMissing('branch');
+        if ($ticket->branch->tenant_id !== $request->user()->tenant_id) {
+            abort(403, 'No tiene acceso a este turno.');
+        }
+
         $ticket->load(['queue', 'service', 'counter', 'servedBy', 'createdByUser', 'events.user', 'branch']);
 
         return Inertia::render('Tickets/Show', [

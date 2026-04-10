@@ -1,16 +1,29 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
+// resources/js/Layouts/GuestLayout.jsx
 import { Link } from '@inertiajs/react';
+import { T } from '@/Components/TurnosUI';
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
-            </div>
+        <div style={{
+            minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', background: T.bg, fontFamily: T.font, color: T.text, padding: 20,
+        }}>
+            <Link href="/" style={{ textDecoration: 'none', marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                        width: 40, height: 40, borderRadius: 12,
+                        background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 900, fontSize: 18, color: '#fff',
+                    }}>O</div>
+                    <span style={{ fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: '-0.03em' }}>Olinora</span>
+                </div>
+            </Link>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
+            <div style={{
+                width: '100%', maxWidth: 420, background: T.card, borderRadius: 20,
+                border: `1px solid ${T.border}`, padding: '32px 28px', boxShadow: T.shadow,
+            }}>
                 {children}
             </div>
         </div>

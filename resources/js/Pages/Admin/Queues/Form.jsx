@@ -1,7 +1,7 @@
 // resources/js/Pages/Admin/Queues/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Btn, Card, T, theme } from '@/Components/TurnosUI';
+import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const ALGORITHMS = [
     { value: 'fifo', label: 'FIFO', desc: 'Primero en llegar, primero en ser atendido', icon: '→' },
@@ -28,21 +28,17 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
     });
 
     const toggleService = (id) => {
-        const ids = data.service_ids.includes(id)
-            ? data.service_ids.filter(x => x !== id)
-            : [...data.service_ids, id];
+        const ids = data.service_ids.includes(id) ? data.service_ids.filter(x => x !== id) : [...data.service_ids, id];
         setData('service_ids', ids);
     };
 
-    const submit = (e) => {
-        e.preventDefault();
-        isEdit ? put(route('admin.colas.update', queue.id)) : post(route('admin.colas.store'));
-    };
+    const submit = (e) => { e.preventDefault(); isEdit ? put(route('admin.colas.update', queue.id)) : post(route('admin.colas.store')); };
 
     return (
         <AuthenticatedLayout>
             <Head title={isEdit ? `Editar: ${queue.name}` : 'Nueva Cola'} />
-            <div style={{ padding: '24px 28px', background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
                 <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
                     <div>
@@ -56,14 +52,14 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
                     <Link href={route('admin.colas.index')}><Btn variant="ghost">← Volver</Btn></Link>
                 </div>
 
-                <form onSubmit={submit} style={{ maxWidth: 700 }}>
+                <form onSubmit={submit}>
 
                     {/* Status */}
                     {isEdit && (
                         <div className="t-fade-up t-stagger-1" style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            background: data.is_active ? `${T.green}08` : `${T.red}08`,
-                            border: `1px solid ${data.is_active ? T.green : T.red}20`,
+                            background: data.is_active ? `color-mix(in srgb, ${T.green} 5%, transparent)` : `color-mix(in srgb, ${T.red} 5%, transparent)`,
+                            border: `1px solid color-mix(in srgb, ${data.is_active ? T.green : T.red} 15%, transparent)`,
                             borderRadius: 14, padding: '14px 18px', marginBottom: 16,
                         }}>
                             <div>
@@ -88,8 +84,7 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
                             {!isEdit && (
                                 <div style={{ gridColumn: '1 / -1' }}>
                                     <label style={labelStyle}>Sucursal</label>
-                                    <select value={data.branch_id} onChange={e => setData('branch_id', e.target.value)}
-                                        style={{ ...inputStyle, cursor: 'pointer' }}>
+                                    <select value={data.branch_id} onChange={e => setData('branch_id', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
                                         {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                     </select>
                                     {errors.branch_id && <div style={{ fontSize: 11, color: T.red, marginTop: 4 }}>{errors.branch_id}</div>}
@@ -121,7 +116,7 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
                             {ALGORITHMS.map(alg => (
                                 <button key={alg.value} type="button" onClick={() => setData('priority_algorithm', alg.value)}
                                     style={{
-                                        background: data.priority_algorithm === alg.value ? `${T.amber}12` : T.surface,
+                                        background: data.priority_algorithm === alg.value ? `color-mix(in srgb, ${T.amber} 8%, transparent)` : T.surface,
                                         border: `1px solid ${data.priority_algorithm === alg.value ? T.amber : T.border}`,
                                         borderRadius: 12, padding: '16px 14px', cursor: 'pointer', textAlign: 'left',
                                         transition: 'all 0.2s', color: T.text, fontFamily: T.font,
@@ -154,11 +149,11 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
                                 return (
                                     <button key={s.id} type="button" onClick={() => toggleService(s.id)} style={{
                                         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10,
-                                        background: selected ? `${s.color}15` : T.surface,
+                                        background: selected ? `color-mix(in srgb, ${s.color} 10%, transparent)` : T.surface,
                                         border: `1px solid ${selected ? s.color : T.border}`,
                                         cursor: 'pointer', transition: 'all 0.2s', color: T.text, fontFamily: T.font,
                                     }}>
-                                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, boxShadow: selected ? `0 0 8px ${s.color}50` : 'none', transition: 'box-shadow 0.2s' }} />
+                                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, boxShadow: selected ? `0 0 8px ${s.color}50` : 'none' }} />
                                         <span style={{ fontSize: 13, fontWeight: selected ? 700 : 500 }}>{s.name}</span>
                                         {selected && <span style={{ fontSize: 12, color: T.green, marginLeft: 2 }}>✓</span>}
                                     </button>
@@ -175,6 +170,8 @@ export default function QueueForm({ queue, branches = [], services = [] }) {
                         <Link href={route('admin.colas.index')}><Btn variant="ghost" size="lg">Cancelar</Btn></Link>
                     </div>
                 </form>
+
+                </div>{/* end maxWidth */}
             </div>
         </AuthenticatedLayout>
     );

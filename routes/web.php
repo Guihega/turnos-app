@@ -32,7 +32,7 @@ Route::prefix('kiosco/{branch}')->group(function () {
         ->middleware('throttle:kiosk-view')
         ->name('kiosk.public');
     Route::post('/turno', [KioskController::class, 'store'])
-        ->middleware('throttle:kiosk-issue')
+        ->middleware(['throttle:kiosk-issue', 'throttle:kiosk-branch-hourly'])
         ->name('kiosk.store');
     Route::get('/turno/{ticket}', [KioskController::class, 'status'])
         ->middleware('throttle:kiosk-view')
@@ -84,7 +84,9 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
 
     // ── Tickets (emisión rápida + detalle) ──
     Route::middleware('role:staff')->prefix('tickets')->name('tickets.')->group(function () {
-        Route::post('/emitir', [TicketActionController::class, 'issue'])->name('issue');
+        Route::post('/emitir', [TicketActionController::class, 'issue'])
+            ->middleware('throttle:30,1')
+            ->name('issue');
         Route::get('/{ticket}', [TicketActionController::class, 'show'])->name('show');
     });
 

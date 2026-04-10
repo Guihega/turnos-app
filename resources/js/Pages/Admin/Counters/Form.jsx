@@ -1,7 +1,7 @@
 // resources/js/Pages/Admin/Counters/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Btn, Card, T, theme } from '@/Components/TurnosUI';
+import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const STATUSES = [
     { value: 'closed', label: 'Cerrada', color: T.textMuted, icon: '◇', desc: 'No disponible para atención' },
@@ -25,17 +25,14 @@ export default function CounterForm({ counter, branches = [] }) {
         status: counter?.status || 'closed',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-        isEdit ? put(route('admin.ventanillas.update', counter.id)) : post(route('admin.ventanillas.store'));
-    };
-
+    const submit = (e) => { e.preventDefault(); isEdit ? put(route('admin.ventanillas.update', counter.id)) : post(route('admin.ventanillas.store')); };
     const currentStatus = STATUSES.find(s => s.value === data.status) || STATUSES[0];
 
     return (
         <AuthenticatedLayout>
             <Head title={isEdit ? `Editar: ${counter.name}` : 'Nueva Ventanilla'} />
-            <div style={{ padding: '24px 28px', background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <div style={{ maxWidth: 600, margin: '0 auto' }}>
 
                 <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
                     <div>
@@ -47,7 +44,7 @@ export default function CounterForm({ counter, branches = [] }) {
                     <Link href={route('admin.ventanillas.index')}><Btn variant="ghost">← Volver</Btn></Link>
                 </div>
 
-                <form onSubmit={submit} style={{ maxWidth: 600 }}>
+                <form onSubmit={submit}>
 
                     {/* Identity */}
                     <Card className="t-fade-up t-stagger-1" accent={T.purple} style={{ marginBottom: 16 }}>
@@ -76,7 +73,12 @@ export default function CounterForm({ counter, branches = [] }) {
 
                         {/* Preview */}
                         <div style={{ marginTop: 20, background: T.surface, borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <div style={{ width: 56, height: 56, borderRadius: 14, background: `${currentStatus.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: currentStatus.color, fontFamily: T.mono }}>
+                            <div style={{
+                                width: 56, height: 56, borderRadius: 14,
+                                background: `color-mix(in srgb, ${currentStatus.color} 10%, transparent)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 28, fontWeight: 900, color: currentStatus.color, fontFamily: T.mono,
+                            }}>
                                 {data.number || '?'}
                             </div>
                             <div>
@@ -97,7 +99,7 @@ export default function CounterForm({ counter, branches = [] }) {
                                 {STATUSES.filter(s => s.value !== 'serving').map(st => (
                                     <button key={st.value} type="button" onClick={() => setData('status', st.value)} style={{
                                         display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12,
-                                        background: data.status === st.value ? `${st.color}12` : T.surface,
+                                        background: data.status === st.value ? `color-mix(in srgb, ${st.color} 8%, transparent)` : T.surface,
                                         border: `1px solid ${data.status === st.value ? st.color : T.border}`,
                                         cursor: 'pointer', transition: 'all 0.2s', color: T.text, fontFamily: T.font, textAlign: 'left',
                                     }}>
@@ -119,6 +121,8 @@ export default function CounterForm({ counter, branches = [] }) {
                         <Link href={route('admin.ventanillas.index')}><Btn variant="ghost" size="lg">Cancelar</Btn></Link>
                     </div>
                 </form>
+
+                </div>{/* end maxWidth */}
             </div>
         </AuthenticatedLayout>
     );

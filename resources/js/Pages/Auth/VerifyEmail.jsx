@@ -1,47 +1,42 @@
-import PrimaryButton from '@/Components/PrimaryButton';
+// resources/js/Pages/Auth/VerifyEmail.jsx
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { T, Btn } from '@/Components/TurnosUI';
 
 export default function VerifyEmail({ status }) {
     const { post, processing } = useForm({});
-
-    const submit = (e) => {
-        e.preventDefault();
-
-        post(route('verification.send'));
-    };
+    const submit = (e) => { e.preventDefault(); post(route('verification.send')); };
 
     return (
         <GuestLayout>
-            <Head title="Email Verification" />
-
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
+            <Head title="Verificar Email" />
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.02em', fontFamily: T.font }}>Verifica tu email</h2>
+                <p style={{ fontSize: 13, color: T.textSoft, lineHeight: 1.5 }}>
+                    Te enviamos un enlace de verificación. Si no lo recibiste, podemos enviarte otro.
+                </p>
             </div>
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <div style={{
+                    background: `color-mix(in srgb, ${T.green} 8%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${T.green} 20%, transparent)`,
+                    borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: T.green, textAlign: 'center',
+                }}>Se envió un nuevo enlace de verificación</div>
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
-
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Log Out
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Btn type="submit" variant="primary" disabled={processing}>
+                        {processing ? 'Enviando...' : 'Reenviar enlace'}
+                    </Btn>
+                    <Link href={route('logout')} method="post" as="button"
+                        style={{
+                            fontSize: 12, color: T.textMuted, background: 'none', border: 'none',
+                            cursor: 'pointer', textDecoration: 'underline', fontFamily: T.font,
+                        }}>
+                        Cerrar sesión
                     </Link>
                 </div>
             </form>

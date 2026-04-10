@@ -1,7 +1,7 @@
 // resources/js/Pages/Admin/Users/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Btn, Card, T, theme } from '@/Components/TurnosUI';
+import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const ROLE_COLORS = {
     tenant_admin: T.red, branch_manager: T.amber, operator: T.blue, receptionist: T.green, viewer: T.textMuted,
@@ -29,7 +29,8 @@ export default function UserForm({ user, roles = [], branches = [] }) {
     return (
         <AuthenticatedLayout>
             <Head title={isEdit ? `Editar: ${user.name}` : 'Nuevo Usuario'} />
-            <div style={{ padding: '24px 28px', background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
                 <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
                     <div>
@@ -39,14 +40,14 @@ export default function UserForm({ user, roles = [], branches = [] }) {
                     <Link href={route('admin.usuarios.index')}><Btn variant="ghost">← Volver</Btn></Link>
                 </div>
 
-                <form onSubmit={submit} style={{ maxWidth: 680 }}>
+                <form onSubmit={submit}>
 
                     {/* Status */}
                     {isEdit && (
                         <div className="t-fade-up t-stagger-1" style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            background: data.is_active ? `${T.green}08` : `${T.red}08`,
-                            border: `1px solid ${data.is_active ? T.green : T.red}20`,
+                            background: data.is_active ? `color-mix(in srgb, ${T.green} 5%, transparent)` : `color-mix(in srgb, ${T.red} 5%, transparent)`,
+                            border: `1px solid color-mix(in srgb, ${data.is_active ? T.green : T.red} 15%, transparent)`,
                             borderRadius: 14, padding: '14px 18px', marginBottom: 16,
                         }}>
                             <div>
@@ -93,7 +94,7 @@ export default function UserForm({ user, roles = [], branches = [] }) {
                                 return (
                                     <button key={r.value} type="button" onClick={() => setData('role', r.value)} style={{
                                         padding: '14px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'center',
-                                        background: selected ? `${rc}15` : T.surface,
+                                        background: selected ? `color-mix(in srgb, ${rc} 10%, transparent)` : T.surface,
                                         border: `1px solid ${selected ? rc : T.border}`,
                                         transition: 'all 0.2s', color: T.text, fontFamily: T.font,
                                     }}>
@@ -140,7 +141,7 @@ export default function UserForm({ user, roles = [], branches = [] }) {
                                 return (
                                     <button key={b.id} type="button" onClick={() => toggleBranch(b.id)} style={{
                                         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10,
-                                        background: selected ? `${T.green}15` : T.surface,
+                                        background: selected ? `color-mix(in srgb, ${T.green} 10%, transparent)` : T.surface,
                                         border: `1px solid ${selected ? T.green : T.border}`,
                                         cursor: 'pointer', transition: 'all 0.2s', color: T.text, fontFamily: T.font,
                                     }}>
@@ -160,6 +161,8 @@ export default function UserForm({ user, roles = [], branches = [] }) {
                         <Link href={route('admin.usuarios.index')}><Btn variant="ghost" size="lg">Cancelar</Btn></Link>
                     </div>
                 </form>
+
+                </div>{/* end maxWidth */}
             </div>
         </AuthenticatedLayout>
     );

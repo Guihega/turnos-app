@@ -1,113 +1,60 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
+// resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.jsx
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { T, Btn } from '@/Components/TurnosUI';
 
-export default function UpdateProfileInformation({
-    mustVerifyEmail,
-    status,
-    className = '',
-}) {
+const labelStyle = { fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6, fontFamily: T.font };
+const inputStyle = {
+    width: '100%', background: T.surface, color: T.text, border: `1px solid ${T.border}`,
+    borderRadius: 8, padding: '11px 14px', fontSize: 13, outline: 'none', fontFamily: T.font,
+};
+
+export default function UpdateProfileInformation({ mustVerifyEmail, status }) {
     const user = usePage().props.auth.user;
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({ name: user.name, email: user.email });
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
-        useForm({
-            name: user.name,
-            email: user.email,
-        });
-
-    const submit = (e) => {
-        e.preventDefault();
-
-        patch(route('profile.update'));
-    };
+    const submit = (e) => { e.preventDefault(); patch(route('profile.update')); };
 
     return (
-        <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Profile Information
-                </h2>
+        <div>
+            <div style={{ marginBottom: 18 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: T.text, margin: 0, fontFamily: T.font }}>Información del perfil</h3>
+                <p style={{ fontSize: 12, color: T.textMuted, marginTop: 4, fontFamily: T.font }}>Actualiza tu nombre y correo electrónico</p>
+            </div>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
-                </p>
-            </header>
-
-            <form onSubmit={submit} className="mt-6 space-y-6">
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
-                        id="name"
-                        className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                        isFocused
-                        autoComplete="name"
-                    />
-
-                    <InputError className="mt-2" message={errors.name} />
+                    <label style={labelStyle}>Nombre</label>
+                    <input style={inputStyle} value={data.name} onChange={e => setData('name', e.target.value)} required autoComplete="name"
+                        onFocus={e => { e.target.style.borderColor = `var(--t-blue)`; e.target.style.boxShadow = `0 0 0 3px var(--t-blue-glow)`; }}
+                        onBlur={e => { e.target.style.borderColor = `var(--t-border)`; e.target.style.boxShadow = 'none'; }} />
+                    {errors.name && <div style={{ fontSize: 11, color: T.red, marginTop: 4 }}>{errors.name}</div>}
                 </div>
-
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        className="mt-1 block w-full"
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                        autoComplete="username"
-                    />
-
-                    <InputError className="mt-2" message={errors.email} />
+                    <label style={labelStyle}>Email</label>
+                    <input type="email" style={inputStyle} value={data.email} onChange={e => setData('email', e.target.value)} required autoComplete="username"
+                        onFocus={e => { e.target.style.borderColor = `var(--t-blue)`; e.target.style.boxShadow = `0 0 0 3px var(--t-blue-glow)`; }}
+                        onBlur={e => { e.target.style.borderColor = `var(--t-border)`; e.target.style.boxShadow = 'none'; }} />
+                    {errors.email && <div style={{ fontSize: 11, color: T.red, marginTop: 4 }}>{errors.email}</div>}
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-gray-800">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
+                    <div style={{ fontSize: 12, color: T.amber }}>
+                        Tu email no está verificado.{' '}
+                        <Link href={route('verification.send')} method="post" as="button"
+                            style={{ color: T.blue, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: 12, fontFamily: T.font }}>
+                            Reenviar verificación
+                        </Link>
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
+                            <span style={{ color: T.green, marginLeft: 8 }}>Se envió un nuevo enlace</span>
                         )}
                     </div>
                 )}
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
-
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
-                    </Transition>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Btn type="submit" variant="primary" disabled={processing}>{processing ? 'Guardando...' : 'Guardar'}</Btn>
+                    {recentlySuccessful && <span style={{ fontSize: 12, color: T.green, fontWeight: 600 }}>✓ Guardado</span>}
                 </div>
             </form>
-        </section>
+        </div>
     );
 }

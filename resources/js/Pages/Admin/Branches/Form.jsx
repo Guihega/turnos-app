@@ -1,8 +1,7 @@
 // resources/js/Pages/Admin/Branches/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { useState } from 'react';
-import { Btn, Card, T, theme } from '@/Components/TurnosUI';
+import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const DAYS = [
     { key: 'mon', label: 'Lunes', short: 'L' },
@@ -62,11 +61,8 @@ export default function BranchForm({ branch }) {
 
     const toggleDay = (dayKey) => {
         const hours = { ...data.operating_hours };
-        if (hours[dayKey]) {
-            delete hours[dayKey];
-        } else {
-            hours[dayKey] = { ...DEFAULT_HOURS };
-        }
+        if (hours[dayKey]) delete hours[dayKey];
+        else hours[dayKey] = { ...DEFAULT_HOURS };
         setData('operating_hours', hours);
     };
 
@@ -95,7 +91,8 @@ export default function BranchForm({ branch }) {
     return (
         <AuthenticatedLayout>
             <Head title={isEdit ? `Editar: ${branch.name}` : 'Nueva Sucursal'} />
-            <div style={{ padding: '24px 28px', background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+            <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
+                <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
                 {/* Header */}
                 <div className="t-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
@@ -110,16 +107,15 @@ export default function BranchForm({ branch }) {
                     <Link href={route('admin.sucursales.index')}><Btn variant="ghost">← Volver</Btn></Link>
                 </div>
 
-                <form onSubmit={submit} style={{ maxWidth: 780 }}>
+                <form onSubmit={submit}>
 
-                    {/* ── Status Toggle (Edit only) ── */}
+                    {/* Status Toggle */}
                     {isEdit && (
                         <div className="t-fade-up t-stagger-1" style={{
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            background: data.is_active ? `${T.green}08` : `${T.red}08`,
-                            border: `1px solid ${data.is_active ? T.green : T.red}20`,
+                            background: data.is_active ? `color-mix(in srgb, ${T.green} 5%, transparent)` : `color-mix(in srgb, ${T.red} 5%, transparent)`,
+                            border: `1px solid color-mix(in srgb, ${data.is_active ? T.green : T.red} 15%, transparent)`,
                             borderRadius: 14, padding: '16px 20px', marginBottom: 20,
-                            transition: 'all 0.3s',
                         }}>
                             <div>
                                 <div style={{ fontSize: 14, fontWeight: 700, color: data.is_active ? T.green : T.red }}>
@@ -131,48 +127,39 @@ export default function BranchForm({ branch }) {
                             </div>
                             <button type="button" onClick={() => setData('is_active', !data.is_active)} style={{
                                 width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer',
-                                background: data.is_active ? T.green : T.border, position: 'relative',
-                                transition: 'background 0.3s',
+                                background: data.is_active ? T.green : T.border, position: 'relative', transition: 'background 0.3s',
                             }}>
-                                <div style={{
-                                    width: 22, height: 22, borderRadius: '50%', background: '#fff',
-                                    position: 'absolute', top: 3, transition: 'left 0.3s',
-                                    left: data.is_active ? 27 : 3,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                }} />
+                                <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: data.is_active ? 27 : 3, transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                             </button>
                         </div>
                     )}
 
-                    {/* ── Información General ── */}
+                    {/* Identity */}
                     <Card className="t-fade-up t-stagger-2" accent={T.blue} style={{ marginBottom: 16 }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Información General</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Identificación</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 16, marginBottom: 16 }}>
                             <Field label="Nombre" error={errors.name}>
                                 <input style={inputStyle} value={data.name} onChange={e => setData('name', e.target.value)} required placeholder="Ej: Sede Centro" />
                             </Field>
                             <Field label="Código" error={errors.code}>
-                                <input style={{ ...inputStyle, fontFamily: T.mono, fontWeight: 600, textTransform: 'uppercase' }} value={data.code} onChange={e => setData('code', e.target.value.toUpperCase())} required maxLength={10} placeholder="CTR" />
+                                <input style={{ ...inputStyle, fontFamily: T.mono, fontWeight: 800, textTransform: 'uppercase', textAlign: 'center', fontSize: 18 }}
+                                    value={data.code} onChange={e => setData('code', e.target.value.toUpperCase())} required maxLength={6} placeholder="CTR" />
                             </Field>
-                            <Field label="Dirección" error={errors.address} span="1 / -1">
-                                <input style={inputStyle} value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Calle, número, colonia..." />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 16 }}>
+                            <Field label="Dirección" error={errors.address}>
+                                <input style={inputStyle} value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Calle, número, colonia" />
                             </Field>
-                            <Field label="Ciudad" error={errors.city}>
-                                <input style={inputStyle} value={data.city} onChange={e => setData('city', e.target.value)} />
-                            </Field>
-                            <Field label="Estado">
-                                <input style={inputStyle} value={data.state} onChange={e => setData('state', e.target.value)} />
-                            </Field>
-                            <Field label="Teléfono">
-                                <input style={inputStyle} value={data.phone} onChange={e => setData('phone', e.target.value)} type="tel" placeholder="+52 222..." />
-                            </Field>
-                            <Field label="Email">
-                                <input style={inputStyle} value={data.email} onChange={e => setData('email', e.target.value)} type="email" placeholder="sucursal@ejemplo.com" />
-                            </Field>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+                            <Field label="Ciudad"><input style={inputStyle} value={data.city} onChange={e => setData('city', e.target.value)} placeholder="Puebla" /></Field>
+                            <Field label="Estado"><input style={inputStyle} value={data.state} onChange={e => setData('state', e.target.value)} placeholder="Puebla" /></Field>
+                            <Field label="Teléfono"><input style={inputStyle} value={data.phone} onChange={e => setData('phone', e.target.value)} type="tel" placeholder="+52 222..." /></Field>
+                            <Field label="Email"><input style={inputStyle} value={data.email} onChange={e => setData('email', e.target.value)} type="email" placeholder="sucursal@ejemplo.com" /></Field>
                         </div>
                     </Card>
 
-                    {/* ── Horarios de Operación ── */}
+                    {/* Operating Hours */}
                     <Card className="t-fade-up t-stagger-3" accent={T.amber} style={{ marginBottom: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                             <div>
@@ -190,16 +177,15 @@ export default function BranchForm({ branch }) {
                             </select>
                         </div>
 
-                        {/* Day toggles */}
                         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
                             {DAYS.map(day => {
                                 const active = !!data.operating_hours[day.key];
                                 return (
                                     <button key={day.key} type="button" onClick={() => toggleDay(day.key)} style={{
                                         flex: 1, padding: '10px 4px', borderRadius: 10, border: `1px solid ${active ? T.amber : T.border}`,
-                                        background: active ? `${T.amber}12` : T.surface, color: active ? T.amber : T.textMuted,
-                                        cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: T.font,
-                                        transition: 'all 0.2s', textAlign: 'center',
+                                        background: active ? `color-mix(in srgb, ${T.amber} 8%, transparent)` : T.surface,
+                                        color: active ? T.amber : T.textMuted,
+                                        cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: T.font, textAlign: 'center',
                                     }}>
                                         <div style={{ fontSize: 14, fontWeight: 800 }}>{day.short}</div>
                                         <div style={{ fontSize: 8, marginTop: 2, opacity: 0.7 }}>{day.label.substring(0, 3)}</div>
@@ -208,7 +194,6 @@ export default function BranchForm({ branch }) {
                             })}
                         </div>
 
-                        {/* Time inputs for active days */}
                         {DAYS.filter(d => data.operating_hours[d.key]).map(day => (
                             <div key={day.key} style={{
                                 display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8,
@@ -241,7 +226,7 @@ export default function BranchForm({ branch }) {
                         )}
                     </Card>
 
-                    {/* ── Configuración de Capacidad ── */}
+                    {/* Capacity */}
                     <Card className="t-fade-up t-stagger-4" accent={T.purple} style={{ marginBottom: 16 }}>
                         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Capacidad y Permisos</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
@@ -253,7 +238,6 @@ export default function BranchForm({ branch }) {
                             </Field>
                         </div>
 
-                        {/* Toggle switches */}
                         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                             {[
                                 { key: 'accepts_walkins', label: 'Acepta turnos sin cita', desc: 'Clientes pueden tomar turno desde el kiosco', color: T.green },
@@ -262,7 +246,7 @@ export default function BranchForm({ branch }) {
                                 <div key={opt.key} style={{
                                     flex: '1 1 260px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                     background: T.surface, borderRadius: 10, padding: '14px 16px',
-                                    border: `1px solid ${data[opt.key] ? `${opt.color}20` : T.border}`,
+                                    border: `1px solid ${data[opt.key] ? `color-mix(in srgb, ${opt.color} 20%, transparent)` : T.border}`,
                                 }}>
                                     <div>
                                         <div style={{ fontSize: 13, fontWeight: 600, color: data[opt.key] ? T.text : T.textMuted }}>{opt.label}</div>
@@ -272,18 +256,14 @@ export default function BranchForm({ branch }) {
                                         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
                                         background: data[opt.key] ? opt.color : T.border, position: 'relative', transition: 'background 0.3s',
                                     }}>
-                                        <div style={{
-                                            width: 18, height: 18, borderRadius: '50%', background: '#fff',
-                                            position: 'absolute', top: 3, transition: 'left 0.3s',
-                                            left: data[opt.key] ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                        }} />
+                                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: data[opt.key] ? 23 : 3, transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                                     </button>
                                 </div>
                             ))}
                         </div>
                     </Card>
 
-                    {/* ── Actions ── */}
+                    {/* Actions */}
                     <div className="t-fade-up t-stagger-5" style={{ display: 'flex', gap: 12, marginTop: 24 }}>
                         <Btn type="submit" variant="primary" size="lg" disabled={processing}>
                             {processing ? 'Guardando...' : isEdit ? '◆ Actualizar Sucursal' : '◆ Crear Sucursal'}
@@ -291,6 +271,8 @@ export default function BranchForm({ branch }) {
                         <Link href={route('admin.sucursales.index')}><Btn variant="ghost" size="lg">Cancelar</Btn></Link>
                     </div>
                 </form>
+
+                </div>{/* end maxWidth */}
             </div>
         </AuthenticatedLayout>
     );
