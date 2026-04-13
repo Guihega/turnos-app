@@ -1,7 +1,9 @@
 // resources/js/Pages/Admin/Dashboard.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import { Card, LiveDot, MetricBar, Avatar, useAutoRefresh, fmtMinutes, PageShell, PageHeader, T } from '@/Components/TurnosUI';
+import { useBranchChannel } from '@/Hooks/useBranchChannel';
 
 const adminSections = [
     { route: 'admin.sucursales.index', label: 'Sucursales', icon: '◈', color: '#3D7AFF', countKey: 'branches', desc: 'Ubicaciones y horarios' },
@@ -74,9 +76,32 @@ function KPICompact({ label, value, color }) {
 }
 
 export default function AdminDashboard({ branches = [], currentBranchId, todayStats = {}, operators = [], services = [], branchStats = [] }) {
-    useAutoRefresh(15000);
-    const s = todayStats;
+    const [wsConnected, setWsConnected] = useState(false);
 
+    // ── WebSocket: real-time updates when tickets change in selected branch ──
+    useBranchChannel(currentBranchId, 'branch', {
+        'TicketIssued': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'operators', 'branchStats'], preserveScroll: true });
+        },
+        'TicketCalled': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'operators', 'branchStats'], preserveScroll: true });
+        },
+        'TicketCompleted': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'operators', 'branchStats'], preserveScroll: true });
+        },
+        'TicketTransferred': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'operators', 'branchStats'], preserveScroll: true });
+        },
+    });
+
+    // Polling fallback: slow if WS connected, fast if not
+    useAutoRefresh(wsConnected ? 30000 : 15000);
+
+    const s = todayStats;
     const countMap = { branches: branches.length, services: services.length, operators: operators.length };
     const sections = adminSections.map(sec => ({
         ...sec,
@@ -98,7 +123,7 @@ export default function AdminDashboard({ branches = [], currentBranchId, todaySt
                     actions={
                         branches.length > 0 ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <LiveDot label="En vivo" />
+                                <LiveDot label={wsConnected ? 'WS' : 'En vivo'} />
                                 <select
                                     onChange={e => router.get(route('admin.dashboard'), { branch_id: e.target.value }, { preserveState: true })}
                                     defaultValue={currentBranchId || ''}

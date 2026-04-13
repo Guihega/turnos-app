@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Card, StatusBadge, FlashMessages, LiveDot, MetricBar, useAutoRefresh, fmtSeconds, fmtMinutes, T, statusMap } from '@/Components/TurnosUI';
+import { useBranchChannel } from '@/Hooks/useBranchChannel';
 
 // ── Mini Charts ──
 const BarChart = ({ data, valueKey, labelKey, colorKey, height = 140, max: maxBars = 13 }) => {
@@ -52,7 +53,30 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
     const { flash } = usePage().props;
     const [tab, setTab] = useState('overview');
     const [clock, setClock] = useState(new Date());
-    useAutoRefresh(8000);
+    const [wsConnected, setWsConnected] = useState(false);
+
+    // ── WebSocket: real-time updates when tickets change in this branch ──
+    useBranchChannel(currentBranch?.id, 'branch', {
+        'TicketIssued': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'activeTickets', 'queues'], preserveScroll: true });
+        },
+        'TicketCalled': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'activeTickets', 'queues'], preserveScroll: true });
+        },
+        'TicketCompleted': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'activeTickets', 'queues'], preserveScroll: true });
+        },
+        'TicketTransferred': () => {
+            setWsConnected(true);
+            router.reload({ only: ['todayStats', 'activeTickets', 'queues'], preserveScroll: true });
+        },
+    });
+
+    // Polling fallback: slow if WS connected, fast if not
+    useAutoRefresh(wsConnected ? 30000 : 8000);
     useEffect(() => { const id = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(id); }, []);
 
     const s = todayStats;
@@ -84,7 +108,7 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
                         <span style={{ fontSize: 12, color: T.textMuted, fontFamily: T.mono, fontVariantNumeric: 'tabular-nums' }}>
                             {clock.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                         </span>
-                        <LiveDot />
+                        <LiveDot label={wsConnected ? 'WS' : null} />
                     </div>
                     </div>
                 </div>
@@ -110,79 +134,78 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
                     {/* ══ OVERVIEW ══ */}
                     {tab === 'overview' && (<>
                         {/* KPI Row */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }} className="t-dash-kpi">
+                        <div className="t-dash-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 16 }}>
                             {[
-                                { label: 'Emitidos', value: s.total_issued || 0, color: T.blue },
-                                { label: 'Completados', value: s.completed || 0, color: T.green },
-                                { label: 'Espera', value: `${Math.round((s.avg_wait || 0) / 60)}`, suffix: 'm', color: T.text },
-                                { label: 'Rating', value: s.avg_rating || '—', suffix: s.avg_rating ? '/5' : '', color: T.amber },
-                            ].map((k, i) => (
-                                <div key={k.label} className={`t-fade-up t-stagger-${i + 1}`} style={{
+                                { label: 'Emitidos', val: s.total_issued || 0, color: T.blue },
+                                { label: 'En Espera', val: s.waiting || 0, color: T.amber },
+                                { label: 'Completados', val: s.completed || 0, color: T.green },
+                                { label: 'Espera Prom.', val: fmtMinutes(s.avg_wait), color: T.text },
+                                { label: 'Atención Prom.', val: fmtMinutes(s.avg_service), color: T.purple },
+                                { label: 'Rating', val: s.avg_rating ? `★ ${s.avg_rating}` : '—', color: T.amber },
+                            ].map(x => (
+                                <div key={x.label} style={{
                                     background: T.card, border: `1px solid ${T.border}`, borderRadius: 10,
-                                    padding: '12px 14px', textAlign: 'center', position: 'relative', overflow: 'hidden',
+                                    textAlign: 'center', padding: '14px 10px',
                                 }}>
-                                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${k.color}, transparent)`, opacity: 0.5 }} />
-                                    <div style={{ fontSize: 9, fontWeight: 600, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: T.mono, marginBottom: 4 }}>{k.label}</div>
-                                    <div style={{ fontSize: 22, fontWeight: 900, color: k.color, fontFamily: T.mono, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                                        {k.value}<span style={{ fontSize: 11, fontWeight: 600, opacity: 0.6 }}>{k.suffix || ''}</span>
-                                    </div>
+                                    <div style={{ fontSize: 22, fontWeight: 900, color: x.color, fontFamily: T.mono, lineHeight: 1 }}>{x.val}</div>
+                                    <div style={{ fontSize: 8, color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 6 }}>{x.label}</div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Charts row */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', gap: 14, marginBottom: 20 }} className="t-grid-responsive">
-                            <Card className="t-fade-up t-stagger-3">
-                                <div style={{ fontSize: 12, fontWeight: 700, color: T.textSoft, marginBottom: 14 }}>Estado por Colas</div>
-                                {queues.length > 0 ? (
-                                    <BarChart data={queues.map(q => ({ ...q, label: q.name, value: (q.waiting || 0) + (q.in_progress || 0) + (q.completed || 0), color: T.blue }))} valueKey="value" labelKey="label" colorKey="color" height={140} />
-                                ) : (
-                                    <div style={{ textAlign: 'center', padding: 32, color: T.textMuted, fontSize: 12 }}>Sin datos de colas</div>
-                                )}
-                            </Card>
-
-                            <Card className="t-fade-up t-stagger-4" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: T.textSoft, marginBottom: 14, alignSelf: 'flex-start' }}>Estado Actual</div>
-                                <DonutChart size={110} segments={[
-                                    { value: s.completed || 0, color: T.green },
-                                    { value: s.waiting || 0, color: T.amber },
-                                    { value: s.in_progress || 0, color: T.purple },
-                                    { value: s.called || 0, color: T.blue },
-                                    { value: s.cancelled || 0, color: T.red },
-                                ]} />
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px 12px', marginTop: 14, justifyContent: 'center' }}>
-                                    {[
-                                        { l: 'Completado', c: T.green, v: s.completed || 0 },
-                                        { l: 'Espera', c: T.amber, v: s.waiting || 0 },
-                                        { l: 'Atención', c: T.purple, v: s.in_progress || 0 },
-                                        { l: 'Cancelado', c: T.red, v: s.cancelled || 0 },
-                                    ].map(x => (
-                                        <span key={x.l} style={{ fontSize: 9, color: T.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: x.c }} /> {x.l} ({x.v})
-                                        </span>
-                                    ))}
+                        {/* Charts Row */}
+                        <div className="t-grid-responsive" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                            {/* Donut Chart */}
+                            <Card accent={T.blue}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 700 }}>Distribución</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+                                    <DonutChart segments={[
+                                        { value: s.completed || 0, color: T.green },
+                                        { value: s.waiting || 0, color: T.amber },
+                                        { value: s.in_progress || 0, color: T.purple },
+                                        { value: s.cancelled || 0, color: T.red },
+                                    ]} />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {[
+                                            { label: 'Completados', val: s.completed || 0, color: T.green },
+                                            { label: 'En espera', val: s.waiting || 0, color: T.amber },
+                                            { label: 'En atención', val: s.in_progress || 0, color: T.purple },
+                                            { label: 'Cancelados', val: s.cancelled || 0, color: T.red },
+                                        ].map(seg => (
+                                            <div key={seg.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <div style={{ width: 8, height: 8, borderRadius: 2, background: seg.color }} />
+                                                <span style={{ fontSize: 11, color: T.textSoft }}>{seg.label}</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700, fontFamily: T.mono, color: T.text, marginLeft: 'auto' }}>{seg.val}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </Card>
-                        </div>
 
-                        {/* Queue status cards */}
-                        <Card className="t-fade-up t-stagger-5">
-                            <div style={{ fontSize: 12, fontWeight: 700, color: T.textSoft, marginBottom: 14 }}>Estado de Colas</div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                                {queues.map(q => (
-                                    <div key={q.id} style={{ background: T.surface, borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontWeight: 700, fontSize: 13 }}>{q.name}</span>
-                                            <span style={{ fontSize: 10, color: T.textMuted, background: T.card, borderRadius: 4, padding: '2px 7px', fontFamily: T.mono, fontWeight: 700 }}>{q.prefix}</span>
+                            {/* Queues Overview */}
+                            <Card accent={T.amber}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 700 }}>Estado de Colas</span>
+                                </div>
+                                {queues.map((q, i) => (
+                                    <div key={q.id} style={{
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0',
+                                        borderBottom: i < queues.length - 1 ? `1px solid color-mix(in srgb, ${T.border} 50%, transparent)` : 'none',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontSize: 11, background: T.surface, borderRadius: 4, padding: '2px 8px', fontFamily: T.mono, fontWeight: 700 }}>{q.prefix}</span>
+                                            <span style={{ fontSize: 12, fontWeight: 600 }}>{q.name}</span>
                                         </div>
                                         <div style={{ display: 'flex', gap: 12 }}>
                                             {[
-                                                { v: q.waiting, l: 'esperando', c: T.amber },
-                                                { v: q.in_progress, l: 'atendiendo', c: T.purple },
-                                                { v: q.completed, l: 'completados', c: T.green },
+                                                { v: q.waiting, l: '◷', c: T.amber },
+                                                { v: q.in_progress, l: '▸', c: T.purple },
+                                                { v: q.completed, l: '✓', c: T.green },
                                             ].map(m => (
                                                 <div key={m.l} style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: 18, fontWeight: 800, color: m.v > 0 ? m.c : T.textMuted, fontFamily: T.mono }}>{m.v}</div>
+                                                    <span style={{ fontSize: 13, fontWeight: 900, fontFamily: T.mono, color: m.v > 0 ? m.c : T.textMuted }}>{m.v}</span>
                                                     <div style={{ fontSize: 9, color: T.textMuted }}>{m.l}</div>
                                                 </div>
                                             ))}
@@ -191,8 +214,8 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
                                     </div>
                                 ))}
                                 {queues.length === 0 && <div style={{ padding: 24, color: T.textMuted, fontSize: 12 }}>Sin colas configuradas</div>}
-                            </div>
-                        </Card>
+                            </Card>
+                        </div>
                     </>)}
 
                     {/* ══ LIVE TAB ══ */}
@@ -217,7 +240,9 @@ export default function Dashboard({ branches = [], currentBranch, todayStats = {
                         <Card accent={T.blue} style={{ padding: 0, overflow: 'hidden' }}>
                             <div style={{ padding: '12px 18px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: 13, fontWeight: 700 }}>Turnos Activos</span>
-                                <span style={{ fontSize: 9, color: T.textMuted, fontFamily: T.mono }}>auto-refresh 8s</span>
+                                <span style={{ fontSize: 9, color: wsConnected ? T.green : T.textMuted, fontFamily: T.mono }}>
+                                    {wsConnected ? '● WebSocket activo' : '○ polling ' + (wsConnected ? '30s' : '8s')}
+                                </span>
                             </div>
                             {activeTickets.length === 0 ? (
                                 <div style={{ padding: 40, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>

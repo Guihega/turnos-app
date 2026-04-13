@@ -1,4 +1,4 @@
-// resources/js/hooks/useBranchChannel.js
+// resources/js/Hooks/useBranchChannel.js
 import { useEffect, useRef } from 'react';
 
 /**
@@ -6,10 +6,14 @@ import { useEffect, useRef } from 'react';
  *
  * @param {string} branchId - ID de la branch
  * @param {string} channelType - 'display' (público) o 'branch' (privado para operadores)
- * @param {Object} listeners - { 'EventName': (data) => void }
+ * @param {Object} listeners - { 'TicketIssued': (data) => void } o { 'ticket.issued': (data) => void }
+ *
+ * Soporta ambos formatos de nombres:
+ *   - Nombre de clase: 'TicketIssued' → escucha '.App\Events\TicketIssued'
+ *   - broadcastAs custom: 'ticket.issued' → escucha '.ticket.issued'
  *
  * Ejemplo de uso:
- *   useBranchChannel(branch.id, 'display', {
+ *   useBranchChannel(branch.id, 'branch', {
  *       'TicketCalled': (data) => console.log('Llamaron:', data.display_number),
  *       'TicketIssued': (data) => console.log('Nuevo turno:', data.display_number),
  *   });
@@ -29,8 +33,12 @@ export function useBranchChannel(branchId, channelType, listeners) {
         const eventNames = Object.keys(listenersRef.current);
 
         eventNames.forEach(eventName => {
-            // Laravel broadcast event names: .App\Events\TicketCalled
-            const fullEventName = `.App\\Events\\${eventName}`;
+            // If name contains a dot (e.g. 'ticket.issued'), it's a broadcastAs name
+            // Otherwise it's a class name (e.g. 'TicketIssued')
+            const fullEventName = eventName.includes('.')
+                ? `.${eventName}`
+                : `.App\\Events\\${eventName}`;
+
             channel.listen(fullEventName, (data) => {
                 if (listenersRef.current[eventName]) {
                     listenersRef.current[eventName](data);
