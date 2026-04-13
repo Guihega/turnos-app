@@ -40,6 +40,7 @@ class TicketFlowTest extends TestCase
         ]);
         $this->queue = Queue::factory()->create([
             'branch_id' => $this->branch->id,
+            'prefix' => 'A',
             'is_active' => true,
             'max_capacity' => 100,
         ]);
@@ -135,6 +136,7 @@ class TicketFlowTest extends TestCase
     {
         $targetQueue = Queue::factory()->create([
             'branch_id' => $this->branch->id,
+            'prefix' => 'B',
             'is_active' => true,
         ]);
         $ticket = $this->createInProgressTicket();
