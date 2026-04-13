@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Broadcast;
 
 // ── User personal channel (notifications) ──
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+    return (string) $user->id === (string) $id;
 });
 
 // ── Branch channel (operators, managers — ticket events) ──
