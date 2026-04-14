@@ -13,6 +13,8 @@ use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\TicketActionController;
 use App\Http\Controllers\TenantSettingsController;
+use App\Http\Controllers\Admin\DisplayAnnouncementController;
+use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -24,6 +26,18 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
+});
+
+// Onboarding — Registro público de nuevos tenants
+Route::middleware('guest')->group(function () {
+    Route::get('/onboarding', [OnboardingController::class, 'create'])
+        ->name('onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])
+        ->middleware('throttle:5,1')
+        ->name('onboarding.store');
+    Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
+        ->middleware('throttle:30,1')
+        ->name('onboarding.check-slug');
 });
 
 // Kiosco público (rate limited)
@@ -118,6 +132,13 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
         Route::put('/personalizacion/seguridad', [TenantSettingsController::class, 'updateSecurity'])->name('settings.security');
         Route::post('/personalizacion/logo', [TenantSettingsController::class, 'uploadLogo'])->name('settings.logo.upload');
         Route::delete('/personalizacion/logo', [TenantSettingsController::class, 'removeLogo'])->name('settings.logo.remove');
+
+        // ── Anuncios de Pantalla ──
+        Route::get('/anuncios', [DisplayAnnouncementController::class, 'index'])->name('announcements.index');
+        Route::post('/anuncios', [DisplayAnnouncementController::class, 'store'])->name('announcements.store');
+        Route::put('/anuncios/{announcement}', [DisplayAnnouncementController::class, 'update'])->name('announcements.update');
+        Route::patch('/anuncios/{announcement}/toggle', [DisplayAnnouncementController::class, 'toggle'])->name('announcements.toggle');
+        Route::delete('/anuncios/{announcement}', [DisplayAnnouncementController::class, 'destroy'])->name('announcements.destroy');
 
         // Métricas API (JSON)
         Route::prefix('api')->name('api.')->group(function () {

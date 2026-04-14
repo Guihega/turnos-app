@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\DisplayAnnouncement;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -33,6 +34,7 @@ class DisplayController extends Controller
                     'code' => $branches->first()->code,
                 ],
                 'initialData' => $this->getDisplayData($branches->first()),
+                'announcements' => $this->getAnnouncements($branches->first()),
                 'branding' => $user->tenant->getBrandingForFrontend(),
             ]);
         }
@@ -59,6 +61,7 @@ class DisplayController extends Controller
         return Inertia::render('Display/Screen', [
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
+            'announcements' => $this->getAnnouncements($branch),
             'branding' => $user->tenant->getBrandingForFrontend(),
         ]);
     }
@@ -78,6 +81,7 @@ class DisplayController extends Controller
         return Inertia::render('Display/Screen', [
             'branch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
             'initialData' => $this->getDisplayData($branch),
+            'announcements' => $this->getAnnouncements($branch),
             'isPublic' => true,
             'branding' => $branch->tenant->getBrandingForFrontend(),
         ]);
@@ -140,6 +144,34 @@ class DisplayController extends Controller
                     'avgWaitMinutes' => (int) round($avgWait / 60),
                     'timestamp' => now()->toIso8601String(),
                 ];
+            }
+        );
+    }
+
+    /**
+     * Obtener anuncios activos para la pantalla de una sucursal.
+     * Cache TTL: 60 segundos (los anuncios no cambian tan frecuentemente).
+     */
+    private function getAnnouncements(Branch $branch): array
+    {
+        return Cache::remember(
+            "display:announcements:{$branch->id}",
+            60,
+            function () use ($branch) {
+                return DisplayAnnouncement::where('tenant_id', $branch->tenant_id)
+                    ->active()
+                    ->forBranch($branch->id)
+                    ->orderByDesc('priority')
+                    ->orderByDesc('created_at')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn($a) => [
+                        'id'    => $a->id,
+                        'type'  => $a->type,
+                        'title' => $a->title,
+                        'body'  => $a->body,
+                    ])
+                    ->toArray();
             }
         );
     }

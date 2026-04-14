@@ -198,11 +198,11 @@ export default function Welcome({ canLogin, canResetPassword }) {
                             </p>
 
                             <div className="lp-fade" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animationDelay: '300ms' }}>
-                                <a href={route('login')} style={{ padding: '14px 32px', fontSize: 15, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 12, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
+                                <Link href="/onboarding" style={{ padding: '14px 32px', fontSize: 15, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 12, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                                    onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                    Prueba la version demo
-                                </a>
+                                    Probar Olinora Ahora
+                                </Link>
                                 <a href="#how" style={{ padding: '14px 28px', fontSize: 15, fontWeight: 600, color: L.textSoft, border: `1px solid ${L.border}`, borderRadius: 12, textDecoration: 'none', transition: 'all 0.2s' }}
                                    onMouseEnter={e => { e.currentTarget.style.borderColor = L.blue; e.currentTarget.style.color = L.text; }}
                                    onMouseLeave={e => { e.currentTarget.style.borderColor = L.border; e.currentTarget.style.color = L.textSoft; }}>
@@ -376,11 +376,16 @@ export default function Welcome({ canLogin, canResetPassword }) {
                         Agenda una demo personalizada y descubre cómo Olinora puede transformar la experiencia de tus clientes.
                     </p>
                     <div className="lp-fade" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', animationDelay: '300ms' }}>
+                        <Link href="/onboarding" style={{ padding: '16px 40px', fontSize: 16, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 14, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
+                              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                              onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+                            Probar Olinora Ahora
+                        </Link>
                         {canLogin && (
-                            <Link href={route('login')} style={{ padding: '16px 40px', fontSize: 16, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 14, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
-                                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                Probar Olinora Ahora
+                            <Link href={route('login')} style={{ padding: '16px 32px', fontSize: 16, fontWeight: 600, color: L.textSoft, border: `1px solid ${L.border}`, borderRadius: 14, textDecoration: 'none', transition: 'all 0.2s' }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor = L.blue; e.currentTarget.style.color = L.text; }}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor = L.border; e.currentTarget.style.color = L.textSoft; }}>
+                                Ya tengo cuenta
                             </Link>
                         )}
                     </div>
