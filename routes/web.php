@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\DisplayAnnouncementController;
 use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\HelpCenterController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -76,6 +77,16 @@ Route::middleware('throttle:60,1')->prefix('api/geo')->group(function () {
 Route::get('/t/{branch:slug}', function (App\Models\Branch $branch) {
     return redirect()->route('kiosk.public', $branch);
 })->middleware('throttle:kiosk-view')->name('kiosk.shorturl');
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes (no tenant scope — general documentation)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+    Route::get('/ayuda', [HelpCenterController::class, 'index'])->name('help.index');
+});
 
 /*
 |--------------------------------------------------------------------------

@@ -20,12 +20,14 @@ export default function AuthenticatedLayout({ children }) {
         { href: 'admin.analytics', label: 'Analytics', icon: '◈' },
         { href: 'display.index', label: 'Pantalla', icon: '▣' },
         { href: 'admin.reports.index', label: 'Reportes', icon: '◧' },
+        { href: 'help.index', label: 'Ayuda', icon: '?' },
     ];
 
     const isActive = (name) => {
         if (name === 'admin.dashboard') return currentRoute === 'admin.dashboard';
         if (name === 'admin.analytics') return currentRoute === 'admin.analytics';
         if (name === 'admin.settings.edit') return currentRoute?.startsWith('admin.settings');
+        if (name === 'help.index') return currentRoute?.startsWith('help');
         return currentRoute === name;
     };
 
