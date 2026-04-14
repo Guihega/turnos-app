@@ -350,7 +350,7 @@ export default function BranchForm({ branch }) {
                     </Card>
 
                     {/* Ubicación (GeoNames) */}
-                    <Card className="t-fade-up t-stagger-2b" accent={T.cyan || T.blue} style={{ marginBottom: 16 }}>
+                    <Card className="t-fade-up t-stagger-2b" accent={T.cyan || T.blue} style={{ marginBottom: 16, overflow: 'visible' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                             <div>
                                 <div style={{ fontSize: 15, fontWeight: 700 }}>Ubicación</div>
