@@ -48,6 +48,7 @@ export default function BranchForm({ branch }) {
         address: branch?.address || '',
         city: branch?.city || '',
         state: branch?.state || '',
+        country: branch?.country || 'MX',
         phone: branch?.phone || '',
         email: branch?.email || '',
         timezone: branch?.timezone || 'America/Mexico_City',
@@ -151,9 +152,35 @@ export default function BranchForm({ branch }) {
                                 <input style={inputStyle} value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Calle, número, colonia" />
                             </Field>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                             <Field label="Ciudad"><input style={inputStyle} value={data.city} onChange={e => setData('city', e.target.value)} placeholder="Puebla" /></Field>
-                            <Field label="Estado"><input style={inputStyle} value={data.state} onChange={e => setData('state', e.target.value)} placeholder="Puebla" /></Field>
+                            <Field label="Estado / Provincia"><input style={inputStyle} value={data.state} onChange={e => setData('state', e.target.value)} placeholder="Puebla" /></Field>
+                            <Field label="País">
+                                <select style={inputStyle} value={data.country} onChange={e => setData('country', e.target.value)}>
+                                    <option value="MX">🇲🇽 México</option>
+                                    <option value="CO">🇨🇴 Colombia</option>
+                                    <option value="PE">🇵🇪 Perú</option>
+                                    <option value="CL">🇨🇱 Chile</option>
+                                    <option value="AR">🇦🇷 Argentina</option>
+                                    <option value="EC">🇪🇨 Ecuador</option>
+                                    <option value="GT">🇬🇹 Guatemala</option>
+                                    <option value="CR">🇨🇷 Costa Rica</option>
+                                    <option value="PA">🇵🇦 Panamá</option>
+                                    <option value="DO">🇩🇴 Rep. Dominicana</option>
+                                    <option value="SV">🇸🇻 El Salvador</option>
+                                    <option value="HN">🇭🇳 Honduras</option>
+                                    <option value="NI">🇳🇮 Nicaragua</option>
+                                    <option value="BO">🇧🇴 Bolivia</option>
+                                    <option value="PY">🇵🇾 Paraguay</option>
+                                    <option value="UY">🇺🇾 Uruguay</option>
+                                    <option value="VE">🇻🇪 Venezuela</option>
+                                    <option value="BR">🇧🇷 Brasil</option>
+                                    <option value="US">🇺🇸 Estados Unidos</option>
+                                    <option value="ES">🇪🇸 España</option>
+                                </select>
+                            </Field>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
                             <Field label="Teléfono"><input style={inputStyle} value={data.phone} onChange={e => setData('phone', e.target.value)} type="tel" placeholder="+52 222..." /></Field>
                             <Field label="Email"><input style={inputStyle} value={data.email} onChange={e => setData('email', e.target.value)} type="email" placeholder="sucursal@ejemplo.com" /></Field>
                         </div>
@@ -170,10 +197,47 @@ export default function BranchForm({ branch }) {
                             </div>
                             <select value={data.timezone} onChange={e => setData('timezone', e.target.value)}
                                 style={{ ...inputStyle, width: 'auto', fontSize: 11, padding: '8px 12px', fontFamily: T.mono }}>
-                                <option value="America/Mexico_City">CDMX (CST)</option>
-                                <option value="America/Tijuana">Tijuana (PST)</option>
-                                <option value="America/Monterrey">Monterrey (CST)</option>
-                                <option value="America/Cancun">Cancún (EST)</option>
+                                <optgroup label="México">
+                                    <option value="America/Mexico_City">CDMX (CST)</option>
+                                    <option value="America/Monterrey">Monterrey (CST)</option>
+                                    <option value="America/Cancun">Cancún (EST)</option>
+                                    <option value="America/Tijuana">Tijuana (PST)</option>
+                                    <option value="America/Hermosillo">Hermosillo (MST)</option>
+                                    <option value="America/Mazatlan">Mazatlán (MST)</option>
+                                    <option value="America/Chihuahua">Chihuahua (MST)</option>
+                                    <option value="America/Merida">Mérida (CST)</option>
+                                </optgroup>
+                                <optgroup label="Centroamérica y Caribe">
+                                    <option value="America/Guatemala">Guatemala (CST)</option>
+                                    <option value="America/Costa_Rica">Costa Rica (CST)</option>
+                                    <option value="America/Panama">Panamá (EST)</option>
+                                    <option value="America/El_Salvador">El Salvador (CST)</option>
+                                    <option value="America/Tegucigalpa">Honduras (CST)</option>
+                                    <option value="America/Managua">Nicaragua (CST)</option>
+                                    <option value="America/Santo_Domingo">Rep. Dominicana (AST)</option>
+                                </optgroup>
+                                <optgroup label="Sudamérica">
+                                    <option value="America/Bogota">Colombia (COT)</option>
+                                    <option value="America/Lima">Perú (PET)</option>
+                                    <option value="America/Santiago">Chile (CLT)</option>
+                                    <option value="America/Argentina/Buenos_Aires">Argentina (ART)</option>
+                                    <option value="America/Guayaquil">Ecuador (ECT)</option>
+                                    <option value="America/La_Paz">Bolivia (BOT)</option>
+                                    <option value="America/Asuncion">Paraguay (PYT)</option>
+                                    <option value="America/Montevideo">Uruguay (UYT)</option>
+                                    <option value="America/Caracas">Venezuela (VET)</option>
+                                    <option value="America/Sao_Paulo">Brasil (BRT)</option>
+                                </optgroup>
+                                <optgroup label="Norteamérica">
+                                    <option value="America/New_York">Este EEUU (EST)</option>
+                                    <option value="America/Chicago">Centro EEUU (CST)</option>
+                                    <option value="America/Denver">Montaña EEUU (MST)</option>
+                                    <option value="America/Los_Angeles">Pacífico EEUU (PST)</option>
+                                </optgroup>
+                                <optgroup label="Europa">
+                                    <option value="Europe/Madrid">España (CET)</option>
+                                    <option value="Europe/London">Reino Unido (GMT)</option>
+                                </optgroup>
                             </select>
                         </div>
 
