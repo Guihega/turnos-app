@@ -104,7 +104,6 @@ function SearchableSelect({ value, onChange, options = [], loading, placeholder,
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999,
                     marginTop: 4, background: T.card, border: `1px solid ${T.border}`,
                     borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-                    maxHeight: 280, overflow: 'hidden', display: 'flex', flexDirection: 'column',
                 }}>
                     <input
                         type="text"
@@ -113,11 +112,11 @@ function SearchableSelect({ value, onChange, options = [], loading, placeholder,
                         placeholder="Buscar..."
                         autoFocus
                         style={{
-                            ...inputStyle, borderRadius: 0, border: 'none',
+                            ...inputStyle, borderRadius: '10px 10px 0 0', border: 'none',
                             borderBottom: `1px solid ${T.border}`, fontSize: 13,
                         }}
                     />
-                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                    <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                         {loading ? (
                             <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
                                 Cargando...
