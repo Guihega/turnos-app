@@ -123,7 +123,7 @@ class OperatorSecurityTest extends TestCase
 
     public function test_operator_can_transfer_to_queue_in_same_branch(): void
     {
-        $targetQueue = Queue::factory()->create(['branch_id' => $this->branchA->id, 'is_active' => true]);
+        $targetQueue = Queue::factory()->create(['branch_id' => $this->branchA->id, 'prefix' => 'TRF', 'is_active' => true]);
         $ticket = $this->createInProgressTicket($this->branchA, $this->queueA, $this->serviceA, $this->operatorA, $this->counterA);
 
         $this->withoutExceptionHandling();
