@@ -194,9 +194,9 @@ export default function BranchForm({ branch }) {
                 if (!res.ok) throw new Error('API no disponible');
                 return res.json();
             })
-            .then(data => {
-                if (Array.isArray(data)) {
-                    setStates(data);
+            .then(result => {
+                if (Array.isArray(result)) {
+                    setStates(result);
                     setGeoAvailable(true);
                 } else {
                     setGeoAvailable(false);
@@ -220,8 +220,8 @@ export default function BranchForm({ branch }) {
                 if (!res.ok) throw new Error('API no disponible');
                 return res.json();
             })
-            .then(data => {
-                if (Array.isArray(data)) setCities(data);
+            .then(result => {
+                if (Array.isArray(result)) setCities(result);
             })
             .catch(() => {})
             .finally(() => setLoadingCities(false));
