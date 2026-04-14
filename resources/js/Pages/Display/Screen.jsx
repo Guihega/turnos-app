@@ -224,6 +224,9 @@ export default function DisplayScreen({ branch, initialData, announcements: init
                                 <div style={{ fontSize: 9, color: '#64748B', textTransform: 'capitalize', marginTop: 1 }}>
                                     {weather.description}
                                 </div>
+                                <div style={{ fontSize: 8, color: '#475569', marginTop: 1, fontWeight: 600 }}>
+                                    📍 {weather.city}
+                                </div>
                             </div>
                             <div style={{
                                 fontSize: 9, color: '#475569', fontFamily: T.mono,
