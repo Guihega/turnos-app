@@ -3,33 +3,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 /* ────────────────────────────────────────────
-   Design tokens (TurnosUI-compatible)
+   CSS variable helper — same pattern as AuthenticatedLayout
    ──────────────────────────────────────────── */
-const T = {
-    bg: '#0f1117',
-    card: '#1a1d27',
-    cardHover: '#22253a',
-    border: '#2a2d3a',
-    text: '#e2e8f0',
-    textMuted: '#94a3b8',
-    textDim: '#64748b',
-    blue: '#3b82f6',
-    blueHover: '#2563eb',
-    blueSoft: 'rgba(59,130,246,0.1)',
-    green: '#22c55e',
-    greenSoft: 'rgba(34,197,94,0.1)',
-    yellow: '#eab308',
-    yellowSoft: 'rgba(234,179,8,0.1)',
-    purple: '#a855f7',
-    purpleSoft: 'rgba(168,85,247,0.1)',
-    red: '#ef4444',
-    redSoft: 'rgba(239,68,68,0.1)',
-    orange: '#f97316',
-    orangeSoft: 'rgba(249,115,22,0.1)',
-    mono: "'JetBrains Mono', 'Fira Code', monospace",
-    radius: '8px',
-    radiusLg: '12px',
-};
+const V = (name) => `var(${name})`;
 
 /* ────────────────────────────────────────────
    Section data
@@ -56,17 +32,18 @@ const SECTIONS = [
 function SectionHeading({ id, icon, title }) {
     return (
         <h2 id={id} style={{
-            fontSize: '1.5rem',
+            fontSize: '1.4rem',
             fontWeight: 700,
-            color: T.text,
+            color: V('--t-text'),
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
             margin: '2.5rem 0 1rem',
             paddingTop: '1rem',
             scrollMarginTop: '80px',
+            fontFamily: "'Outfit', sans-serif",
         }}>
-            <span style={{ fontSize: '1.3rem' }}>{icon}</span> {title}
+            <span style={{ fontSize: '1.2rem' }}>{icon}</span> {title}
         </h2>
     );
 }
@@ -74,10 +51,11 @@ function SectionHeading({ id, icon, title }) {
 function SubHeading({ children }) {
     return (
         <h3 style={{
-            fontSize: '1.1rem',
+            fontSize: '1.05rem',
             fontWeight: 600,
-            color: T.text,
+            color: V('--t-text'),
             margin: '1.5rem 0 0.75rem',
+            fontFamily: "'Outfit', sans-serif",
         }}>
             {children}
         </h3>
@@ -87,10 +65,10 @@ function SubHeading({ children }) {
 function P({ children }) {
     return (
         <p style={{
-            color: T.textMuted,
-            lineHeight: 1.7,
+            color: V('--t-text-muted'),
+            lineHeight: 1.75,
             margin: '0.5rem 0',
-            fontSize: '0.925rem',
+            fontSize: '0.9rem',
         }}>
             {children}
         </p>
@@ -99,25 +77,25 @@ function P({ children }) {
 
 function StepList({ steps }) {
     return (
-        <ol style={{ margin: '0.75rem 0', paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <ol style={{ margin: '0.75rem 0', paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {steps.map((step, i) => (
                 <li key={i} style={{
                     display: 'flex',
                     gap: '0.75rem',
                     alignItems: 'flex-start',
-                    background: T.card,
-                    border: `1px solid ${T.border}`,
-                    borderRadius: T.radius,
-                    padding: '0.75rem 1rem',
+                    background: V('--t-card'),
+                    border: `1px solid ${V('--t-border')}`,
+                    borderRadius: 8,
+                    padding: '0.7rem 1rem',
                 }}>
                     <span style={{
-                        background: T.blueSoft,
-                        color: T.blue,
+                        background: `color-mix(in srgb, ${V('--t-blue')} 12%, transparent)`,
+                        color: V('--t-blue'),
                         fontWeight: 700,
-                        fontSize: '0.8rem',
+                        fontSize: '0.75rem',
                         borderRadius: '50%',
-                        width: 28,
-                        height: 28,
+                        width: 26,
+                        height: 26,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -126,7 +104,7 @@ function StepList({ steps }) {
                     }}>
                         {i + 1}
                     </span>
-                    <span style={{ color: T.textMuted, lineHeight: 1.6, fontSize: '0.9rem' }}>{step}</span>
+                    <span style={{ color: V('--t-text-muted'), lineHeight: 1.65, fontSize: '0.875rem' }}>{step}</span>
                 </li>
             ))}
         </ol>
@@ -135,47 +113,48 @@ function StepList({ steps }) {
 
 function InfoBox({ type = 'info', children }) {
     const styles = {
-        info: { bg: T.blueSoft, border: T.blue, icon: 'ℹ️' },
-        tip: { bg: T.greenSoft, border: T.green, icon: '💡' },
-        warning: { bg: T.yellowSoft, border: T.yellow, icon: '⚠️' },
-        important: { bg: T.purpleSoft, border: T.purple, icon: '🔑' },
+        info: { color: '--t-blue', icon: 'ℹ️' },
+        tip: { color: '--t-green', icon: '💡' },
+        warning: { color: '--t-yellow', icon: '⚠️' },
+        important: { color: '--t-purple', icon: '🔑' },
     };
     const s = styles[type] || styles.info;
     return (
         <div style={{
-            background: s.bg,
-            borderLeft: `3px solid ${s.border}`,
-            borderRadius: `0 ${T.radius} ${T.radius} 0`,
+            background: `color-mix(in srgb, ${V(s.color)} 8%, transparent)`,
+            borderLeft: `3px solid ${V(s.color)}`,
+            borderRadius: `0 8px 8px 0`,
             padding: '0.75rem 1rem',
             margin: '0.75rem 0',
             display: 'flex',
             gap: '0.5rem',
             alignItems: 'flex-start',
         }}>
-            <span style={{ fontSize: '1rem', flexShrink: 0 }}>{s.icon}</span>
-            <span style={{ color: T.textMuted, lineHeight: 1.6, fontSize: '0.9rem' }}>{children}</span>
+            <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>{s.icon}</span>
+            <span style={{ color: V('--t-text-muted'), lineHeight: 1.65, fontSize: '0.875rem' }}>{children}</span>
         </div>
     );
 }
 
 function RoleBadge({ role }) {
     const colors = {
-        admin: { bg: T.purpleSoft, color: T.purple },
-        operador: { bg: T.blueSoft, color: T.blue },
-        cliente: { bg: T.greenSoft, color: T.green },
-        manager: { bg: T.orangeSoft, color: T.orange },
+        admin: '--t-purple',
+        operador: '--t-blue',
+        cliente: '--t-green',
+        manager: '--t-yellow',
     };
-    const c = colors[role] || colors.operador;
+    const c = colors[role] || '--t-blue';
     return (
         <span style={{
-            background: c.bg,
-            color: c.color,
-            fontSize: '0.75rem',
+            background: `color-mix(in srgb, ${V(c)} 12%, transparent)`,
+            color: V(c),
+            fontSize: '0.7rem',
             fontWeight: 600,
             padding: '2px 8px',
-            borderRadius: '4px',
+            borderRadius: 4,
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
+            fontFamily: "'Outfit', sans-serif",
         }}>
             {role}
         </span>
@@ -185,24 +164,15 @@ function RoleBadge({ role }) {
 function CodeBlock({ children }) {
     return (
         <code style={{
-            background: 'rgba(59,130,246,0.1)',
-            color: T.blue,
+            background: `color-mix(in srgb, ${V('--t-blue')} 10%, transparent)`,
+            color: V('--t-blue'),
             padding: '2px 6px',
-            borderRadius: '4px',
-            fontFamily: T.mono,
-            fontSize: '0.825rem',
+            borderRadius: 4,
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: '0.8rem',
         }}>
             {children}
         </code>
-    );
-}
-
-function KeyValue({ label, children }) {
-    return (
-        <div style={{ display: 'flex', gap: '0.5rem', margin: '0.25rem 0', fontSize: '0.9rem' }}>
-            <span style={{ color: T.textDim, minWidth: 120, flexShrink: 0 }}>{label}:</span>
-            <span style={{ color: T.textMuted }}>{children}</span>
-        </div>
     );
 }
 
@@ -210,20 +180,21 @@ function FeatureGrid({ items }) {
     return (
         <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '0.75rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            gap: '0.6rem',
             margin: '0.75rem 0',
         }}>
             {items.map((item, i) => (
                 <div key={i} style={{
-                    background: T.card,
-                    border: `1px solid ${T.border}`,
-                    borderRadius: T.radius,
+                    background: V('--t-card'),
+                    border: `1px solid ${V('--t-border')}`,
+                    borderRadius: 10,
                     padding: '1rem',
+                    transition: 'border-color 0.2s',
                 }}>
-                    <div style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{item.icon}</div>
-                    <div style={{ color: T.text, fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.25rem' }}>{item.title}</div>
-                    <div style={{ color: T.textDim, fontSize: '0.825rem', lineHeight: 1.5 }}>{item.desc}</div>
+                    <div style={{ fontSize: '1.2rem', marginBottom: '0.4rem' }}>{item.icon}</div>
+                    <div style={{ color: V('--t-text'), fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.2rem', fontFamily: "'Outfit', sans-serif" }}>{item.title}</div>
+                    <div style={{ color: V('--t-text-muted'), fontSize: '0.8rem', lineHeight: 1.5 }}>{item.desc}</div>
                 </div>
             ))}
         </div>
@@ -236,7 +207,7 @@ function TableSimple({ headers, rows }) {
             <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontSize: '0.875rem',
+                fontSize: '0.85rem',
             }}>
                 <thead>
                     <tr>
@@ -244,12 +215,13 @@ function TableSimple({ headers, rows }) {
                             <th key={i} style={{
                                 textAlign: 'left',
                                 padding: '0.5rem 0.75rem',
-                                borderBottom: `2px solid ${T.border}`,
-                                color: T.textDim,
+                                borderBottom: `2px solid ${V('--t-border')}`,
+                                color: V('--t-text-muted'),
                                 fontWeight: 600,
-                                fontSize: '0.8rem',
+                                fontSize: '0.75rem',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.5px',
+                                fontFamily: "'Outfit', sans-serif",
                             }}>{h}</th>
                         ))}
                     </tr>
@@ -260,8 +232,8 @@ function TableSimple({ headers, rows }) {
                             {row.map((cell, j) => (
                                 <td key={j} style={{
                                     padding: '0.5rem 0.75rem',
-                                    borderBottom: `1px solid ${T.border}`,
-                                    color: T.textMuted,
+                                    borderBottom: `1px solid ${V('--t-border')}`,
+                                    color: V('--t-text-muted'),
                                 }}>{cell}</td>
                             ))}
                         </tr>
@@ -329,9 +301,9 @@ function SectionOnboarding() {
 
             <SubHeading>Wizard de 3 pasos</SubHeading>
             <StepList steps={[
-                <><strong>Cuenta personal</strong> — Ingresa tu nombre, email y contraseña. El email debe ser único en toda la plataforma y se usará para verificación.</>,
-                <><strong>Datos de empresa</strong> — Nombre de la empresa, slug (URL única, ej: mi-clinica), país, teléfono opcional. El slug se valida en tiempo real con debounce para asegurar disponibilidad.</>,
-                <><strong>Primera sucursal</strong> — Nombre de la sucursal, dirección con selección cascada de país → estado → ciudad (vía GeoNames), horario de operación y capacidad máxima.</>,
+                <><strong style={{ color: V('--t-text') }}>Cuenta personal</strong> — Ingresa tu nombre, email y contraseña. El email debe ser único en toda la plataforma y se usará para verificación.</>,
+                <><strong style={{ color: V('--t-text') }}>Datos de empresa</strong> — Nombre de la empresa, slug (URL única, ej: mi-clinica), país, teléfono opcional. El slug se valida en tiempo real con debounce para asegurar disponibilidad.</>,
+                <><strong style={{ color: V('--t-text') }}>Primera sucursal</strong> — Nombre de la sucursal, dirección con selección cascada de país → estado → ciudad (vía GeoNames), horario de operación y capacidad máxima.</>,
             ]} />
 
             <InfoBox type="info">
@@ -703,12 +675,12 @@ function SectionSeguridad() {
 
             <SubHeading>Capas de protección</SubHeading>
             <StepList steps={[
-                <><strong>Nginx</strong> — Rate limiting a nivel de servidor web. Protección contra DDoS básico.</>,
-                <><strong>Por IP</strong> — Límite de peticiones por dirección IP. Configurable desde Personalización → Seguridad.</>,
-                <><strong>Por IP + Sucursal</strong> — Límite combinado para prevenir abuso en kioscos públicos.</>,
-                <><strong>Por Sucursal por hora</strong> — Capacidad máxima de turnos por hora por sucursal.</>,
-                <><strong>Detección de bots</strong> — Campos honeypot y validación de timestamp en el kiosco. Configurable.</>,
-                <><strong>Validaciones de negocio</strong> — Verificación de horario, capacidad, y estado de la cola.</>,
+                <><strong style={{ color: V('--t-text') }}>Nginx</strong> — Rate limiting a nivel de servidor web. Protección contra DDoS básico.</>,
+                <><strong style={{ color: V('--t-text') }}>Por IP</strong> — Límite de peticiones por dirección IP. Configurable desde Personalización → Seguridad.</>,
+                <><strong style={{ color: V('--t-text') }}>Por IP + Sucursal</strong> — Límite combinado para prevenir abuso en kioscos públicos.</>,
+                <><strong style={{ color: V('--t-text') }}>Por Sucursal por hora</strong> — Capacidad máxima de turnos por hora por sucursal.</>,
+                <><strong style={{ color: V('--t-text') }}>Detección de bots</strong> — Campos honeypot y validación de timestamp en el kiosco. Configurable.</>,
+                <><strong style={{ color: V('--t-text') }}>Validaciones de negocio</strong> — Verificación de horario, capacidad, y estado de la cola.</>,
             ]} />
 
             <SubHeading>Aislamiento multi-tenant</SubHeading>
@@ -780,7 +752,7 @@ function SectionFAQ() {
     return (
         <>
             <SectionHeading id="faq" icon="❓" title="Preguntas Frecuentes" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '1rem 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', margin: '1rem 0' }}>
                 {faqs.map((faq, i) => (
                     <FAQItem key={i} q={faq.q} a={faq.a} />
                 ))}
@@ -793,10 +765,11 @@ function FAQItem({ q, a }) {
     const [open, setOpen] = useState(false);
     return (
         <div style={{
-            background: T.card,
-            border: `1px solid ${T.border}`,
-            borderRadius: T.radius,
+            background: V('--t-card'),
+            border: `1px solid ${V('--t-border')}`,
+            borderRadius: 8,
             overflow: 'hidden',
+            transition: 'border-color 0.2s',
         }}>
             <button
                 onClick={() => setOpen(!open)}
@@ -805,35 +778,36 @@ function FAQItem({ q, a }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0.875rem 1rem',
+                    padding: '0.85rem 1rem',
                     background: 'none',
                     border: 'none',
-                    color: T.text,
+                    color: V('--t-text'),
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '0.875rem',
                     fontWeight: 500,
                     textAlign: 'left',
+                    fontFamily: "'Outfit', sans-serif",
                 }}
             >
                 {q}
                 <span style={{
                     transform: open ? 'rotate(180deg)' : 'rotate(0)',
                     transition: 'transform 0.2s ease',
-                    color: T.textDim,
-                    fontSize: '0.75rem',
+                    color: V('--t-text-muted'),
+                    fontSize: '0.7rem',
                     flexShrink: 0,
-                    marginLeft: '0.5rem',
+                    marginLeft: '0.75rem',
                 }}>
                     ▼
                 </span>
             </button>
             {open && (
                 <div style={{
-                    padding: '0 1rem 0.875rem',
-                    color: T.textMuted,
-                    fontSize: '0.875rem',
-                    lineHeight: 1.6,
-                    borderTop: `1px solid ${T.border}`,
+                    padding: '0 1rem 0.85rem',
+                    color: V('--t-text-muted'),
+                    fontSize: '0.85rem',
+                    lineHeight: 1.65,
+                    borderTop: `1px solid ${V('--t-border')}`,
                     paddingTop: '0.75rem',
                 }}>
                     {a}
@@ -891,7 +865,7 @@ export default function HelpIndex({ userRole }) {
         setMobileNavOpen(false);
     }, []);
 
-    // Search filtering — highlight matching sections
+    // Search filtering
     const filteredSections = useMemo(() => {
         if (!searchQuery.trim()) return SECTIONS;
         const q = searchQuery.toLowerCase();
@@ -905,17 +879,32 @@ export default function HelpIndex({ userRole }) {
         <AuthenticatedLayout>
             <Head title="Centro de Ayuda" />
 
+            <style>{`
+                .help-sidebar::-webkit-scrollbar { width: 3px; }
+                .help-sidebar::-webkit-scrollbar-thumb { background: ${V('--t-border')}; border-radius: 3px; }
+                .help-nav-item { transition: all 0.15s ease; }
+                .help-nav-item:hover { background: ${V('--t-surface')} !important; }
+                .help-search:focus { border-color: ${V('--t-blue')} !important; outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, ${V('--t-blue')} 15%, transparent); }
+                @media (max-width: 767px) {
+                    .help-sidebar-desktop { display: none !important; }
+                }
+                @media (min-width: 768px) {
+                    .help-mobile-fab { display: none !important; }
+                }
+            `}</style>
+
             <div style={{
                 maxWidth: 1100,
                 margin: '0 auto',
-                padding: '0 1rem',
+                padding: '1.5rem 1rem 0',
                 display: 'flex',
                 gap: '2rem',
                 position: 'relative',
+                fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
             }}>
                 {/* ─── Sidebar (desktop) ─── */}
-                <aside style={{
-                    width: 240,
+                <aside className="help-sidebar-desktop help-sidebar" style={{
+                    width: 230,
                     flexShrink: 0,
                     position: 'sticky',
                     top: 72,
@@ -923,8 +912,6 @@ export default function HelpIndex({ userRole }) {
                     maxHeight: 'calc(100vh - 90px)',
                     overflowY: 'auto',
                     paddingBottom: '2rem',
-                    display: 'none',
-                    // Show on desktop via media query workaround — inline below
                 }}>
                     <SidebarContent
                         sections={filteredSections}
@@ -935,60 +922,24 @@ export default function HelpIndex({ userRole }) {
                     />
                 </aside>
 
-                {/* Desktop sidebar via style tag */}
-                <style>{`
-                    @media (min-width: 768px) {
-                        .help-sidebar { display: block !important; }
-                        .help-mobile-toggle { display: none !important; }
-                    }
-                    @media (max-width: 767px) {
-                        .help-sidebar { display: none !important; }
-                    }
-                    .help-sidebar::-webkit-scrollbar { width: 4px; }
-                    .help-sidebar::-webkit-scrollbar-thumb { background: ${T.border}; border-radius: 4px; }
-                    .help-nav-item { transition: all 0.15s ease; }
-                    .help-nav-item:hover { background: ${T.cardHover} !important; }
-                    .help-search:focus { border-color: ${T.blue} !important; outline: none; }
-                `}</style>
-
-                <aside className="help-sidebar" style={{
-                    width: 240,
-                    flexShrink: 0,
-                    position: 'sticky',
-                    top: 72,
-                    height: 'fit-content',
-                    maxHeight: 'calc(100vh - 90px)',
-                    overflowY: 'auto',
-                    paddingBottom: '2rem',
-                    paddingTop: '1rem',
-                }}>
-                    <SidebarContent
-                        sections={filteredSections}
-                        activeSection={activeSection}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        scrollTo={scrollTo}
-                    />
-                </aside>
-
-                {/* ─── Mobile nav toggle ─── */}
+                {/* ─── Mobile nav FAB ─── */}
                 <button
-                    className="help-mobile-toggle"
+                    className="help-mobile-fab"
                     onClick={() => setMobileNavOpen(!mobileNavOpen)}
                     style={{
                         position: 'fixed',
                         bottom: 20,
                         right: 20,
                         zIndex: 50,
-                        background: T.blue,
+                        background: V('--t-blue'),
                         color: '#fff',
                         border: 'none',
                         borderRadius: '50%',
                         width: 48,
                         height: 48,
-                        fontSize: '1.25rem',
+                        fontSize: '1.2rem',
                         cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1011,8 +962,8 @@ export default function HelpIndex({ userRole }) {
                                 bottom: 0,
                                 left: 0,
                                 right: 0,
-                                background: T.bg,
-                                borderTop: `1px solid ${T.border}`,
+                                background: V('--t-bg'),
+                                borderTop: `1px solid ${V('--t-border')}`,
                                 borderRadius: '16px 16px 0 0',
                                 padding: '1.5rem',
                                 maxHeight: '70vh',
@@ -1032,27 +983,28 @@ export default function HelpIndex({ userRole }) {
                 )}
 
                 {/* ─── Main content ─── */}
-                <main ref={contentRef} style={{ flex: 1, minWidth: 0, paddingTop: '0.5rem', paddingBottom: '4rem' }}>
+                <main ref={contentRef} style={{ flex: 1, minWidth: 0, paddingBottom: '4rem' }}>
                     {/* Header */}
                     <div style={{
-                        background: `linear-gradient(135deg, ${T.blueSoft}, ${T.purpleSoft})`,
-                        borderRadius: T.radiusLg,
-                        padding: '2rem',
-                        marginBottom: '1rem',
-                        border: `1px solid ${T.border}`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, ${V('--t-blue')} 10%, transparent), color-mix(in srgb, ${V('--t-purple')} 10%, transparent))`,
+                        borderRadius: 12,
+                        padding: '1.75rem 2rem',
+                        marginBottom: '0.5rem',
+                        border: `1px solid ${V('--t-border')}`,
                     }}>
                         <h1 style={{
-                            fontSize: '1.75rem',
+                            fontSize: '1.6rem',
                             fontWeight: 700,
-                            color: T.text,
+                            color: V('--t-text'),
                             margin: 0,
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.5rem',
+                            fontFamily: "'Outfit', sans-serif",
                         }}>
                             📖 Centro de Ayuda
                         </h1>
-                        <p style={{ color: T.textMuted, margin: '0.5rem 0 0', fontSize: '0.925rem' }}>
+                        <p style={{ color: V('--t-text-muted'), margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
                             Documentación completa del sistema de gestión de turnos Olinora.
                         </p>
                     </div>
@@ -1084,16 +1036,16 @@ export default function HelpIndex({ userRole }) {
 
                     {/* Footer */}
                     <div style={{
-                        marginTop: '3rem',
-                        padding: '1.5rem',
-                        background: T.card,
-                        border: `1px solid ${T.border}`,
-                        borderRadius: T.radiusLg,
+                        marginTop: '2.5rem',
+                        padding: '1.25rem',
+                        background: V('--t-card'),
+                        border: `1px solid ${V('--t-border')}`,
+                        borderRadius: 10,
                         textAlign: 'center',
                     }}>
-                        <p style={{ color: T.textDim, fontSize: '0.85rem', margin: 0 }}>
+                        <p style={{ color: V('--t-text-muted'), fontSize: '0.85rem', margin: 0 }}>
                             ¿No encontraste lo que buscas? Contáctanos en{' '}
-                            <span style={{ color: T.blue }}>soporte@olinora.com.mx</span>
+                            <span style={{ color: V('--t-blue') }}>soporte@olinora.com.mx</span>
                         </p>
                     </div>
                 </main>
@@ -1107,7 +1059,7 @@ function SidebarContent({ sections, activeSection, searchQuery, setSearchQuery, 
     return (
         <>
             {/* Search */}
-            <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '0.75rem' }}>
                 <input
                     className="help-search"
                     type="text"
@@ -1117,19 +1069,21 @@ function SidebarContent({ sections, activeSection, searchQuery, setSearchQuery, 
                     style={{
                         width: '100%',
                         padding: '0.5rem 0.75rem',
-                        background: T.card,
-                        border: `1px solid ${T.border}`,
-                        borderRadius: T.radius,
-                        color: T.text,
-                        fontSize: '0.825rem',
+                        background: V('--t-card'),
+                        border: `1px solid ${V('--t-border')}`,
+                        borderRadius: 8,
+                        color: V('--t-text'),
+                        fontSize: '0.8rem',
                         outline: 'none',
                         boxSizing: 'border-box',
+                        fontFamily: "'Outfit', sans-serif",
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
                     }}
                 />
             </div>
 
             {/* Nav items */}
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                 {sections.map(s => {
                     const isActive = activeSection === s.id;
                     return (
@@ -1141,20 +1095,22 @@ function SidebarContent({ sections, activeSection, searchQuery, setSearchQuery, 
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.5rem',
-                                padding: '0.5rem 0.75rem',
-                                background: isActive ? T.blueSoft : 'transparent',
+                                padding: '0.45rem 0.7rem',
+                                background: isActive ? `color-mix(in srgb, ${V('--t-blue')} 10%, transparent)` : 'transparent',
                                 border: 'none',
-                                borderRadius: '6px',
+                                borderRadius: 6,
                                 cursor: 'pointer',
                                 textAlign: 'left',
                                 width: '100%',
-                                borderLeft: isActive ? `3px solid ${T.blue}` : '3px solid transparent',
+                                borderLeft: isActive ? `3px solid ${V('--t-blue')}` : '3px solid transparent',
+                                fontFamily: "'Outfit', sans-serif",
+                                transition: 'all 0.15s ease',
                             }}
                         >
-                            <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{s.icon}</span>
+                            <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>{s.icon}</span>
                             <span style={{
-                                fontSize: '0.825rem',
-                                color: isActive ? T.blue : T.textMuted,
+                                fontSize: '0.8rem',
+                                color: isActive ? V('--t-blue') : V('--t-text-muted'),
                                 fontWeight: isActive ? 600 : 400,
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -1168,7 +1124,7 @@ function SidebarContent({ sections, activeSection, searchQuery, setSearchQuery, 
             </nav>
 
             {sections.length === 0 && searchQuery && (
-                <p style={{ color: T.textDim, fontSize: '0.8rem', textAlign: 'center', marginTop: '1rem' }}>
+                <p style={{ color: V('--t-text-muted'), fontSize: '0.8rem', textAlign: 'center', marginTop: '1rem' }}>
                     No se encontraron secciones
                 </p>
             )}
@@ -1177,5 +1133,5 @@ function SidebarContent({ sections, activeSection, searchQuery, setSearchQuery, 
 }
 
 function Divider() {
-    return <hr style={{ border: 'none', borderTop: `1px solid ${T.border}`, margin: '1.5rem 0' }} />;
+    return <hr style={{ border: 'none', borderTop: `1px solid ${V('--t-border')}`, margin: '1.5rem 0' }} />;
 }
