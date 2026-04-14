@@ -166,10 +166,12 @@ class DisplayController extends Controller
                     ->limit(10)
                     ->get()
                     ->map(fn($a) => [
-                        'id'    => $a->id,
-                        'type'  => $a->type,
-                        'title' => $a->title,
-                        'body'  => $a->body,
+                        'id'         => $a->id,
+                        'type'       => $a->type,
+                        'title'      => $a->title,
+                        'body'       => $a->body,
+                        'media_url'  => $a->media_url,
+                        'media_type' => $a->media_type,
                     ])
                     ->toArray();
             }

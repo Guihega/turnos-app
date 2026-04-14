@@ -387,20 +387,32 @@ export default function DisplayScreen({ branch, initialData, announcements: init
                         </div>
                         {newsItems.slice(0, 3).map((item, i) => (
                             <div key={item.id || i} style={{
-                                padding: '10px 12px',
+                                padding: item.media_url ? 0 : '10px 12px',
                                 background: 'rgba(255,255,255,0.02)',
                                 borderRadius: 10,
                                 marginBottom: 8,
                                 border: '1px solid rgba(255,255,255,0.04)',
+                                overflow: 'hidden',
                             }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#CBD5E1', lineHeight: 1.4 }}>
-                                    {item.title}
-                                </div>
-                                {item.body && (
-                                    <div style={{ fontSize: 11, color: '#64748B', marginTop: 4, lineHeight: 1.5 }}>
-                                        {item.body.length > 120 ? item.body.slice(0, 120) + '...' : item.body}
+                                {item.media_url && (
+                                    <div style={{ width: '100%', height: 100, overflow: 'hidden' }}>
+                                        {item.media_type === 'video' ? (
+                                            <video src={item.media_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop playsInline />
+                                        ) : (
+                                            <img src={item.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        )}
                                     </div>
                                 )}
+                                <div style={{ padding: '10px 12px' }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#CBD5E1', lineHeight: 1.4 }}>
+                                        {item.title}
+                                    </div>
+                                    {item.body && (
+                                        <div style={{ fontSize: 11, color: '#64748B', marginTop: 4, lineHeight: 1.5 }}>
+                                            {item.body.length > 120 ? item.body.slice(0, 120) + '...' : item.body}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -531,28 +543,40 @@ function AnnouncementCarousel({ items, primaryColor }) {
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div key={idx} style={{
-                padding: '14px 16px',
                 background: `${primaryColor}08`,
                 border: `1px solid ${primaryColor}15`,
                 borderRadius: 12,
                 animation: 'fadeSlideIn 0.4s ease',
                 flex: 1,
+                overflow: 'hidden',
             }}>
-                <div style={{
-                    fontSize: 10, fontWeight: 800, color: primaryColor,
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    marginBottom: 6, fontFamily: "'JetBrains Mono', monospace",
-                }}>
-                    {current.type === 'promo' ? '🎉 Promoción' : '📢 Anuncio'}
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#E2E8F0', lineHeight: 1.4, marginBottom: 4 }}>
-                    {current.title}
-                </div>
-                {current.body && (
-                    <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5 }}>
-                        {current.body.length > 150 ? current.body.slice(0, 150) + '...' : current.body}
+                {/* Media (imagen o video) */}
+                {current.media_url && (
+                    <div style={{ width: '100%', maxHeight: 160, overflow: 'hidden' }}>
+                        {current.media_type === 'video' ? (
+                            <video src={current.media_url} style={{ width: '100%', height: 160, objectFit: 'cover' }} autoPlay muted loop playsInline />
+                        ) : (
+                            <img src={current.media_url} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                        )}
                     </div>
                 )}
+                <div style={{ padding: '12px 16px' }}>
+                    <div style={{
+                        fontSize: 10, fontWeight: 800, color: primaryColor,
+                        textTransform: 'uppercase', letterSpacing: '0.08em',
+                        marginBottom: 6, fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                        {current.type === 'promo' ? '🎉 Promoción' : '📢 Anuncio'}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#E2E8F0', lineHeight: 1.4, marginBottom: 4 }}>
+                        {current.title}
+                    </div>
+                    {current.body && (
+                        <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.5 }}>
+                            {current.body.length > 150 ? current.body.slice(0, 150) + '...' : current.body}
+                        </div>
+                    )}
+                </div>
             </div>
             {items.length > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10 }}>

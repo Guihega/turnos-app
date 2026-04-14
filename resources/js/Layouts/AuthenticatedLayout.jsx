@@ -117,6 +117,13 @@ export default function AuthenticatedLayout({ children }) {
                                                 ⬡ Códigos QR
                                             </Link>
                                         )}
+                                        {isAdminRole(user.role) && (
+                                            <Link href={route('admin.announcements.index')} style={{ display: 'block', padding: '10px 16px', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', transition: 'background 0.15s' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = V('--t-surface')}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                📢 Anuncios
+                                            </Link>
+                                        )}
                                         <Link href={route('logout')} method="post" as="button" style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 13, color: V('--t-red'), background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", transition: 'background 0.15s' }}
                                             onMouseEnter={e => e.currentTarget.style.background = `color-mix(in srgb, ${V('--t-red')} 6%, transparent)`}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -174,6 +181,11 @@ export default function AuthenticatedLayout({ children }) {
                             {isAdminRole(user.role) && (
                                 <Link href={route('admin.qr.index')} onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', padding: '6px 0' }}>
                                     ⬡ Códigos QR
+                                </Link>
+                            )}
+                            {isAdminRole(user.role) && (
+                                <Link href={route('admin.announcements.index')} onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-text-soft'), textDecoration: 'none', padding: '6px 0' }}>
+                                    📢 Anuncios
                                 </Link>
                             )}
                             <Link href={route('logout')} method="post" as="button" onClick={() => setOpen(false)} style={{ display: 'block', fontSize: 13, color: V('--t-red'), background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", padding: '6px 0', marginTop: 4 }}>Cerrar sesión</Link>

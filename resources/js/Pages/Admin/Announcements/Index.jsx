@@ -1,5 +1,5 @@
 // resources/js/Pages/Admin/Announcements/Index.jsx
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -23,11 +23,15 @@ export default function AnnouncementsIndex({ announcements, branches }) {
     const { flash } = usePage().props;
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [mediaPreview, setMediaPreview] = useState(null);
+    const mediaRef = useRef(null);
 
     const form = useForm({
         type: 'announcement',
         title: '',
         body: '',
+        media: null,
+        remove_media: false,
         branch_id: '',
         priority: 0,
         is_active: true,
@@ -39,6 +43,7 @@ export default function AnnouncementsIndex({ announcements, branches }) {
         form.reset();
         setEditing(null);
         setShowForm(false);
+        setMediaPreview(null);
     };
 
     const startEdit = (item) => {
@@ -47,24 +52,62 @@ export default function AnnouncementsIndex({ announcements, branches }) {
             type: item.type,
             title: item.title,
             body: item.body || '',
+            media: null,
+            remove_media: false,
             branch_id: item.branch_id || '',
             priority: item.priority || 0,
             is_active: item.is_active,
             starts_at: item.starts_at ? item.starts_at.slice(0, 16) : '',
             ends_at: item.ends_at ? item.ends_at.slice(0, 16) : '',
         });
+        setMediaPreview(item.media_url || null);
         setShowForm(true);
     };
 
+    const handleMediaSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        form.setData('media', file);
+        form.setData('remove_media', false);
+        setMediaPreview(URL.createObjectURL(file));
+    };
+
+    const handleMediaRemove = () => {
+        form.setData('media', null);
+        form.setData('remove_media', true);
+        setMediaPreview(null);
+        if (mediaRef.current) mediaRef.current.value = '';
+    };
+
+    const isVideo = (url) => {
+        if (!url) return false;
+        return url.match(/\.(mp4|webm)$/i) || (form.data.media && form.data.media.type?.startsWith('video/'));
+    };
+
     const submit = () => {
+        const data = new FormData();
+        data.append('type', form.data.type);
+        data.append('title', form.data.title);
+        data.append('body', form.data.body || '');
+        data.append('branch_id', form.data.branch_id || '');
+        data.append('priority', form.data.priority);
+        data.append('is_active', form.data.is_active ? '1' : '0');
+        data.append('starts_at', form.data.starts_at || '');
+        data.append('ends_at', form.data.ends_at || '');
+        if (form.data.media) data.append('media', form.data.media);
+        if (form.data.remove_media) data.append('remove_media', '1');
+
         if (editing) {
-            form.put(route('admin.announcements.update', editing.id), {
+            data.append('_method', 'PUT');
+            router.post(route('admin.announcements.update', editing.id), data, {
                 preserveScroll: true,
+                forceFormData: true,
                 onSuccess: resetForm,
             });
         } else {
-            form.post(route('admin.announcements.store'), {
+            router.post(route('admin.announcements.store'), data, {
                 preserveScroll: true,
+                forceFormData: true,
                 onSuccess: resetForm,
             });
         }
@@ -134,11 +177,7 @@ export default function AnnouncementsIndex({ announcements, branches }) {
 
                         {/* Tipo */}
                         <div style={{ marginBottom: 20 }}>
-                            <label style={{
-                                display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                fontFamily: "'JetBrains Mono', monospace",
-                            }}>Tipo</label>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Tipo</label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 {TYPES.map(t => (
                                     <button key={t.value} type="button" onClick={() => form.setData('type', t.value)}
@@ -157,128 +196,104 @@ export default function AnnouncementsIndex({ announcements, branches }) {
 
                         {/* Título */}
                         <div style={{ marginBottom: 20 }}>
-                            <label style={{
-                                display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                fontFamily: "'JetBrains Mono', monospace",
-                            }}>Título</label>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Título</label>
                             <input type="text" value={form.data.title} onChange={e => form.setData('title', e.target.value)}
-                                placeholder="Ej: Horario especial este viernes"
-                                maxLength={255}
-                                style={{
-                                    width: '100%', padding: '10px 14px',
-                                    background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                    color: V('--t-text'), fontSize: 14, outline: 'none',
-                                    fontFamily: "'Outfit', sans-serif",
-                                }} />
+                                placeholder="Ej: Horario especial este viernes" maxLength={255}
+                                style={{ width: '100%', padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 14, outline: 'none', fontFamily: "'Outfit', sans-serif" }} />
                             {form.errors.title && <div style={{ fontSize: 11, color: V('--t-red'), marginTop: 4 }}>{form.errors.title}</div>}
                         </div>
 
                         {/* Cuerpo */}
                         <div style={{ marginBottom: 20 }}>
-                            <label style={{
-                                display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                fontFamily: "'JetBrains Mono', monospace",
-                            }}>Descripción (opcional)</label>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Descripción (opcional)</label>
                             <textarea value={form.data.body} onChange={e => form.setData('body', e.target.value)}
-                                placeholder="Texto adicional que se mostrará debajo del título"
-                                maxLength={1000} rows={3}
-                                style={{
-                                    width: '100%', padding: '10px 14px',
-                                    background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                    color: V('--t-text'), fontSize: 14, outline: 'none', resize: 'vertical',
-                                    fontFamily: "'Outfit', sans-serif",
-                                }} />
+                                placeholder="Texto adicional que se mostrará debajo del título" maxLength={1000} rows={3}
+                                style={{ width: '100%', padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: "'Outfit', sans-serif" }} />
+                        </div>
+
+                        {/* Media upload */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Imagen o video (opcional)</label>
+                            <div style={{
+                                padding: 16, borderRadius: 12,
+                                border: `1.5px dashed ${V('--t-border')}`,
+                                background: V('--t-surface'),
+                                textAlign: 'center',
+                            }}>
+                                {mediaPreview ? (
+                                    <div>
+                                        {isVideo(mediaPreview) ? (
+                                            <video src={mediaPreview} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }} controls muted />
+                                        ) : (
+                                            <img src={mediaPreview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, objectFit: 'cover' }} />
+                                        )}
+                                        <div style={{ marginTop: 10, display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                            <button type="button" onClick={() => mediaRef.current?.click()} style={{
+                                                padding: '6px 16px', borderRadius: 8, background: V('--t-blue'), color: '#fff',
+                                                border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif",
+                                            }}>Cambiar</button>
+                                            <button type="button" onClick={handleMediaRemove} style={{
+                                                padding: '6px 16px', borderRadius: 8, border: `1px solid ${V('--t-border')}`,
+                                                background: 'transparent', color: V('--t-red'), fontSize: 12, fontWeight: 600,
+                                                cursor: 'pointer', fontFamily: "'Outfit', sans-serif",
+                                            }}>Eliminar</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.4 }}>🖼️</div>
+                                        <button type="button" onClick={() => mediaRef.current?.click()} style={{
+                                            padding: '8px 20px', borderRadius: 8, background: V('--t-blue'), color: '#fff',
+                                            border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit', sans-serif",
+                                        }}>Subir imagen o video</button>
+                                        <div style={{ fontSize: 11, color: V('--t-text-muted'), marginTop: 8 }}>
+                                            JPG, PNG, GIF, WebP, MP4, WebM · Máximo 20MB
+                                        </div>
+                                    </div>
+                                )}
+                                <input ref={mediaRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+                                    onChange={handleMediaSelect} style={{ display: 'none' }} />
+                            </div>
+                            {form.errors.media && <div style={{ fontSize: 11, color: V('--t-red'), marginTop: 4 }}>{form.errors.media}</div>}
                         </div>
 
                         {/* Fila: Sucursal + Prioridad */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
                             <div>
-                                <label style={{
-                                    display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                    textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                    fontFamily: "'JetBrains Mono', monospace",
-                                }}>Sucursal</label>
+                                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Sucursal</label>
                                 <select value={form.data.branch_id} onChange={e => form.setData('branch_id', e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '10px 14px',
-                                        background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                        color: V('--t-text'), fontSize: 14, outline: 'none', cursor: 'pointer',
-                                        fontFamily: "'Outfit', sans-serif", appearance: 'none',
-                                    }}>
+                                    style={{ width: '100%', padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 14, outline: 'none', cursor: 'pointer', fontFamily: "'Outfit', sans-serif", appearance: 'none' }}>
                                     <option value="">Todas las sucursales</option>
-                                    {branches.map(b => (
-                                        <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
-                                    ))}
+                                    {branches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.code})</option>)}
                                 </select>
-                                <div style={{ fontSize: 11, color: V('--t-text-muted'), marginTop: 4 }}>
-                                    Dejar vacío para mostrar en todas
-                                </div>
+                                <div style={{ fontSize: 11, color: V('--t-text-muted'), marginTop: 4 }}>Dejar vacío para mostrar en todas</div>
                             </div>
                             <div>
-                                <label style={{
-                                    display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                    textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                    fontFamily: "'JetBrains Mono', monospace",
-                                }}>Prioridad</label>
+                                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Prioridad</label>
                                 <input type="number" value={form.data.priority} min={0} max={100}
                                     onChange={e => form.setData('priority', parseInt(e.target.value) || 0)}
-                                    style={{
-                                        width: 100, padding: '10px 14px',
-                                        background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                        color: V('--t-text'), fontSize: 14, fontFamily: "'JetBrains Mono', monospace",
-                                        fontWeight: 700, outline: 'none',
-                                    }} />
-                                <div style={{ fontSize: 11, color: V('--t-text-muted'), marginTop: 4 }}>
-                                    Mayor número = aparece primero
-                                </div>
+                                    style={{ width: 100, padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 14, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, outline: 'none' }} />
+                                <div style={{ fontSize: 11, color: V('--t-text-muted'), marginTop: 4 }}>Mayor número = aparece primero</div>
                             </div>
                         </div>
 
                         {/* Fila: Fechas */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
                             <div>
-                                <label style={{
-                                    display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                    textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                    fontFamily: "'JetBrains Mono', monospace",
-                                }}>Inicia (opcional)</label>
-                                <input type="datetime-local" value={form.data.starts_at}
-                                    onChange={e => form.setData('starts_at', e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '10px 14px',
-                                        background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                        color: V('--t-text'), fontSize: 13, outline: 'none',
-                                        fontFamily: "'JetBrains Mono', monospace",
-                                    }} />
+                                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Inicia (opcional)</label>
+                                <input type="datetime-local" value={form.data.starts_at} onChange={e => form.setData('starts_at', e.target.value)}
+                                    style={{ width: '100%', padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 13, outline: 'none', fontFamily: "'JetBrains Mono', monospace" }} />
                             </div>
                             <div>
-                                <label style={{
-                                    display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'),
-                                    textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8,
-                                    fontFamily: "'JetBrains Mono', monospace",
-                                }}>Termina (opcional)</label>
-                                <input type="datetime-local" value={form.data.ends_at}
-                                    onChange={e => form.setData('ends_at', e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '10px 14px',
-                                        background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10,
-                                        color: V('--t-text'), fontSize: 13, outline: 'none',
-                                        fontFamily: "'JetBrains Mono', monospace",
-                                    }} />
+                                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: V('--t-text-muted'), textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>Termina (opcional)</label>
+                                <input type="datetime-local" value={form.data.ends_at} onChange={e => form.setData('ends_at', e.target.value)}
+                                    style={{ width: '100%', padding: '10px 14px', background: V('--t-surface'), border: `1px solid ${V('--t-border')}`, borderRadius: 10, color: V('--t-text'), fontSize: 13, outline: 'none', fontFamily: "'JetBrains Mono', monospace" }} />
                             </div>
                         </div>
 
                         {/* Botones */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24, paddingTop: 20,
-                            borderTop: `1px solid ${V('--t-border')}` }}>
-                            <button type="button" onClick={resetForm} style={{
-                                padding: '10px 20px', borderRadius: 10, cursor: 'pointer',
-                                background: V('--t-surface'), color: V('--t-text-muted'),
-                                border: `1px solid ${V('--t-border')}`, fontSize: 13, fontWeight: 600,
-                                fontFamily: "'Outfit', sans-serif",
-                            }}>Cancelar</button>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24, paddingTop: 20, borderTop: `1px solid ${V('--t-border')}` }}>
+                            <button type="button" onClick={resetForm} style={{ padding: '10px 20px', borderRadius: 10, cursor: 'pointer', background: V('--t-surface'), color: V('--t-text-muted'), border: `1px solid ${V('--t-border')}`, fontSize: 13, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Cancelar</button>
                             <button type="button" onClick={submit} disabled={form.processing || !form.data.title.trim()} style={{
                                 padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer',
                                 background: V('--t-blue'), color: '#fff', fontSize: 13, fontWeight: 700,
@@ -294,33 +309,31 @@ export default function AnnouncementsIndex({ announcements, branches }) {
 
                 {/* Lista de anuncios */}
                 {items.length === 0 && !showForm ? (
-                    <div style={{
-                        textAlign: 'center', padding: '60px 20px',
-                        background: V('--t-card'), border: `1px solid ${V('--t-border')}`, borderRadius: 16,
-                    }}>
+                    <div style={{ textAlign: 'center', padding: '60px 20px', background: V('--t-card'), border: `1px solid ${V('--t-border')}`, borderRadius: 16 }}>
                         <div style={{ fontSize: 48, marginBottom: 16 }}>📢</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: V('--t-text'), marginBottom: 8 }}>
-                            Sin anuncios todavía
-                        </div>
-                        <div style={{ fontSize: 14, color: V('--t-text-muted'), marginBottom: 24 }}>
-                            Los anuncios se muestran en la pantalla pública de las sucursales
-                        </div>
-                        <button onClick={() => setShowForm(true)} style={{
-                            padding: '11px 28px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                            background: V('--t-blue'), color: '#fff', fontSize: 13, fontWeight: 700,
-                            fontFamily: "'Outfit', sans-serif",
-                        }}>Crear primer anuncio</button>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: V('--t-text'), marginBottom: 8 }}>Sin anuncios todavía</div>
+                        <div style={{ fontSize: 14, color: V('--t-text-muted'), marginBottom: 24 }}>Los anuncios se muestran en la pantalla pública de las sucursales</div>
+                        <button onClick={() => setShowForm(true)} style={{ padding: '11px 28px', borderRadius: 10, border: 'none', cursor: 'pointer', background: V('--t-blue'), color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>Crear primer anuncio</button>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {items.map(item => (
                             <div key={item.id} style={{
                                 background: V('--t-card'), border: `1px solid ${V('--t-border')}`, borderRadius: 14,
-                                padding: '18px 22px',
-                                display: 'flex', alignItems: 'center', gap: 16,
-                                opacity: item.is_active ? 1 : 0.5,
-                                transition: 'opacity 0.2s',
+                                padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 16,
+                                opacity: item.is_active ? 1 : 0.5, transition: 'opacity 0.2s',
                             }}>
+                                {/* Thumbnail de media */}
+                                {item.media_url && (
+                                    <div style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: V('--t-surface') }}>
+                                        {item.media_type === 'video' ? (
+                                            <video src={item.media_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                                        ) : (
+                                            <img src={item.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Tipo badge */}
                                 <div style={{
                                     fontSize: 10, fontWeight: 700, padding: '5px 10px', borderRadius: 6,
@@ -334,15 +347,10 @@ export default function AnnouncementsIndex({ announcements, branches }) {
 
                                 {/* Contenido */}
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: 14, fontWeight: 700, color: V('--t-text'), marginBottom: 2 }}>
-                                        {item.title}
-                                    </div>
+                                    <div style={{ fontSize: 14, fontWeight: 700, color: V('--t-text'), marginBottom: 2 }}>{item.title}</div>
                                     <div style={{ display: 'flex', gap: 12, fontSize: 11, color: V('--t-text-muted') }}>
-                                        {item.branch ? (
-                                            <span>📍 {item.branch.name}</span>
-                                        ) : (
-                                            <span>🌐 Todas las sucursales</span>
-                                        )}
+                                        {item.branch ? <span>📍 {item.branch.name}</span> : <span>🌐 Todas</span>}
+                                        {item.media_url && <span>{item.media_type === 'video' ? '🎬 Video' : '🖼️ Imagen'}</span>}
                                         {item.starts_at && <span>Desde: {new Date(item.starts_at).toLocaleDateString('es-MX')}</span>}
                                         {item.ends_at && <span>Hasta: {new Date(item.ends_at).toLocaleDateString('es-MX')}</span>}
                                     </div>
@@ -351,29 +359,13 @@ export default function AnnouncementsIndex({ announcements, branches }) {
                                 {/* Acciones */}
                                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                                     <button onClick={() => toggleActive(item)} title={item.is_active ? 'Desactivar' : 'Activar'}
-                                        style={{
-                                            width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer',
-                                            background: item.is_active
-                                                ? `color-mix(in srgb, ${V('--t-green')} 10%, transparent)`
-                                                : V('--t-surface'),
-                                            color: item.is_active ? V('--t-green') : V('--t-text-muted'),
-                                            fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        }}>
+                                        style={{ width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer', background: item.is_active ? `color-mix(in srgb, ${V('--t-green')} 10%, transparent)` : V('--t-surface'), color: item.is_active ? V('--t-green') : V('--t-text-muted'), fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {item.is_active ? '✓' : '○'}
                                     </button>
                                     <button onClick={() => startEdit(item)} title="Editar"
-                                        style={{
-                                            width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer',
-                                            background: V('--t-surface'), color: V('--t-text-muted'), fontSize: 14,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        }}>✎</button>
+                                        style={{ width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer', background: V('--t-surface'), color: V('--t-text-muted'), fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✎</button>
                                     <button onClick={() => deleteItem(item)} title="Eliminar"
-                                        style={{
-                                            width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer',
-                                            background: `color-mix(in srgb, ${V('--t-red')} 8%, transparent)`,
-                                            color: V('--t-red'), fontSize: 14,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        }}>✕</button>
+                                        style={{ width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer', background: `color-mix(in srgb, ${V('--t-red')} 8%, transparent)`, color: V('--t-red'), fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                                 </div>
                             </div>
                         ))}

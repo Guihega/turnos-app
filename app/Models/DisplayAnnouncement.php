@@ -20,6 +20,8 @@ class DisplayAnnouncement extends Model
         'title',
         'body',
         'image_url',
+        'media_url',
+        'media_type',
         'priority',
         'is_active',
         'starts_at',
