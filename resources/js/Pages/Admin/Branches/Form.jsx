@@ -1,7 +1,7 @@
 // resources/js/Pages/Admin/Branches/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const DAYS = [
@@ -64,27 +64,32 @@ function Field({ label, error, children, span, hint }) {
 }
 
 // ── Componente de búsqueda con autocompletado ──
-function SearchableSelect({ value, onChange, options, loading, placeholder, onSearch, disabled }) {
+function SearchableSelect({ value, onChange, options = [], loading, placeholder, disabled }) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
+    const ref = useRef(null);
 
-    const filtered = search
-        ? options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()))
-        : options;
+    // Cerrar al hacer clic fuera
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
 
-    const handleSelect = (option) => {
-        onChange(option);
-        setSearch('');
-        setOpen(false);
-    };
+    const filtered = options.filter(o =>
+        !search || o.name.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <div style={{ position: 'relative' }}>
+        <div ref={ref} style={{ position: 'relative' }}>
             <div style={{
                 ...inputStyle,
                 display: 'flex', alignItems: 'center', cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.5 : 1,
-            }} onClick={() => !disabled && setOpen(!open)}>
+            }} onClick={() => { if (!disabled) { setOpen(!open); setSearch(''); } }}>
                 <span style={{ flex: 1, color: value ? T.text : T.textMuted }}>
                     {value || placeholder || 'Seleccionar...'}
                 </span>
@@ -95,53 +100,48 @@ function SearchableSelect({ value, onChange, options, loading, placeholder, onSe
             </div>
 
             {open && !disabled && (
-                <>
-                    <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-                    <div style={{
-                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                        marginTop: 4, background: T.card, border: `1px solid ${T.border}`,
-                        borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                        maxHeight: 240, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                    }}>
-                        {/* Buscador */}
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={e => { setSearch(e.target.value); onSearch?.(e.target.value); }}
-                            placeholder="Buscar..."
-                            autoFocus
-                            style={{
-                                ...inputStyle, borderRadius: 0, border: 'none',
-                                borderBottom: `1px solid ${T.border}`, fontSize: 13,
-                            }}
-                        />
-                        <div style={{ overflow: 'auto', flex: 1 }}>
-                            {loading ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
-                                    Cargando...
+                <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999,
+                    marginTop: 4, background: T.card, border: `1px solid ${T.border}`,
+                    borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                    maxHeight: 280, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                }}>
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Buscar..."
+                        autoFocus
+                        style={{
+                            ...inputStyle, borderRadius: 0, border: 'none',
+                            borderBottom: `1px solid ${T.border}`, fontSize: 13,
+                        }}
+                    />
+                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                        {loading ? (
+                            <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
+                                Cargando...
+                            </div>
+                        ) : filtered.length === 0 ? (
+                            <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
+                                {search ? 'Sin resultados' : options.length === 0 ? 'Cargando datos...' : 'Sin opciones'}
+                            </div>
+                        ) : (
+                            filtered.map((option, i) => (
+                                <div key={option.id || i}
+                                    onClick={() => { onChange(option); setOpen(false); setSearch(''); }}
+                                    style={{
+                                        padding: '10px 14px', cursor: 'pointer', fontSize: 13,
+                                        color: T.text, borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}22` : 'none',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = T.surface}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {option.name}
                                 </div>
-                            ) : filtered.length === 0 ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
-                                    {search ? 'Sin resultados' : 'Sin opciones disponibles'}
-                                </div>
-                            ) : (
-                                filtered.map((option, i) => (
-                                    <div key={option.id || option.name || i}
-                                        onClick={() => handleSelect(option)}
-                                        style={{
-                                            padding: '10px 14px', cursor: 'pointer', fontSize: 13,
-                                            color: T.text, transition: 'background 0.1s',
-                                            borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}33` : 'none',
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.background = T.surface}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                        {option.name}
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                            ))
+                        )}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );
