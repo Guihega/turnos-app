@@ -178,16 +178,16 @@ export default function BranchForm({ branch }) {
     const [loadingCities, setLoadingCities] = useState(false);
     const [selectedStateId, setSelectedStateId] = useState(null);
     const [geoAvailable, setGeoAvailable] = useState(true);
+    const [activeCountry, setActiveCountry] = useState(data.country || 'MX');
 
-    // Cargar estados cuando cambia el país
-    useEffect(() => {
-        if (!data.country) return;
-
+    // Función para cargar estados de un país
+    const loadStates = useCallback((countryCode) => {
+        if (!countryCode) return;
         setLoadingStates(true);
         setStates([]);
         setCities([]);
 
-        fetch(`/api/geo/states/${data.country}`, {
+        fetch(`/api/geo/states/${countryCode}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then(res => {
@@ -204,16 +204,15 @@ export default function BranchForm({ branch }) {
             })
             .catch(() => setGeoAvailable(false))
             .finally(() => setLoadingStates(false));
-    }, [data.country]);
+    }, []);
 
-    // Cargar ciudades cuando se selecciona un estado
-    useEffect(() => {
-        if (!selectedStateId || !data.country) return;
-
+    // Función para cargar ciudades de un estado
+    const loadCities = useCallback((countryCode, stateId) => {
+        if (!stateId || !countryCode) return;
         setLoadingCities(true);
         setCities([]);
 
-        fetch(`/api/geo/cities/${data.country}/${selectedStateId}`, {
+        fetch(`/api/geo/cities/${countryCode}/${stateId}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then(res => {
@@ -225,38 +224,37 @@ export default function BranchForm({ branch }) {
             })
             .catch(() => {})
             .finally(() => setLoadingCities(false));
-    }, [selectedStateId, data.country]);
+    }, []);
+
+    // Cargar estados al montar el componente
+    useEffect(() => {
+        loadStates(activeCountry);
+    }, []);
 
     const handleCountryChange = (countryCode) => {
-        setData(prev => ({
-            ...prev,
-            country: countryCode,
-            state: '',
-            city: '',
-            latitude: '',
-            longitude: '',
-        }));
+        setData('country', countryCode);
+        setData('state', '');
+        setData('city', '');
+        setData('latitude', '');
+        setData('longitude', '');
+        setActiveCountry(countryCode);
         setSelectedStateId(null);
+        loadStates(countryCode);
     };
 
     const handleStateSelect = (stateOption) => {
-        setData(prev => ({
-            ...prev,
-            state: stateOption.name,
-            city: '',
-            latitude: '',
-            longitude: '',
-        }));
+        setData('state', stateOption.name);
+        setData('city', '');
+        setData('latitude', '');
+        setData('longitude', '');
         setSelectedStateId(stateOption.id);
+        loadCities(activeCountry, stateOption.id);
     };
 
     const handleCitySelect = (cityOption) => {
-        setData(prev => ({
-            ...prev,
-            city: cityOption.name,
-            latitude: cityOption.lat || prev.latitude,
-            longitude: cityOption.lng || prev.longitude,
-        }));
+        setData('city', cityOption.name);
+        if (cityOption.lat) setData('latitude', cityOption.lat);
+        if (cityOption.lng) setData('longitude', cityOption.lng);
     };
 
     const toggleDay = (dayKey) => {
