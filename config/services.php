@@ -41,4 +41,7 @@ return [
         'alerts_enabled' => env('TELEGRAM_ALERTS_ENABLED', false),
     ],
 
+    'openweathermap' => [
+        'key' => env('OPENWEATHERMAP_API_KEY'),
+    ],
 ];

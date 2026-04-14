@@ -14,6 +14,7 @@ use App\Http\Controllers\KioskController;
 use App\Http\Controllers\TicketActionController;
 use App\Http\Controllers\TenantSettingsController;
 use App\Http\Controllers\Admin\DisplayAnnouncementController;
+use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -57,6 +58,11 @@ Route::prefix('kiosco/{branch}')->group(function () {
 Route::get('/pantalla-publica/{branch}', [DisplayController::class, 'public'])
     ->middleware('throttle:display-public')
     ->name('display.public');
+
+// API del clima para pantalla pública (cache 30min)
+Route::get('/api/weather/{branch}', [WeatherController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('api.weather');
 
 // Ruta corta para QR → redirige al kiosco (ej: olinora.com.mx/t/sede-centro)
 Route::get('/t/{branch:slug}', function (App\Models\Branch $branch) {

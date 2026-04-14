@@ -17,6 +17,7 @@ export default function DisplayScreen({ branch, initialData, announcements: init
     const [wsConnected, setWsConnected] = useState(false);
     const [announcements, setAnnouncements] = useState(initialAnnouncements);
     const [currentAnnouncementIdx, setCurrentAnnouncementIdx] = useState(0);
+    const [weather, setWeather] = useState(null);
     const lastEventRef = useRef(Date.now());
 
     // Configuración del tenant
@@ -51,6 +52,24 @@ export default function DisplayScreen({ branch, initialData, announcements: init
         }, ANNOUNCEMENT_ROTATE_MS);
         return () => clearInterval(id);
     }, [announcements.length]);
+
+    // ── Clima ──
+    useEffect(() => {
+        const fetchWeather = async () => {
+            try {
+                const res = await fetch(`/api/weather/${branch.id}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!data.error) setWeather(data);
+                }
+            } catch {}
+        };
+        fetchWeather();
+        const id = setInterval(fetchWeather, 30 * 60 * 1000); // cada 30 min
+        return () => clearInterval(id);
+    }, [branch.id]);
 
     // ── Recarga de datos ──
     const reloadData = useCallback(() => {
@@ -167,7 +186,7 @@ export default function DisplayScreen({ branch, initialData, announcements: init
                     </div>
                 </div>
 
-                {/* Fecha, hora y estado */}
+                {/* Fecha, hora, clima y estado */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div style={{
@@ -180,6 +199,42 @@ export default function DisplayScreen({ branch, initialData, announcements: init
                             {wsConnected ? 'EN VIVO' : 'POLL'}
                         </span>
                     </div>
+
+                    {/* Widget de clima */}
+                    {weather && (
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '6px 14px',
+                            background: 'rgba(255,255,255,0.04)',
+                            borderRadius: 10,
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <img
+                                src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
+                                alt={weather.description}
+                                style={{ width: 36, height: 36, marginLeft: -6 }}
+                            />
+                            <div>
+                                <div style={{
+                                    fontSize: 20, fontWeight: 800, fontFamily: T.mono,
+                                    color: '#F1F5F9', lineHeight: 1,
+                                }}>
+                                    {weather.temp}°
+                                </div>
+                                <div style={{ fontSize: 9, color: '#64748B', textTransform: 'capitalize', marginTop: 1 }}>
+                                    {weather.description}
+                                </div>
+                            </div>
+                            <div style={{
+                                fontSize: 9, color: '#475569', fontFamily: T.mono,
+                                display: 'flex', flexDirection: 'column', gap: 1, marginLeft: 4,
+                            }}>
+                                <span>💧 {weather.humidity}%</span>
+                                <span>🌡 {weather.feels_like}°</span>
+                            </div>
+                        </div>
+                    )}
+
                     <div style={{ textAlign: 'right' }}>
                         <div style={{
                             fontSize: 36, fontWeight: 800, fontFamily: T.mono,
