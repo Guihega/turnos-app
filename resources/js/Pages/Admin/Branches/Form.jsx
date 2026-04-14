@@ -1,6 +1,7 @@
 // resources/js/Pages/Admin/Branches/Form.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
+import { useState, useEffect, useCallback } from 'react';
 import { Btn, Card, T } from '@/Components/TurnosUI';
 
 const DAYS = [
@@ -15,6 +16,29 @@ const DAYS = [
 
 const DEFAULT_HOURS = { open: '08:00', close: '18:00' };
 
+const COUNTRIES = [
+    { code: 'MX', name: 'México', flag: '🇲🇽' },
+    { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+    { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+    { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+    { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+    { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+    { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+    { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
+    { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
+    { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
+    { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
+    { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
+    { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
+    { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
+    { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
+    { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+    { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+    { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+    { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+    { code: 'ES', name: 'España', flag: '🇪🇸' },
+];
+
 const inputStyle = {
     width: '100%', background: T.surface, color: T.text, border: `1px solid ${T.border}`,
     borderRadius: 10, padding: '12px 14px', fontSize: 14, outline: 'none', fontFamily: T.font,
@@ -28,12 +52,97 @@ const labelStyle = {
 
 const errorStyle = { fontSize: 11, color: T.red, marginTop: 4 };
 
-function Field({ label, error, children, span }) {
+function Field({ label, error, children, span, hint }) {
     return (
         <div style={span ? { gridColumn: span } : {}}>
             <label style={labelStyle}>{label}</label>
             {children}
+            {hint && !error && <div style={{ fontSize: 10, color: T.textMuted, marginTop: 4 }}>{hint}</div>}
             {error && <div style={errorStyle}>{error}</div>}
+        </div>
+    );
+}
+
+// ── Componente de búsqueda con autocompletado ──
+function SearchableSelect({ value, onChange, options, loading, placeholder, onSearch, disabled }) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+
+    const filtered = search
+        ? options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()))
+        : options;
+
+    const handleSelect = (option) => {
+        onChange(option);
+        setSearch('');
+        setOpen(false);
+    };
+
+    return (
+        <div style={{ position: 'relative' }}>
+            <div style={{
+                ...inputStyle,
+                display: 'flex', alignItems: 'center', cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1,
+            }} onClick={() => !disabled && setOpen(!open)}>
+                <span style={{ flex: 1, color: value ? T.text : T.textMuted }}>
+                    {value || placeholder || 'Seleccionar...'}
+                </span>
+                {loading && <span style={{ fontSize: 11 }}>⏳</span>}
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" style={{ opacity: 0.4, flexShrink: 0 }}>
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+            </div>
+
+            {open && !disabled && (
+                <>
+                    <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                    <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                        marginTop: 4, background: T.card, border: `1px solid ${T.border}`,
+                        borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                        maxHeight: 240, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                    }}>
+                        {/* Buscador */}
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => { setSearch(e.target.value); onSearch?.(e.target.value); }}
+                            placeholder="Buscar..."
+                            autoFocus
+                            style={{
+                                ...inputStyle, borderRadius: 0, border: 'none',
+                                borderBottom: `1px solid ${T.border}`, fontSize: 13,
+                            }}
+                        />
+                        <div style={{ overflow: 'auto', flex: 1 }}>
+                            {loading ? (
+                                <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
+                                    Cargando...
+                                </div>
+                            ) : filtered.length === 0 ? (
+                                <div style={{ padding: 16, textAlign: 'center', color: T.textMuted, fontSize: 12 }}>
+                                    {search ? 'Sin resultados' : 'Sin opciones disponibles'}
+                                </div>
+                            ) : (
+                                filtered.map((option, i) => (
+                                    <div key={option.id || option.name || i}
+                                        onClick={() => handleSelect(option)}
+                                        style={{
+                                            padding: '10px 14px', cursor: 'pointer', fontSize: 13,
+                                            color: T.text, transition: 'background 0.1s',
+                                            borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}33` : 'none',
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = T.surface}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                        {option.name}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
@@ -49,6 +158,8 @@ export default function BranchForm({ branch }) {
         city: branch?.city || '',
         state: branch?.state || '',
         country: branch?.country || 'MX',
+        latitude: branch?.latitude || '',
+        longitude: branch?.longitude || '',
         phone: branch?.phone || '',
         email: branch?.email || '',
         timezone: branch?.timezone || 'America/Mexico_City',
@@ -59,6 +170,94 @@ export default function BranchForm({ branch }) {
         is_active: branch?.is_active ?? true,
         operating_hours: initialHours,
     });
+
+    // Estados y ciudades cargados desde GeoNames
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [selectedStateId, setSelectedStateId] = useState(null);
+    const [geoAvailable, setGeoAvailable] = useState(true);
+
+    // Cargar estados cuando cambia el país
+    useEffect(() => {
+        if (!data.country) return;
+
+        setLoadingStates(true);
+        setStates([]);
+        setCities([]);
+
+        fetch(`/api/geo/states/${data.country}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('API no disponible');
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setStates(data);
+                    setGeoAvailable(true);
+                } else {
+                    setGeoAvailable(false);
+                }
+            })
+            .catch(() => setGeoAvailable(false))
+            .finally(() => setLoadingStates(false));
+    }, [data.country]);
+
+    // Cargar ciudades cuando se selecciona un estado
+    useEffect(() => {
+        if (!selectedStateId || !data.country) return;
+
+        setLoadingCities(true);
+        setCities([]);
+
+        fetch(`/api/geo/cities/${data.country}/${selectedStateId}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('API no disponible');
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) setCities(data);
+            })
+            .catch(() => {})
+            .finally(() => setLoadingCities(false));
+    }, [selectedStateId, data.country]);
+
+    const handleCountryChange = (countryCode) => {
+        setData(prev => ({
+            ...prev,
+            country: countryCode,
+            state: '',
+            city: '',
+            latitude: '',
+            longitude: '',
+        }));
+        setSelectedStateId(null);
+    };
+
+    const handleStateSelect = (stateOption) => {
+        setData(prev => ({
+            ...prev,
+            state: stateOption.name,
+            city: '',
+            latitude: '',
+            longitude: '',
+        }));
+        setSelectedStateId(stateOption.id);
+    };
+
+    const handleCitySelect = (cityOption) => {
+        setData(prev => ({
+            ...prev,
+            city: cityOption.name,
+            latitude: cityOption.lat || prev.latitude,
+            longitude: cityOption.lng || prev.longitude,
+        }));
+    };
 
     const toggleDay = (dayKey) => {
         const hours = { ...data.operating_hours };
@@ -88,6 +287,7 @@ export default function BranchForm({ branch }) {
     };
 
     const activeDays = Object.keys(data.operating_hours).length;
+    const currentCountry = COUNTRIES.find(c => c.code === data.country);
 
     return (
         <AuthenticatedLayout>
@@ -135,52 +335,115 @@ export default function BranchForm({ branch }) {
                         </div>
                     )}
 
-                    {/* Identity */}
+                    {/* Identification */}
                     <Card className="t-fade-up t-stagger-2" accent={T.blue} style={{ marginBottom: 16 }}>
                         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Identificación</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 16, marginBottom: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: 16, marginBottom: 16 }}>
                             <Field label="Nombre" error={errors.name}>
-                                <input style={inputStyle} value={data.name} onChange={e => setData('name', e.target.value)} required placeholder="Ej: Sede Centro" />
+                                <input style={inputStyle} value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Sucursal Centro" />
                             </Field>
                             <Field label="Código" error={errors.code}>
-                                <input style={{ ...inputStyle, fontFamily: T.mono, fontWeight: 800, textTransform: 'uppercase', textAlign: 'center', fontSize: 18 }}
-                                    value={data.code} onChange={e => setData('code', e.target.value.toUpperCase())} required maxLength={6} placeholder="CTR" />
+                                <input style={{ ...inputStyle, fontFamily: T.mono, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}
+                                    value={data.code} onChange={e => setData('code', e.target.value.toUpperCase())} placeholder="CTR" maxLength={10} />
                             </Field>
                         </div>
+                        <Field label="Dirección" error={errors.address}>
+                            <input style={inputStyle} value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Calle, Número, Colonia" />
+                        </Field>
+                    </Card>
+
+                    {/* Ubicación (GeoNames) */}
+                    <Card className="t-fade-up t-stagger-2b" accent={T.cyan || T.blue} style={{ marginBottom: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                            <div>
+                                <div style={{ fontSize: 15, fontWeight: 700 }}>Ubicación</div>
+                                <div style={{ fontSize: 11, color: T.textMuted, marginTop: 2 }}>
+                                    País, estado y ciudad — se usa para el clima y la zona horaria
+                                </div>
+                            </div>
+                            {!geoAvailable && (
+                                <div style={{
+                                    fontSize: 10, padding: '4px 10px', borderRadius: 6,
+                                    background: `color-mix(in srgb, ${T.amber} 10%, transparent)`,
+                                    color: T.amber, fontWeight: 600,
+                                }}>
+                                    Modo manual
+                                </div>
+                            )}
+                        </div>
+
+                        {/* País */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 16 }}>
-                            <Field label="Dirección" error={errors.address}>
-                                <input style={inputStyle} value={data.address} onChange={e => setData('address', e.target.value)} placeholder="Calle, número, colonia" />
-                            </Field>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-                            <Field label="Ciudad"><input style={inputStyle} value={data.city} onChange={e => setData('city', e.target.value)} placeholder="Puebla" /></Field>
-                            <Field label="Estado / Provincia"><input style={inputStyle} value={data.state} onChange={e => setData('state', e.target.value)} placeholder="Puebla" /></Field>
                             <Field label="País">
-                                <select style={inputStyle} value={data.country} onChange={e => setData('country', e.target.value)}>
-                                    <option value="MX">🇲🇽 México</option>
-                                    <option value="CO">🇨🇴 Colombia</option>
-                                    <option value="PE">🇵🇪 Perú</option>
-                                    <option value="CL">🇨🇱 Chile</option>
-                                    <option value="AR">🇦🇷 Argentina</option>
-                                    <option value="EC">🇪🇨 Ecuador</option>
-                                    <option value="GT">🇬🇹 Guatemala</option>
-                                    <option value="CR">🇨🇷 Costa Rica</option>
-                                    <option value="PA">🇵🇦 Panamá</option>
-                                    <option value="DO">🇩🇴 Rep. Dominicana</option>
-                                    <option value="SV">🇸🇻 El Salvador</option>
-                                    <option value="HN">🇭🇳 Honduras</option>
-                                    <option value="NI">🇳🇮 Nicaragua</option>
-                                    <option value="BO">🇧🇴 Bolivia</option>
-                                    <option value="PY">🇵🇾 Paraguay</option>
-                                    <option value="UY">🇺🇾 Uruguay</option>
-                                    <option value="VE">🇻🇪 Venezuela</option>
-                                    <option value="BR">🇧🇷 Brasil</option>
-                                    <option value="US">🇺🇸 Estados Unidos</option>
-                                    <option value="ES">🇪🇸 España</option>
+                                <select style={inputStyle} value={data.country} onChange={e => handleCountryChange(e.target.value)}>
+                                    {COUNTRIES.map(c => (
+                                        <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                                    ))}
                                 </select>
                             </Field>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+
+                        {/* Estado y Ciudad — con autocompletado si GeoNames disponible */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                            <Field label="Estado / Provincia" hint={geoAvailable ? 'Selecciona de la lista' : 'Escribe manualmente'}>
+                                {geoAvailable ? (
+                                    <SearchableSelect
+                                        value={data.state}
+                                        onChange={handleStateSelect}
+                                        options={states}
+                                        loading={loadingStates}
+                                        placeholder="Seleccionar estado..."
+                                    />
+                                ) : (
+                                    <input style={inputStyle} value={data.state}
+                                        onChange={e => setData('state', e.target.value)}
+                                        placeholder="Ej: Puebla" />
+                                )}
+                            </Field>
+
+                            <Field label="Ciudad" hint={geoAvailable && selectedStateId ? 'Selecciona de la lista' : geoAvailable ? 'Primero selecciona un estado' : 'Escribe manualmente'}>
+                                {geoAvailable && selectedStateId ? (
+                                    <SearchableSelect
+                                        value={data.city}
+                                        onChange={handleCitySelect}
+                                        options={cities}
+                                        loading={loadingCities}
+                                        placeholder="Seleccionar ciudad..."
+                                    />
+                                ) : geoAvailable ? (
+                                    <SearchableSelect
+                                        value={data.city}
+                                        onChange={() => {}}
+                                        options={[]}
+                                        loading={false}
+                                        placeholder="Selecciona un estado primero..."
+                                        disabled
+                                    />
+                                ) : (
+                                    <input style={inputStyle} value={data.city}
+                                        onChange={e => setData('city', e.target.value)}
+                                        placeholder="Ej: Puebla" />
+                                )}
+                            </Field>
+                        </div>
+
+                        {/* Coordenadas (auto-llenadas al seleccionar ciudad, o manuales) */}
+                        {(data.latitude || data.longitude) && (
+                            <div style={{
+                                marginTop: 12, padding: '8px 12px', borderRadius: 8,
+                                background: T.surface, fontSize: 11, color: T.textMuted,
+                                fontFamily: T.mono, display: 'flex', gap: 16,
+                            }}>
+                                <span>📍 Lat: {data.latitude}</span>
+                                <span>Lon: {data.longitude}</span>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Contacto */}
+                    <Card className="t-fade-up t-stagger-2c" accent={T.green} style={{ marginBottom: 16 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Contacto</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                             <Field label="Teléfono"><input style={inputStyle} value={data.phone} onChange={e => setData('phone', e.target.value)} type="tel" placeholder="+52 222..." /></Field>
                             <Field label="Email"><input style={inputStyle} value={data.email} onChange={e => setData('email', e.target.value)} type="email" placeholder="sucursal@ejemplo.com" /></Field>
                         </div>

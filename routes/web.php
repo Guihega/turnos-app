@@ -15,6 +15,7 @@ use App\Http\Controllers\TicketActionController;
 use App\Http\Controllers\TenantSettingsController;
 use App\Http\Controllers\Admin\DisplayAnnouncementController;
 use App\Http\Controllers\WeatherController;
+use App\Http\Controllers\GeoController;
 use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -63,6 +64,13 @@ Route::get('/pantalla-publica/{branch}', [DisplayController::class, 'public'])
 Route::get('/api/weather/{branch}', [WeatherController::class, 'show'])
     ->middleware('throttle:30,1')
     ->name('api.weather');
+
+// API de GeoNames — estados y ciudades por país (cache 30 días)
+Route::middleware('throttle:60,1')->prefix('api/geo')->group(function () {
+    Route::get('/states/{country}', [GeoController::class, 'states'])->name('api.geo.states');
+    Route::get('/cities/{country}/{stateGeonameId}', [GeoController::class, 'cities'])->name('api.geo.cities');
+    Route::get('/search/{country}', [GeoController::class, 'search'])->name('api.geo.search');
+});
 
 // Ruta corta para QR → redirige al kiosco (ej: olinora.com.mx/t/sede-centro)
 Route::get('/t/{branch:slug}', function (App\Models\Branch $branch) {

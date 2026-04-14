@@ -44,4 +44,8 @@ return [
     'openweathermap' => [
         'key' => env('OPENWEATHERMAP_API_KEY'),
     ],
+
+    'geonames' => [
+        'username' => env('GEONAMES_USERNAME'),
+    ],
 ];
