@@ -19,6 +19,7 @@ use App\Http\Controllers\GeoController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\LegalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -31,6 +32,10 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 });
+
+// Legal pages (public)
+Route::get('/privacidad', [LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/terminos', [LegalController::class, 'terms'])->name('legal.terms');
 
 // Onboarding — Registro público de nuevos tenants
 Route::middleware('guest')->group(function () {
