@@ -14,7 +14,9 @@ export default function Edit({ mustVerifyEmail, status }) {
         <AuthenticatedLayout>
             <Head title="Perfil" />
             <div className="t-page-shell" style={{ padding: T.pagePadding, background: T.bg, minHeight: '100vh', fontFamily: T.font, color: T.text }}>
-                <PageHeader title="Mi Perfil" subtitle="Administra tu información personal y seguridad" />
+                <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                    <PageHeader title="Mi Perfil" subtitle="Administra tu información personal y seguridad" />
+                </div>
 
                 <div className="profile-grid">
                     {/* Left column: Identity */}
