@@ -32,9 +32,7 @@ class SocialAuthController extends Controller
         // Guardar la intención (login o onboarding) en session
         session()->put('social_auth_action', request('action', 'login'));
 
-        return Socialite::driver($provider)
-            ->scopes($this->getScopes($provider))
-            ->redirect();
+        return $this->buildDriver($provider)->redirect();
     }
 
     /**
@@ -99,9 +97,7 @@ class SocialAuthController extends Controller
 
         session()->put('social_auth_action', 'link');
 
-        return Socialite::driver($provider)
-            ->scopes($this->getScopes($provider))
-            ->redirect();
+        return $this->buildDriver($provider)->redirect();
     }
 
     /**
@@ -182,6 +178,29 @@ class SocialAuthController extends Controller
 
         return redirect()->route('profile.edit')
             ->with('success', 'Cuenta de ' . ucfirst($provider) . ' desvinculada.');
+    }
+
+    /**
+     * Build the Socialite driver with proper scopes.
+     *
+     * Facebook: setScopes([]) overrides Socialite's default 'email' scope
+     * which is rejected by Facebook Graph API v23+.
+     * Google: uses standard OpenID Connect scopes.
+     */
+    private function buildDriver(string $provider)
+    {
+        $driver = Socialite::driver($provider);
+
+        if ($provider === 'facebook') {
+            // setScopes() REPLACES all scopes (including Socialite's default 'email')
+            // Facebook Graph API v23+ rejects 'email' as scope — it's included by default
+            $driver->setScopes([]);
+        } else {
+            // scopes() ADDS to existing scopes
+            $driver->scopes($this->getScopes($provider));
+        }
+
+        return $driver;
     }
 
     /**
