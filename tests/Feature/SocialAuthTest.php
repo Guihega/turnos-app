@@ -33,6 +33,7 @@ class SocialAuthTest extends TestCase
     {
         $driver = Mockery::mock(\Laravel\Socialite\Two\AbstractProvider::class);
         $driver->shouldReceive('scopes')->andReturnSelf();
+        $driver->shouldReceive('setScopes')->andReturnSelf();
         $driver->shouldReceive('redirect')->andReturn(redirect('https://provider.com/auth'));
         $driver->shouldReceive('user')->andReturn($user);
 
