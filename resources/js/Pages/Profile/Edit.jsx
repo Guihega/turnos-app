@@ -47,6 +47,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                     grid-template-columns: 1fr;
                     gap: 16px;
                     max-width: 1100px;
+                    margin: 0 auto;
                 }
                 @media (min-width: 900px) {
                     .profile-grid {
