@@ -103,8 +103,8 @@ class OnboardingController extends Controller
                 'name'      => $validated['name'],
                 'email'     => $validated['email'],
                 'password'  => !empty($validated['password'])
-                    ? Hash::make($validated['password'])
-                    : null,
+                            ? Hash::make($validated['password'])
+                            : '',
                 'tenant_id' => $tenant->id,
                 'role'      => UserRole::TENANT_ADMIN,
             ]);
