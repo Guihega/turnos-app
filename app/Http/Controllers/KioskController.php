@@ -108,8 +108,10 @@ class KioskController extends Controller
             return back()->withErrors(['branch' => 'Servicio no disponible en esta cola.']);
         }
 
-        // Max concurrent waiting check (tenant-configurable)
-        if ($branch->activeWaitingCount() >= $maxConcurrent) {
+        // Max concurrent waiting check (branch limit takes precedence, tenant overrides as ceiling)
+        $branchMax = $branch->max_concurrent_waiting ?? 50;
+        $effectiveMax = min($branchMax, $maxConcurrent);
+        if ($branch->activeWaitingCount() >= $effectiveMax) {
             return back()->withErrors(['branch' => 'Demasiados turnos en espera. Intente en unos minutos.']);
         }
 
