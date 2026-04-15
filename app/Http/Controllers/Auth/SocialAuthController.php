@@ -272,7 +272,7 @@ class SocialAuthController extends Controller
     {
         return match ($provider) {
             'google' => ['openid', 'profile', 'email'],
-            'facebook' => ['public_profile'],
+            'facebook' => [],
             default => [],
         };
     }
