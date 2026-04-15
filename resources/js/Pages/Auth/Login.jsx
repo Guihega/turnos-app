@@ -5,7 +5,7 @@ import { T } from '@/Components/TurnosUI';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: 'admin@empresa.com', password: 'Olinora2026!', remember: false,
+        email: '', password: '', remember: false,
     });
     const [focused, setFocused] = useState(null);
 
@@ -216,6 +216,16 @@ export default function Login({ status, canResetPassword }) {
                             {processing ? 'Ingresando...' : 'Iniciar Sesión'}
                         </button>
                     </form>
+                </div>
+
+                {/* Register link */}
+                <div className="login-anim login-anim-3" style={{ textAlign: 'center', marginTop: 20 }}>
+                    <span style={{ fontSize: 13, color: T.textMuted }}>
+                        ¿No tienes cuenta?{' '}
+                        <Link href="/onboarding" style={{ color: T.blue, textDecoration: 'none', fontWeight: 600 }}>
+                            Regístrate gratis
+                        </Link>
+                    </span>
                 </div>
 
                 {/* Footer */}
