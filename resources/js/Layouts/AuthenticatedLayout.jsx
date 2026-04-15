@@ -74,18 +74,15 @@ export default function AuthenticatedLayout({ children }) {
                             {/* Desktop user menu */}
                             <div className="turnos-nav-desktop" style={{ position: 'relative' }}>
                                 <button onClick={() => setUserMenu(!userMenu)} style={{
-                                    background: 'transparent', border: `1px solid ${V('--t-border')}`, borderRadius: 8,
-                                    padding: '6px 14px', color: V('--t-text-soft'), fontSize: 13, fontWeight: 500,
-                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                                    fontFamily: "'Outfit', sans-serif",
-                                }}>
-                                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: `linear-gradient(135deg, ${V('--t-blue')}, ${V('--t-purple')})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 11 }}>
+                                    background: 'transparent', border: `1px solid ${V('--t-border')}`, borderRadius: '50%',
+                                    padding: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'border-color 0.2s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.borderColor = V('--t-blue')}
+                                onMouseLeave={e => e.currentTarget.style.borderColor = V('--t-border')}>
+                                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `linear-gradient(135deg, ${V('--t-blue')}, ${V('--t-purple')})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 12 }}>
                                         {user.name?.charAt(0)?.toUpperCase()}
                                     </div>
-                                    {user.name}
-                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" style={{ opacity: 0.5 }}>
-                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
                                 </button>
 
                                 {userMenu && (<>
