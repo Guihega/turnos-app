@@ -18,6 +18,7 @@ use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\HelpCenterController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,6 +42,24 @@ Route::middleware('guest')->group(function () {
     Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
         ->middleware('throttle:30,1')
         ->name('onboarding.check-slug');
+});
+
+// OAuth — Social Login (guests: login + registro)
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
+        ->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
+        ->name('social.callback');
+});
+
+// OAuth — Vincular/Desvincular desde Perfil (autenticadas)
+Route::middleware('auth')->group(function () {
+    Route::get('/auth/{provider}/link', [SocialAuthController::class, 'link'])
+        ->name('social.link');
+    Route::get('/auth/{provider}/link/callback', [SocialAuthController::class, 'linkCallback'])
+        ->name('social.link.callback');
+    Route::delete('/auth/{provider}/unlink', [SocialAuthController::class, 'unlink'])
+        ->name('social.unlink');
 });
 
 // Kiosco público (rate limited)

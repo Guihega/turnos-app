@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
+import SocialAuthButtons from '@/Components/SocialAuthButtons';
 
 // Debounce simple sin dependencia de lodash
 function debounce(fn, delay) {
@@ -78,7 +79,7 @@ function StepIndicator({ current, steps }) {
 }
 
 // ─── Input Field ───
-function Field({ label, name, type = 'text', value, onChange, error, hint, suffix, disabled, autoFocus, maxLength }) {
+function Field({ label, name, type = 'text', value, onChange, error, hint, suffix, disabled, autoFocus, maxLength, readOnly }) {
     return (
         <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: T.gray700, marginBottom: 6 }}>
@@ -91,6 +92,7 @@ function Field({ label, name, type = 'text', value, onChange, error, hint, suffi
                     value={value}
                     onChange={onChange}
                     disabled={disabled}
+                    readOnly={readOnly}
                     autoFocus={autoFocus}
                     maxLength={maxLength}
                     autoComplete={type === 'password' ? 'new-password' : name}
@@ -105,10 +107,11 @@ function Field({ label, name, type = 'text', value, onChange, error, hint, suffi
                         transition: 'border-color 0.2s',
                         fontFamily: T.sans,
                         color: T.gray900,
-                        background: disabled ? T.gray100 : '#fff',
+                        background: disabled || readOnly ? T.gray100 : '#fff',
+                        cursor: readOnly ? 'not-allowed' : 'text',
                         boxSizing: 'border-box',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = error ? T.red : T.blue}
+                    onFocus={(e) => { if (!readOnly) e.target.style.borderColor = error ? T.red : T.blue; }}
                     onBlur={(e) => e.target.style.borderColor = error ? T.red : T.gray300}
                 />
                 {suffix && (
@@ -129,7 +132,9 @@ function Field({ label, name, type = 'text', value, onChange, error, hint, suffi
 }
 
 // ─── Step 1: Account ───
-function StepAccount({ data, setData, errors }) {
+function StepAccount({ data, setData, errors, socialData }) {
+    const isSocial = !!socialData;
+
     return (
         <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: T.gray900, margin: '0 0 4px' }}>
@@ -138,13 +143,49 @@ function StepAccount({ data, setData, errors }) {
             <p style={{ fontSize: 14, color: T.gray500, margin: '0 0 24px' }}>
                 Serás el administrador de tu organización.
             </p>
+
+            {/* Social auth buttons — solo si NO viene de OAuth */}
+            {!isSocial && (
+                <SocialAuthButtons action="onboarding" />
+            )}
+
+            {/* Badge de provider si viene de OAuth */}
+            {isSocial && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#16a34a',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    marginBottom: 20,
+                }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 12l2 2 4-4"/>
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    Conectado con {socialData.provider === 'google' ? 'Google' : 'Facebook'}
+                    {socialData.avatar && (
+                        <img
+                            src={socialData.avatar}
+                            alt=""
+                            style={{ width: 20, height: 20, borderRadius: '50%', marginLeft: 'auto' }}
+                        />
+                    )}
+                </div>
+            )}
+
             <Field
                 label="Nombre completo"
                 name="name"
                 value={data.name}
                 onChange={e => setData('name', e.target.value)}
                 error={errors.name}
-                autoFocus
+                autoFocus={!isSocial}
             />
             <Field
                 label="Correo electrónico"
@@ -153,24 +194,29 @@ function StepAccount({ data, setData, errors }) {
                 value={data.email}
                 onChange={e => setData('email', e.target.value)}
                 error={errors.email}
+                readOnly={isSocial}
             />
-            <Field
-                label="Contraseña"
-                name="password"
-                type="password"
-                value={data.password}
-                onChange={e => setData('password', e.target.value)}
-                error={errors.password}
-                hint="Mínimo 8 caracteres"
-            />
-            <Field
-                label="Confirmar contraseña"
-                name="password_confirmation"
-                type="password"
-                value={data.password_confirmation}
-                onChange={e => setData('password_confirmation', e.target.value)}
-                error={errors.password_confirmation}
-            />
+            {!isSocial && (
+                <>
+                    <Field
+                        label="Contraseña"
+                        name="password"
+                        type="password"
+                        value={data.password}
+                        onChange={e => setData('password', e.target.value)}
+                        error={errors.password}
+                        hint="Mínimo 8 caracteres"
+                    />
+                    <Field
+                        label="Confirmar contraseña"
+                        name="password_confirmation"
+                        type="password"
+                        value={data.password_confirmation}
+                        onChange={e => setData('password_confirmation', e.target.value)}
+                        error={errors.password_confirmation}
+                    />
+                </>
+            )}
         </div>
     );
 }
@@ -269,16 +315,18 @@ function StepBranch({ data, setData, errors }) {
 }
 
 // ─── Main Wizard ───
-export default function Register() {
+export default function Register({ socialData }) {
     const { errors } = usePage().props;
     const [step, setStep] = useState(1);
     const [processing, setProcessing] = useState(false);
     const [slugStatus, setSlugStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
 
+    const isSocial = !!socialData;
+
     const [data, _setData] = useState({
         // Step 1
-        name: '',
-        email: '',
+        name: socialData?.name || '',
+        email: socialData?.email || '',
         password: '',
         password_confirmation: '',
         // Step 2
@@ -328,6 +376,10 @@ export default function Register() {
     // Client-side step validation
     const canProceed = () => {
         if (step === 1) {
+            if (isSocial) {
+                // Si viene de social, solo necesita nombre y email
+                return data.name.trim() && data.email.trim();
+            }
             return data.name.trim() && data.email.trim() && data.password.length >= 8 && data.password === data.password_confirmation;
         }
         if (step === 2) {
@@ -351,17 +403,24 @@ export default function Register() {
         if (!canProceed() || processing) return;
         setProcessing(true);
 
-        // Submit all data via Inertia
-        router.post('/onboarding', {
+        // Preparar datos para enviar
+        const submitData = {
             name: data.name,
             email: data.email,
-            password: data.password,
-            password_confirmation: data.password_confirmation,
             company_name: data.company_name,
             slug: data.slug,
             branch_name: data.branch_name,
             branch_code: data.branch_code,
-        }, {
+        };
+
+        // Solo incluir password si no es social o si el usuario lo llenó
+        if (!isSocial || data.password) {
+            submitData.password = data.password;
+            submitData.password_confirmation = data.password_confirmation;
+        }
+
+        // Submit all data via Inertia
+        router.post('/onboarding', submitData, {
             onFinish: () => setProcessing(false),
             onError: (errors) => {
                 // Navigate to the step that has errors
@@ -417,7 +476,7 @@ export default function Register() {
                         <StepIndicator current={step} steps={steps} />
 
                         {/* Step Content */}
-                        {step === 1 && <StepAccount data={data} setData={setData} errors={errors} />}
+                        {step === 1 && <StepAccount data={data} setData={setData} errors={errors} socialData={socialData} />}
                         {step === 2 && <StepCompany data={data} setData={setData} errors={errors} slugStatus={slugStatus} />}
                         {step === 3 && <StepBranch data={data} setData={setData} errors={errors} />}
 

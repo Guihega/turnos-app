@@ -32,11 +32,12 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user()?->load('socialAccounts'),
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error'   => fn () => $request->session()->get('error'),
+                'info'    => fn () => $request->session()->get('info'),
             ],
             'tenantBranding' => function () use ($request) {
                 $tenant = $request->user()?->tenant;

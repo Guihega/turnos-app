@@ -1,12 +1,15 @@
 // resources/js/Pages/Profile/Edit.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Card, PageHeader, T } from '@/Components/TurnosUI';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import SocialAccountsSection from '@/Components/SocialAccountsSection';
 
 export default function Edit({ mustVerifyEmail, status }) {
+    const { auth } = usePage().props;
+
     return (
         <AuthenticatedLayout>
             <Head title="Perfil" />
@@ -16,6 +19,10 @@ export default function Edit({ mustVerifyEmail, status }) {
                 <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <Card accent={T.blue}>
                         <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} />
+                    </Card>
+
+                    <Card accent={T.blue}>
+                        <SocialAccountsSection socialAccounts={auth?.user?.social_accounts || []} />
                     </Card>
 
                     <Card accent={T.purple}>

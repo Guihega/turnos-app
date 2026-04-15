@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Models\BranchUser;
+use App\Models\SocialAccount;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,6 +67,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(OperatorMetric::class);
     }
 
+    /**
+     * Cuentas sociales vinculadas (Google, Facebook).
+     */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
     // ── Authorization Helpers ──
 
     public function isSuperAdmin(): bool
@@ -81,6 +90,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasPermission(string $permission): bool
     {
         return $this->role->hasPermission($permission);
+    }
+
+    /**
+     * Verificar si el usuario tiene vinculada una cuenta de un provider.
+     */
+    public function hasSocialAccount(string $provider): bool
+    {
+        return $this->socialAccounts()->where('provider', $provider)->exists();
     }
 
     public function belongsToBranch(string $branchId): bool

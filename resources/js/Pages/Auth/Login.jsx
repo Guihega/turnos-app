@@ -1,9 +1,11 @@
 // resources/js/Pages/Auth/Login.jsx
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { T } from '@/Components/TurnosUI';
+import SocialAuthButtons from '@/Components/SocialAuthButtons';
 
 export default function Login({ status, canResetPassword }) {
+    const { flash } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '', password: '', remember: false,
     });
@@ -119,6 +121,29 @@ export default function Login({ status, canResetPassword }) {
                         <p style={{ fontSize: 13, color: T.textMuted }}>Ingresa tus credenciales</p>
                     </div>
 
+                    {/* Flash messages (OAuth errors/info) */}
+                    {flash?.error && (
+                        <div style={{
+                            background: `color-mix(in srgb, ${T.red} 8%, transparent)`,
+                            border: `1px solid color-mix(in srgb, ${T.red} 20%, transparent)`,
+                            borderRadius: 10, padding: '10px 14px', marginBottom: 20,
+                            fontSize: 13, color: T.red, fontWeight: 500,
+                        }}>
+                            {flash.error}
+                        </div>
+                    )}
+
+                    {flash?.info && (
+                        <div style={{
+                            background: `color-mix(in srgb, ${T.blue} 8%, transparent)`,
+                            border: `1px solid color-mix(in srgb, ${T.blue} 20%, transparent)`,
+                            borderRadius: 10, padding: '10px 14px', marginBottom: 20,
+                            fontSize: 13, color: T.blue, fontWeight: 500,
+                        }}>
+                            {flash.info}
+                        </div>
+                    )}
+
                     {status && (
                         <div style={{
                             background: `color-mix(in srgb, ${T.green} 8%, transparent)`,
@@ -216,6 +241,9 @@ export default function Login({ status, canResetPassword }) {
                             {processing ? 'Ingresando...' : 'Iniciar Sesión'}
                         </button>
                     </form>
+
+                    {/* Social Auth Buttons */}
+                    <SocialAuthButtons action="login" />
                 </div>
 
                 {/* Register link */}

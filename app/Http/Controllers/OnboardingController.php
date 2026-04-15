@@ -23,7 +23,17 @@ class OnboardingController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Onboarding/Register');
+        // Obtener datos de registro social si vienen de OAuth
+        $socialData = session('social_registration');
+
+        return Inertia::render('Onboarding/Register', [
+            'socialData' => $socialData ? [
+                'provider' => $socialData['provider'],
+                'name' => $socialData['name'],
+                'email' => $socialData['email'],
+                'avatar' => $socialData['avatar'],
+            ] : null,
+        ]);
     }
 
     /**
@@ -34,11 +44,15 @@ class OnboardingController extends Controller
      */
     public function store(Request $request)
     {
+        // Si viene de registro social, password es opcional
+        $socialData = session('social_registration');
+        $isSocialRegistration = $socialData !== null;
+
         $validated = $request->validate([
             // Step 1 — User account
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => [$isSocialRegistration ? 'nullable' : 'required', 'confirmed', Password::defaults()],
 
             // Step 2 — Tenant / Company
             'company_name' => ['required', 'string', 'max:255'],
@@ -72,7 +86,7 @@ class OnboardingController extends Controller
         $timezone = $validated['branch_timezone']
             ?? $this->timezoneForCountry($country);
 
-        $result = DB::transaction(function () use ($validated, $country, $timezone) {
+        $result = DB::transaction(function () use ($validated, $country, $timezone, $socialData, $isSocialRegistration) {
             // 1. Create the tenant
             $tenant = Tenant::create([
                 'name'      => $validated['company_name'],
@@ -88,12 +102,30 @@ class OnboardingController extends Controller
             $user = User::create([
                 'name'      => $validated['name'],
                 'email'     => $validated['email'],
-                'password'  => Hash::make($validated['password']),
+                'password'  => !empty($validated['password'])
+                    ? Hash::make($validated['password'])
+                    : null,
                 'tenant_id' => $tenant->id,
                 'role'      => UserRole::TENANT_ADMIN,
             ]);
 
-            // 3. Create the first branch
+            // 3. Vincular cuenta social si viene de OAuth
+            if ($isSocialRegistration && $socialData) {
+                $user->socialAccounts()->create([
+                    'provider'        => $socialData['provider'],
+                    'provider_id'     => $socialData['provider_id'],
+                    'provider_email'  => $socialData['email'],
+                    'provider_avatar' => $socialData['avatar'],
+                    'provider_token'  => $socialData['token'],
+                ]);
+
+                // Si el email coincide con el del provider, marcar como verificado
+                if ($user->email === $socialData['email'] && ! $user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                }
+            }
+
+            // 4. Create the first branch
             $branch = Branch::create([
                 'tenant_id'              => $tenant->id,
                 'name'                   => $validated['branch_name'],
@@ -112,11 +144,14 @@ class OnboardingController extends Controller
                 'max_concurrent_waiting' => 30,
             ]);
 
-            // 4. Attach user to the branch
+            // 5. Attach user to the branch
             $user->branches()->attach($branch->id);
 
             return compact('tenant', 'user', 'branch');
         });
+
+        // Limpiar datos de social registration de la sesión
+        session()->forget('social_registration');
 
         // Fire Registered event so Laravel sends verification email
         event(new Registered($result['user']));
