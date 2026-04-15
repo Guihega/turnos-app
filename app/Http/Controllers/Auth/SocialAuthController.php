@@ -194,7 +194,8 @@ class SocialAuthController extends Controller
         if ($provider === 'facebook') {
             // setScopes() REPLACES all scopes (including Socialite's default 'email')
             // Facebook Graph API v23+ rejects 'email' as scope — it's included by default
-            $driver->setScopes([]);
+            //$driver->setScopes([]);
+            $driver->setScopes(['email']);
         } else {
             // scopes() ADDS to existing scopes
             $driver->scopes($this->getScopes($provider));
