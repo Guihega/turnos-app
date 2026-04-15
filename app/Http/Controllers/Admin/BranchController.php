@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Inertia\Inertia;
 
 class BranchController extends Controller
 {
+    use AuthorizesTenantOwnership;
+
     public function index(Request $request)
     {
         $branches = Branch::where('tenant_id', $request->user()->tenant_id)
@@ -40,9 +43,12 @@ class BranchController extends Controller
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:2',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
             'timezone' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'max_daily_tickets' => 'nullable|integer|min:1|max:9999',
             'max_concurrent_waiting' => 'nullable|integer|min:1|max:999',
             'accepts_walkins' => 'boolean',
@@ -59,13 +65,16 @@ class BranchController extends Controller
         return redirect()->route('admin.sucursales.index')->with('success', 'Sucursal creada.');
     }
 
-    public function edit(Branch $branch)
+    public function edit(Request $request, Branch $branch)
     {
+        $this->authorizeTenantOwnership($branch, $request);
+
         return Inertia::render('Admin/Branches/Form', [
             'branch' => [
                 'id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code,
                 'address' => $branch->address, 'city' => $branch->city, 'state' => $branch->state,
-                'phone' => $branch->phone, 'email' => $branch->email, 'timezone' => $branch->timezone,
+                'country' => $branch->country, 'phone' => $branch->phone, 'email' => $branch->email,
+                'timezone' => $branch->timezone, 'latitude' => $branch->latitude, 'longitude' => $branch->longitude,
                 'max_daily_tickets' => $branch->max_daily_tickets, 'max_concurrent_waiting' => $branch->max_concurrent_waiting,
                 'accepts_walkins' => $branch->accepts_walkins, 'accepts_appointments' => $branch->accepts_appointments,
                 'operating_hours' => $branch->operating_hours, 'is_active' => $branch->is_active,
@@ -75,14 +84,19 @@ class BranchController extends Controller
 
     public function update(Request $request, Branch $branch)
     {
+        $this->authorizeTenantOwnership($branch, $request);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10',
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:2',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'max_daily_tickets' => 'nullable|integer|min:1',
             'accepts_walkins' => 'boolean',
             'accepts_appointments' => 'boolean',
@@ -95,8 +109,10 @@ class BranchController extends Controller
         return redirect()->route('admin.sucursales.index')->with('success', 'Sucursal actualizada.');
     }
 
-    public function destroy(Branch $branch)
+    public function destroy(Request $request, Branch $branch)
     {
+        $this->authorizeTenantOwnership($branch, $request);
+
         $branch->delete();
         return redirect()->route('admin.sucursales.index')->with('success', 'Sucursal eliminada.');
     }

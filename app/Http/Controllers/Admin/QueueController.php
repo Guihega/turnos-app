@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Queue;
@@ -13,6 +14,8 @@ use Inertia\Inertia;
 
 class QueueController extends Controller
 {
+    use AuthorizesTenantOwnership;
+
     public function index(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
@@ -61,6 +64,9 @@ class QueueController extends Controller
             'service_ids.*' => 'exists:services,id',
         ]);
 
+        // Verify branch belongs to user's tenant
+        $this->authorizeBranchBelongsToTenant($data['branch_id'], $request);
+
         $queue = Queue::create([
             'branch_id' => $data['branch_id'],
             'name' => $data['name'],
@@ -77,9 +83,11 @@ class QueueController extends Controller
         return redirect()->route('admin.colas.index')->with('success', "Cola {$queue->name} creada.");
     }
 
-    public function edit(Queue $queue)
+    public function edit(Request $request, Queue $queue)
     {
-        $tenantId = $queue->branch->tenant_id;
+        $this->authorizeBranchChild($queue, $request);
+
+        $tenantId = $request->user()->tenant_id;
         return Inertia::render('Admin/Queues/Form', [
             'queue' => [
                 'id' => $queue->id, 'branch_id' => $queue->branch_id, 'name' => $queue->name,
@@ -94,6 +102,8 @@ class QueueController extends Controller
 
     public function update(Request $request, Queue $queue)
     {
+        $this->authorizeBranchChild($queue, $request);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'prefix' => 'required|string|max:3',
@@ -112,8 +122,10 @@ class QueueController extends Controller
         return redirect()->route('admin.colas.index')->with('success', "Cola {$queue->name} actualizada.");
     }
 
-    public function destroy(Queue $queue)
+    public function destroy(Request $request, Queue $queue)
     {
+        $this->authorizeBranchChild($queue, $request);
+
         $queue->services()->detach();
         $queue->delete();
         return redirect()->route('admin.colas.index')->with('success', 'Cola eliminada.');

@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
+use App\Http\Controllers\Admin\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    use AuthorizesTenantOwnership;
+
     public function index(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
@@ -48,9 +52,11 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $tenantId = $request->user()->tenant_id;
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->where('tenant_id', $request->user()->tenant_id)],
+            'email' => ['required', 'email', Rule::unique('users')->where('tenant_id', $tenantId)],
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::enum(UserRole::class)],
@@ -58,8 +64,18 @@ class UserController extends Controller
             'branch_ids.*' => 'exists:branches,id',
         ]);
 
+        // Verify all branch_ids belong to the user's tenant
+        if (!empty($data['branch_ids'])) {
+            $this->validateBranchIds($data['branch_ids'], $tenantId);
+        }
+
+        // Prevent escalation: non-super-admin cannot create super_admin
+        if ($data['role'] === UserRole::SUPER_ADMIN->value) {
+            abort(403, 'No puede crear usuarios con este rol.');
+        }
+
         $user = User::create([
-            'tenant_id' => $request->user()->tenant_id,
+            'tenant_id' => $tenantId,
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
@@ -71,7 +87,7 @@ class UserController extends Controller
         if (!empty($data['branch_ids'])) {
             foreach ($data['branch_ids'] as $branchId) {
                 $user->branches()->attach($branchId, [
-                    'id' => (string) \Illuminate\Support\Str::ulid(),
+                    'id' => (string) Str::ulid(),
                     'role' => $data['role'],
                     'is_active' => true,
                 ]);
@@ -81,9 +97,11 @@ class UserController extends Controller
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario creado.');
     }
 
-    public function edit(User $user)
+    public function edit(Request $request, User $user)
     {
-        $tenantId = $user->tenant_id;
+        $this->authorizeTenantOwnership($user, $request);
+
+        $tenantId = $request->user()->tenant_id;
         return Inertia::render('Admin/Users/Form', [
             'user' => [
                 'id' => $user->id, 'name' => $user->name, 'email' => $user->email,
@@ -97,15 +115,30 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->authorizeTenantOwnership($user, $request);
+
+        $tenantId = $request->user()->tenant_id;
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)->where('tenant_id', $user->tenant_id)],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)->where('tenant_id', $tenantId)],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
             'role' => ['required', Rule::enum(UserRole::class)],
             'is_active' => 'boolean',
             'branch_ids' => 'nullable|array',
+            'branch_ids.*' => 'exists:branches,id',
         ]);
+
+        // Verify all branch_ids belong to the user's tenant
+        if (!empty($data['branch_ids'])) {
+            $this->validateBranchIds($data['branch_ids'], $tenantId);
+        }
+
+        // Prevent escalation
+        if ($data['role'] === UserRole::SUPER_ADMIN->value) {
+            abort(403, 'No puede asignar este rol.');
+        }
 
         $updateData = collect($data)->except(['password', 'branch_ids', 'password_confirmation'])->toArray();
         if (!empty($data['password'])) {
@@ -118,7 +151,7 @@ class UserController extends Controller
             $syncData = [];
             foreach ($data['branch_ids'] as $branchId) {
                 $syncData[$branchId] = [
-                    'id' => (string) \Illuminate\Support\Str::ulid(),
+                    'id' => (string) Str::ulid(),
                     'role' => $data['role'],
                     'is_active' => true,
                 ];
@@ -129,10 +162,32 @@ class UserController extends Controller
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario actualizado.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        $this->authorizeTenantOwnership($user, $request);
+
+        // Prevent self-deletion
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['user' => 'No puede eliminar su propia cuenta desde aquí.']);
+        }
+
         $user->update(['is_active' => false]);
         $user->delete();
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario desactivado.');
+    }
+
+    /**
+     * Verify that all branch IDs belong to the given tenant.
+     */
+    private function validateBranchIds(array $branchIds, string $tenantId): void
+    {
+        $validCount = Branch::withoutGlobalScopes()
+            ->whereIn('id', $branchIds)
+            ->where('tenant_id', $tenantId)
+            ->count();
+
+        if ($validCount !== count($branchIds)) {
+            abort(403, 'Una o más sucursales no pertenecen a su organización.');
+        }
     }
 }

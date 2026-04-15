@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
@@ -47,21 +49,39 @@ class OnboardingController extends Controller
                 'regex:/^[a-z0-9]([a-z0-9\-]*[a-z0-9])?$/',
                 'unique:tenants,slug',
             ],
+            'company_phone'   => ['nullable', 'string', 'max:20'],
+            'company_country' => ['nullable', 'string', 'max:2'],
 
             // Step 3 — First branch
-            'branch_name' => ['required', 'string', 'max:255'],
-            'branch_code' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9\-]+$/'],
+            'branch_name'     => ['required', 'string', 'max:255'],
+            'branch_code'     => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9\-]+$/'],
+            'branch_address'  => ['nullable', 'string', 'max:500'],
+            'branch_city'     => ['nullable', 'string', 'max:100'],
+            'branch_state'    => ['nullable', 'string', 'max:100'],
+            'branch_country'  => ['nullable', 'string', 'max:2'],
+            'branch_timezone' => ['nullable', 'string', 'max:50'],
+            'branch_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'branch_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'branch_schedule' => ['nullable', 'array'],
         ]);
 
-        $result = DB::transaction(function () use ($validated) {
+        $country = $validated['branch_country']
+            ?? $validated['company_country']
+            ?? 'MX';
+
+        $timezone = $validated['branch_timezone']
+            ?? $this->timezoneForCountry($country);
+
+        $result = DB::transaction(function () use ($validated, $country, $timezone) {
             // 1. Create the tenant
             $tenant = Tenant::create([
                 'name'      => $validated['company_name'],
                 'slug'      => $validated['slug'],
                 'email'     => $validated['email'],
+                'phone'     => $validated['company_phone'] ?? null,
+                'timezone'  => $timezone,
                 'is_active' => true,
-                'settings'  => [], // HasTenantSettings trait fills defaults
+                'settings'  => [],
             ]);
 
             // 2. Create the admin user attached to this tenant
@@ -79,6 +99,13 @@ class OnboardingController extends Controller
                 'name'                   => $validated['branch_name'],
                 'code'                   => $validated['branch_code'],
                 'slug'                   => Str::slug($validated['branch_name']),
+                'address'                => $validated['branch_address'] ?? null,
+                'city'                   => $validated['branch_city'] ?? null,
+                'state'                  => $validated['branch_state'] ?? null,
+                'country'                => $validated['branch_country'] ?? $validated['company_country'] ?? 'MX',
+                'timezone'               => $timezone,
+                'latitude'               => $validated['branch_latitude'] ?? null,
+                'longitude'              => $validated['branch_longitude'] ?? null,
                 'is_active'              => true,
                 'operating_hours'        => $validated['branch_schedule'] ?? $this->defaultSchedule(),
                 'max_daily_tickets'      => 200,
@@ -97,8 +124,8 @@ class OnboardingController extends Controller
         // Log the user in
         auth()->login($result['user']);
 
-        // Redirect to email verification notice
-        return redirect()->route('verification.notice');
+        // Redirect to dashboard — email verification is handled by middleware
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -133,5 +160,36 @@ class OnboardingController extends Controller
             'saturday'  => $saturday,
             'sunday'    => $sunday,
         ];
+    }
+
+    /**
+     * Map country code to a sensible default timezone.
+     */
+    private function timezoneForCountry(string $country): string
+    {
+        $map = [
+            'MX' => 'America/Mexico_City',
+            'CO' => 'America/Bogota',
+            'PE' => 'America/Lima',
+            'CL' => 'America/Santiago',
+            'AR' => 'America/Argentina/Buenos_Aires',
+            'EC' => 'America/Guayaquil',
+            'BO' => 'America/La_Paz',
+            'PY' => 'America/Asuncion',
+            'UY' => 'America/Montevideo',
+            'VE' => 'America/Caracas',
+            'BR' => 'America/Sao_Paulo',
+            'GT' => 'America/Guatemala',
+            'CR' => 'America/Costa_Rica',
+            'PA' => 'America/Panama',
+            'SV' => 'America/El_Salvador',
+            'HN' => 'America/Tegucigalpa',
+            'NI' => 'America/Managua',
+            'DO' => 'America/Santo_Domingo',
+            'US' => 'America/New_York',
+            'ES' => 'Europe/Madrid',
+        ];
+
+        return $map[strtoupper($country)] ?? 'America/Mexico_City';
     }
 }

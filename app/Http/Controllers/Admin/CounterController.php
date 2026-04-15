@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Counter;
@@ -12,6 +13,8 @@ use Inertia\Inertia;
 
 class CounterController extends Controller
 {
+    use AuthorizesTenantOwnership;
+
     public function index(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
@@ -48,14 +51,19 @@ class CounterController extends Controller
             'number' => 'required|string|max:10',
         ]);
 
+        // Verify branch belongs to user's tenant
+        $this->authorizeBranchBelongsToTenant($data['branch_id'], $request);
+
         Counter::create(array_merge($data, ['status' => 'closed']));
 
         return redirect()->route('admin.ventanillas.index', ['branch_id' => $data['branch_id']])->with('success', 'Ventanilla creada.');
     }
 
-    public function edit(Counter $counter)
+    public function edit(Request $request, Counter $counter)
     {
-        $branches = Branch::where('tenant_id', $counter->branch->tenant_id)->where('is_active', true)->get(['id', 'name']);
+        $this->authorizeBranchChild($counter, $request);
+
+        $branches = Branch::where('tenant_id', $request->user()->tenant_id)->where('is_active', true)->get(['id', 'name']);
         return Inertia::render('Admin/Counters/Form', [
             'counter' => $counter->only(['id', 'branch_id', 'name', 'number', 'status']),
             'branches' => $branches,
@@ -64,6 +72,8 @@ class CounterController extends Controller
 
     public function update(Request $request, Counter $counter)
     {
+        $this->authorizeBranchChild($counter, $request);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'number' => 'required|string|max:10',
@@ -74,8 +84,10 @@ class CounterController extends Controller
         return redirect()->route('admin.ventanillas.index', ['branch_id' => $counter->branch_id])->with('success', 'Ventanilla actualizada.');
     }
 
-    public function destroy(Counter $counter)
+    public function destroy(Request $request, Counter $counter)
     {
+        $this->authorizeBranchChild($counter, $request);
+
         $branchId = $counter->branch_id;
         $counter->delete();
         return redirect()->route('admin.ventanillas.index', ['branch_id' => $branchId])->with('success', 'Ventanilla eliminada.');

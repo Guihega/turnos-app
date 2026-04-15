@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Inertia\Inertia;
 
 class ServiceController extends Controller
 {
+    use AuthorizesTenantOwnership;
+
     public function index(Request $request)
     {
         $services = Service::where('tenant_id', $request->user()->tenant_id)
@@ -49,8 +52,10 @@ class ServiceController extends Controller
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio creado.');
     }
 
-    public function edit(Service $service)
+    public function edit(Request $request, Service $service)
     {
+        $this->authorizeTenantOwnership($service, $request);
+
         return Inertia::render('Admin/Services/Form', [
             'service' => $service->only(['id', 'name', 'code', 'color', 'description', 'estimated_duration_minutes', 'requires_appointment', 'is_active']),
         ]);
@@ -58,6 +63,8 @@ class ServiceController extends Controller
 
     public function update(Request $request, Service $service)
     {
+        $this->authorizeTenantOwnership($service, $request);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:5',
@@ -72,8 +79,10 @@ class ServiceController extends Controller
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio actualizado.');
     }
 
-    public function destroy(Service $service)
+    public function destroy(Request $request, Service $service)
     {
+        $this->authorizeTenantOwnership($service, $request);
+
         $service->delete();
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio eliminado.');
     }
