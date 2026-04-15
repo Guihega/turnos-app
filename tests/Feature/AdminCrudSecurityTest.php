@@ -276,7 +276,7 @@ class AdminCrudSecurityTest extends TestCase
         $response = $this->actingAs($this->adminA)->post(route('admin.ventanillas.store'), [
             'branch_id' => $this->branchA->id,
             'name' => 'New Counter',
-            'number' => '10',
+            'number' => '999',
         ]);
         $response->assertRedirect();
         $this->assertDatabaseHas('counters', ['name' => 'New Counter', 'branch_id' => $this->branchA->id]);
