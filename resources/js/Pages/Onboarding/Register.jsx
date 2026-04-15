@@ -144,11 +144,6 @@ function StepAccount({ data, setData, errors, socialData }) {
                 Serás el administrador de tu organización.
             </p>
 
-            {/* Social auth buttons — solo si NO viene de OAuth */}
-            {!isSocial && (
-                <SocialAuthButtons action="onboarding" />
-            )}
-
             {/* Badge de provider si viene de OAuth */}
             {isSocial && (
                 <div style={{
@@ -216,6 +211,11 @@ function StepAccount({ data, setData, errors, socialData }) {
                         error={errors.password_confirmation}
                     />
                 </>
+            )}
+
+            {/* Social auth buttons — debajo del formulario, solo si NO viene de OAuth */}
+            {!isSocial && (
+                <SocialAuthButtons action="onboarding" />
             )}
         </div>
     );
