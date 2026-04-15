@@ -38,14 +38,15 @@ Schedule::command('health:check')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/health-check.log'));
 
-// System status: full report every 6 hours, alerts-only every hour
-Schedule::command('system:status')
-    ->everySixHours()
+// Silent monitoring every hour — only notifies if problems detected
+Schedule::command('system:status --alert-only')
+    ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/system-status.log'));
 
-Schedule::command('system:status --alert-only')
-    ->hourly()
+// Daily summary at 8am — confirms monitoring is active + 24h alert recap
+Schedule::command('system:status --daily-summary')
+    ->dailyAt('08:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/system-status.log'));
 

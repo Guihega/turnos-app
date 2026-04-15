@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\Cache;
 
 class SystemStatusCommand extends Command
 {
-    protected $signature = 'system:status {--alert-only : Only send if there are warnings}';
+    protected $signature = 'system:status
+        {--alert-only : Only send notification if there are warnings/errors}
+        {--daily-summary : Send a condensed daily summary with 24h alert count}';
+
     protected $description = 'Check system health and send status to Telegram';
 
     /**
@@ -19,6 +22,12 @@ class SystemStatusCommand extends Command
      * olinora-reverb, olinora-worker_00, olinora-worker_01
      */
     private const EXPECTED_SUPERVISOR_PROCESSES = 3;
+
+    /**
+     * Cache key for tracking alert count over 24h.
+     */
+    private const ALERT_COUNT_KEY = 'system:alert_count_24h';
+    private const LAST_ALERT_KEY = 'system:last_alert_details';
 
     public function handle(): int
     {
@@ -30,13 +39,21 @@ class SystemStatusCommand extends Command
         $diskFree = disk_free_space('/');
         $diskUsedPct = round((1 - $diskFree / $diskTotal) * 100, 1);
         $checks['disco'] = "{$diskUsedPct}%";
-        if ($diskUsedPct > 85) $warnings[] = "⚠️ Disco al {$diskUsedPct}%";
+        if ($diskUsedPct > 90) {
+            $warnings[] = ['level' => 'critical', 'msg' => "🔴 Disco al {$diskUsedPct}%"];
+        } elseif ($diskUsedPct > 85) {
+            $warnings[] = ['level' => 'warning', 'msg' => "⚠️ Disco al {$diskUsedPct}%"];
+        }
 
         // ── 2. Memory ──
         $memInfo = $this->getMemoryInfo();
         $checks['ram'] = $memInfo['used_pct'] . '%';
         $checks['swap'] = $memInfo['swap_used'];
-        if ($memInfo['used_pct'] > 90) $warnings[] = "⚠️ RAM al {$memInfo['used_pct']}%";
+        if ($memInfo['used_pct'] > 95) {
+            $warnings[] = ['level' => 'critical', 'msg' => "🔴 RAM al {$memInfo['used_pct']}%"];
+        } elseif ($memInfo['used_pct'] > 90) {
+            $warnings[] = ['level' => 'warning', 'msg' => "⚠️ RAM al {$memInfo['used_pct']}%"];
+        }
 
         // ── 3. PostgreSQL ──
         try {
@@ -44,14 +61,17 @@ class SystemStatusCommand extends Command
             DB::select('SELECT 1');
             $pgMs = round((microtime(true) - $pgStart) * 1000, 1);
             $checks['postgresql'] = "{$pgMs}ms";
-            if ($pgMs > 100) $warnings[] = "⚠️ PostgreSQL lento: {$pgMs}ms";
+            if ($pgMs > 500) {
+                $warnings[] = ['level' => 'critical', 'msg' => "🔴 PostgreSQL muy lento: {$pgMs}ms"];
+            } elseif ($pgMs > 100) {
+                $warnings[] = ['level' => 'warning', 'msg' => "⚠️ PostgreSQL lento: {$pgMs}ms"];
+            }
 
-            // Active connections
             $conns = DB::select("SELECT count(*) as cnt FROM pg_stat_activity WHERE state = 'active'");
             $checks['pg_connections'] = $conns[0]->cnt;
         } catch (\Throwable $e) {
             $checks['postgresql'] = '❌ DOWN';
-            $warnings[] = "🔴 PostgreSQL DOWN: " . $e->getMessage();
+            $warnings[] = ['level' => 'critical', 'msg' => "🔴 PostgreSQL DOWN: " . $e->getMessage()];
         }
 
         // ── 4. Redis ──
@@ -67,14 +87,18 @@ class SystemStatusCommand extends Command
             $checks['redis_keys'] = $redisInfo['db0'] ?? '0 keys';
         } catch (\Throwable $e) {
             $checks['redis'] = '❌ DOWN';
-            $warnings[] = "🔴 Redis DOWN: " . $e->getMessage();
+            $warnings[] = ['level' => 'critical', 'msg' => "🔴 Redis DOWN: " . $e->getMessage()];
         }
 
         // ── 5. Queue Health ──
         try {
             $queueSize = Redis::llen('queues:default') ?? 0;
             $checks['queue_pending'] = $queueSize;
-            if ($queueSize > 100) $warnings[] = "⚠️ Cola con {$queueSize} jobs pendientes";
+            if ($queueSize > 500) {
+                $warnings[] = ['level' => 'critical', 'msg' => "🔴 Cola con {$queueSize} jobs pendientes"];
+            } elseif ($queueSize > 100) {
+                $warnings[] = ['level' => 'warning', 'msg' => "⚠️ Cola con {$queueSize} jobs pendientes"];
+            }
         } catch (\Throwable) {
             $checks['queue_pending'] = '?';
         }
@@ -100,31 +124,31 @@ class SystemStatusCommand extends Command
         $supervisorChecked = $this->checkSupervisor();
         $checks['supervisor'] = $supervisorChecked['display'];
         if ($supervisorChecked['warning']) {
-            $warnings[] = $supervisorChecked['warning'];
+            $level = str_contains($supervisorChecked['warning'], '🔴') ? 'critical' : 'warning';
+            $warnings[] = ['level' => $level, 'msg' => $supervisorChecked['warning']];
         }
 
-        // ── Build message ──
+        // ── Determine action based on mode ──
         $hasWarnings = count($warnings) > 0;
+        $hasCritical = collect($warnings)->contains('level', 'critical');
+
+        // Track alerts in cache for daily summary
+        if ($hasWarnings) {
+            $this->trackAlert($warnings);
+        }
+
+        if ($this->option('daily-summary')) {
+            $this->sendDailySummary($checks, $warnings);
+            return self::SUCCESS;
+        }
 
         if ($this->option('alert-only') && !$hasWarnings) {
             $this->info('All checks passed, no alert sent.');
             return self::SUCCESS;
         }
 
-        $emoji = $hasWarnings ? '🟡' : '🟢';
-        $msg = "{$emoji} *Olinora Status* — " . now()->format('d/M H:i') . "\n\n";
-
-        foreach ($checks as $key => $value) {
-            $label = str_replace('_', ' ', ucfirst($key));
-            $msg .= "• {$label}: `{$value}`\n";
-        }
-
-        if ($hasWarnings) {
-            $msg .= "\n*Alertas:*\n" . implode("\n", $warnings);
-        }
-
-        // Send to Telegram
-        $this->sendTelegram($msg);
+        // Full report (manual run) or alert-only with warnings
+        $this->sendFullReport($checks, $warnings, $hasWarnings);
 
         // Console output
         $this->info($hasWarnings ? 'Status sent with warnings' : 'Status sent OK');
@@ -136,20 +160,116 @@ class SystemStatusCommand extends Command
     }
 
     /**
+     * Track alert occurrences in Redis for the daily summary.
+     * Uses a rolling 24h window.
+     */
+    private function trackAlert(array $warnings): void
+    {
+        try {
+            $count = (int) Cache::get(self::ALERT_COUNT_KEY, 0);
+            Cache::put(self::ALERT_COUNT_KEY, $count + 1, now()->addHours(24));
+
+            // Store last alert details for daily summary context
+            $lastAlert = [
+                'time' => now()->format('H:i'),
+                'warnings' => array_map(fn($w) => $w['msg'], $warnings),
+            ];
+            Cache::put(self::LAST_ALERT_KEY, $lastAlert, now()->addHours(24));
+        } catch (\Throwable) {
+            // Cache failure shouldn't break monitoring
+        }
+    }
+
+    /**
+     * Send condensed daily summary — one message per day to confirm monitoring is active.
+     */
+    private function sendDailySummary(array $checks, array $warnings): void
+    {
+        $alertCount = 0;
+        $lastAlert = null;
+
+        try {
+            $alertCount = (int) Cache::get(self::ALERT_COUNT_KEY, 0);
+            $lastAlert = Cache::get(self::LAST_ALERT_KEY);
+
+            // Reset counters after daily summary
+            Cache::forget(self::ALERT_COUNT_KEY);
+            Cache::forget(self::LAST_ALERT_KEY);
+        } catch (\Throwable) {
+            // Continue even if cache read fails
+        }
+
+        $hasWarnings = count($warnings) > 0;
+        $emoji = $hasWarnings ? '🟡' : '✅';
+
+        $msg = "{$emoji} *Olinora Daily* — " . now()->format('d/M H:i') . "\n\n";
+
+        // Condensed one-line metrics
+        $msg .= "Disco: `{$checks['disco']}` · RAM: `{$checks['ram']}` · Swap: `{$checks['swap']}`\n";
+        $msg .= "PG: `{$checks['postgresql']}` · Redis: `{$checks['redis']}`\n";
+        $msg .= "Supervisor: `{$checks['supervisor']}`\n";
+        $msg .= "Tickets hoy: `{$checks['tickets_hoy']}`\n";
+
+        // 24h alert summary
+        $msg .= "\n";
+        if ($alertCount === 0) {
+            $msg .= "🛡 Sin alertas en las últimas 24h";
+        } else {
+            $msg .= "⚠️ {$alertCount} alerta(s) en las últimas 24h";
+            if ($lastAlert) {
+                $msg .= "\nÚltima: " . implode(', ', $lastAlert['warnings']) . " ({$lastAlert['time']})";
+            }
+        }
+
+        // Current warnings if any
+        if ($hasWarnings) {
+            $msg .= "\n\n*Alertas activas:*\n";
+            $msg .= implode("\n", array_map(fn($w) => $w['msg'], $warnings));
+        }
+
+        $this->sendTelegram($msg);
+        $this->info('Daily summary sent');
+    }
+
+    /**
+     * Send full status report — used for manual runs and alert-only with warnings.
+     */
+    private function sendFullReport(array $checks, array $warnings, bool $hasWarnings): void
+    {
+        $emoji = $hasWarnings ? '🟡' : '🟢';
+
+        // If there are critical issues, use red emoji
+        if (collect($warnings)->contains('level', 'critical')) {
+            $emoji = '🔴';
+        }
+
+        $msg = "{$emoji} *Olinora Status* — " . now()->format('d/M H:i') . "\n\n";
+
+        foreach ($checks as $key => $value) {
+            $label = str_replace('_', ' ', ucfirst($key));
+            $msg .= "• {$label}: `{$value}`\n";
+        }
+
+        if ($hasWarnings) {
+            $msg .= "\n*Alertas:*\n";
+            $msg .= implode("\n", array_map(fn($w) => $w['msg'], $warnings));
+        }
+
+        $this->sendTelegram($msg);
+    }
+
+    /**
      * Check supervisor processes using sudo (required for www-data user).
      * Tries sudo first, falls back to direct call, handles permission errors.
      */
     private function checkSupervisor(): array
     {
-        // Try sudo first (needed when running as www-data via scheduler)
         $output = shell_exec('sudo /usr/bin/supervisorctl status 2>&1') ?? '';
 
-        // If sudo fails (no sudoers rule), try direct call (works when running as root)
         if (str_contains($output, 'Permission denied') || str_contains($output, 'sudo:') || empty(trim($output))) {
             $output = shell_exec('/usr/bin/supervisorctl status 2>&1') ?? '';
         }
 
-        // If still no output or error, report it
         if (empty(trim($output)) || str_contains($output, 'Permission denied') || str_contains($output, 'error')) {
             return [
                 'display' => '⚠️ no se pudo verificar',
