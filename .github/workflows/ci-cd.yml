@@ -129,9 +129,9 @@ jobs:
             npm ci --production=false
 
             echo "▸ Building assets..."
-            rm -rf public/build
+            sudo rm -rf /var/www/turnospro/public/build
             npm run build
-            chown -R www-data:www-data public/build
+            sudo chown -R www-data:www-data /var/www/turnospro/public/build
 
             echo "▸ Running migrations..."
             php artisan migrate --force
