@@ -129,9 +129,9 @@ jobs:
             npm ci --production=false
 
             echo "▸ Building assets..."
-            sudo rm -rf public/build
+            rm -rf public/build
             npm run build
-            sudo chown -R www-data:www-data public/build
+            chown -R www-data:www-data public/build
 
             echo "▸ Running migrations..."
             php artisan migrate --force
