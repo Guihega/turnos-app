@@ -20,6 +20,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -36,6 +37,9 @@ Route::get('/', function () {
 // Legal pages (public)
 Route::get('/privacidad', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/terminos', [LegalController::class, 'terms'])->name('legal.terms');
+
+// Health check (public — used by CI/CD post-deploy verification)
+Route::get('/health', HealthController::class)->name('health');
 
 // Onboarding — Registro público de nuevos tenants
 Route::middleware('guest')->group(function () {

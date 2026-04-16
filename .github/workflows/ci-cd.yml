@@ -146,3 +146,83 @@ jobs:
             php artisan queue:restart || true
 
             echo "✓ Deploy complete!"
+
+      - name: Health check post-deploy
+        id: healthcheck
+        run: |
+          echo "▸ Waiting 15s for services to stabilize..."
+          sleep 15
+
+          HEALTHY=false
+          for i in 1 2 3; do
+            echo "▸ Health check attempt $i/3..."
+            HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" \
+              --max-time 10 \
+              https://olinora.com.mx/health 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✓ Health check passed (HTTP $HTTP_CODE)"
+              cat /tmp/health_response.json
+              HEALTHY=true
+              break
+            else
+              echo "✗ Attempt $i failed (HTTP $HTTP_CODE)"
+              cat /tmp/health_response.json 2>/dev/null || true
+              if [ "$i" -lt 3 ]; then
+                echo "  Retrying in 10s..."
+                sleep 10
+              fi
+            fi
+          done
+
+          echo "healthy=$HEALTHY" >> $GITHUB_OUTPUT
+
+          if [ "$HEALTHY" = "false" ]; then
+            echo "::error::Health check failed after 3 attempts"
+          fi
+
+      - name: Notify deploy result
+        if: always()
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/turnospro
+            COMMIT_MSG=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "unknown")
+            COMMIT_SHA=$(git log -1 --pretty=format:"%h" 2>/dev/null || echo "unknown")
+            HEALTHY="${{ steps.healthcheck.outputs.healthy }}"
+
+            if [ "$HEALTHY" = "true" ]; then
+              # Tag successful deploy for future rollback reference
+              git tag -f last-known-good HEAD 2>/dev/null || true
+
+              MSG="✅ *Deploy #${{ github.run_number }} OK*
+            Commit: \`$COMMIT_SHA\` — $COMMIT_MSG
+            Health: all checks passed"
+            else
+              MSG="🔴 *Deploy #${{ github.run_number }} — Health check FAILED*
+            Commit: \`$COMMIT_SHA\` — $COMMIT_MSG
+            ⚠️ App may be degraded. Check logs."
+            fi
+
+            php artisan tinker --execute="
+              \$token = config('services.telegram.bot_token');
+              \$chatId = config('services.telegram.chat_id');
+              if (\$token && \$chatId) {
+                  \$ch = curl_init(\"https://api.telegram.org/bot{\$token}/sendMessage\");
+                  curl_setopt_array(\$ch, [
+                      CURLOPT_POST => true,
+                      CURLOPT_POSTFIELDS => [
+                          'chat_id' => \$chatId,
+                          'text' => \"$MSG\",
+                          'parse_mode' => 'Markdown',
+                      ],
+                      CURLOPT_RETURNTRANSFER => true,
+                      CURLOPT_TIMEOUT => 10,
+                  ]);
+                  curl_exec(\$ch);
+                  curl_close(\$ch);
+              }
+            " 2>/dev/null || true
