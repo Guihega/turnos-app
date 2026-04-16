@@ -61,9 +61,9 @@ class SystemStatusCommand extends Command
             DB::select('SELECT 1');
             $pgMs = round((microtime(true) - $pgStart) * 1000, 1);
             $checks['postgresql'] = "{$pgMs}ms";
-            if ($pgMs > 500) {
+            if ($pgMs > 1000) {
                 $warnings[] = ['level' => 'critical', 'msg' => "🔴 PostgreSQL muy lento: {$pgMs}ms"];
-            } elseif ($pgMs > 100) {
+            } elseif ($pgMs > 200) {
                 $warnings[] = ['level' => 'warning', 'msg' => "⚠️ PostgreSQL lento: {$pgMs}ms"];
             }
 

@@ -77,6 +77,7 @@ export default function SocialAuthButtons({ action = 'login', className = '' }) 
                     Continuar con Google
                 </button>
 
+                {/* Facebook button disabled — app pending Meta business verification
                 <button
                     type="button"
                     onClick={() => handleSocialAuth('facebook')}
@@ -102,6 +103,7 @@ export default function SocialAuthButtons({ action = 'login', className = '' }) 
                     <FacebookIcon />
                     Continuar con Facebook
                 </button>
+                */}
             </div>
         </div>
     );

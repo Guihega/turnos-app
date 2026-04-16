@@ -33,7 +33,8 @@ export default function SocialAccountsSection({ socialAccounts = [] }) {
 
     const providers = [
         { key: 'google', name: 'Google', icon: <GoogleIcon />, color: '#4285F4' },
-        { key: 'facebook', name: 'Facebook', icon: <FacebookIcon />, color: '#1877F2' },
+        // Facebook disabled — app pending Meta business verification
+        // { key: 'facebook', name: 'Facebook', icon: <FacebookIcon />, color: '#1877F2' },
     ];
 
     const getLinkedAccount = (providerKey) => {
