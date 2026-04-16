@@ -29,6 +29,13 @@ class SystemStatusCommand extends Command
     private const ALERT_COUNT_KEY = 'system:alert_count_24h';
     private const LAST_ALERT_KEY = 'system:last_alert_details';
 
+    /**
+     * Cache key for the hash of the last alert sent.
+     * Used for deduplication: if the current alert hash matches,
+     * we silently suppress the notification to avoid spam.
+     */
+    private const LAST_ALERT_HASH_KEY = 'system:last_alert_hash';
+
     public function handle(): int
     {
         $checks = [];
@@ -132,22 +139,23 @@ class SystemStatusCommand extends Command
         $hasWarnings = count($warnings) > 0;
         $hasCritical = collect($warnings)->contains('level', 'critical');
 
-        // Track alerts in cache for daily summary
-        if ($hasWarnings) {
-            $this->trackAlert($warnings);
-        }
-
         if ($this->option('daily-summary')) {
+            // Daily summary tracks alerts but always sends, regardless of dedup
+            if ($hasWarnings) {
+                $this->trackAlert($warnings);
+            }
             $this->sendDailySummary($checks, $warnings);
             return self::SUCCESS;
         }
 
-        if ($this->option('alert-only') && !$hasWarnings) {
-            $this->info('All checks passed, no alert sent.');
-            return self::SUCCESS;
+        if ($this->option('alert-only')) {
+            return $this->handleAlertOnly($checks, $warnings, $hasWarnings);
         }
 
-        // Full report (manual run) or alert-only with warnings
+        // Full manual report (no flags) — always sends, always tracks
+        if ($hasWarnings) {
+            $this->trackAlert($warnings);
+        }
         $this->sendFullReport($checks, $warnings, $hasWarnings);
 
         // Console output
@@ -157,6 +165,102 @@ class SystemStatusCommand extends Command
         }
 
         return $hasWarnings ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Handle --alert-only mode with deduplication.
+     *
+     * Rules:
+     *  A) No warnings now, had alert before → send "✅ resolved" once, clear hash.
+     *  B) No warnings now, no previous alert → total silence.
+     *  C) Same warnings as last sent → silent (dedup), still count for summary.
+     *  D) New or changed warnings → send alert, store hash, track for summary.
+     */
+    private function handleAlertOnly(array $checks, array $warnings, bool $hasWarnings): int
+    {
+        $currentHash = $this->getAlertHash($warnings);
+        $lastHash = null;
+
+        try {
+            $lastHash = Cache::get(self::LAST_ALERT_HASH_KEY);
+        } catch (\Throwable) {
+            // Cache read failure — treat as no previous alert
+        }
+
+        // Case A: resolved — previously had alerts, now clean
+        if (!$hasWarnings && $lastHash !== null) {
+            $this->sendResolutionNotice($checks);
+            try {
+                Cache::forget(self::LAST_ALERT_HASH_KEY);
+            } catch (\Throwable) {
+                // Non-critical
+            }
+            $this->info('Alerts resolved, notice sent.');
+            return self::SUCCESS;
+        }
+
+        // Case B: all clean, no previous alert — silent
+        if (!$hasWarnings) {
+            $this->info('All checks passed, no alert sent.');
+            return self::SUCCESS;
+        }
+
+        // We have warnings — always track for daily summary counter
+        $this->trackAlert($warnings);
+
+        // Case C: same alert as last time — dedup, stay silent
+        if ($currentHash === $lastHash) {
+            $this->info('Same alert as previous run, dedup suppressed notification.');
+            return self::FAILURE;
+        }
+
+        // Case D: new or changed alert — send and store hash
+        $this->sendFullReport($checks, $warnings, true);
+        try {
+            Cache::put(self::LAST_ALERT_HASH_KEY, $currentHash, now()->addHours(24));
+        } catch (\Throwable) {
+            // Non-critical — alert was sent, just no dedup next time
+        }
+
+        $this->info('Status sent with warnings');
+        foreach ($checks as $k => $v) {
+            $this->line("  {$k}: {$v}");
+        }
+
+        return self::FAILURE;
+    }
+
+    /**
+     * Build a stable hash for the current warning set.
+     * Sorted by message so order doesn't matter.
+     */
+    private function getAlertHash(array $warnings): string
+    {
+        if (empty($warnings)) {
+            return '';
+        }
+
+        $signature = array_map(
+            fn($w) => ($w['level'] ?? 'warning') . '|' . ($w['msg'] ?? ''),
+            $warnings
+        );
+        sort($signature);
+
+        return md5(implode("\n", $signature));
+    }
+
+    /**
+     * Send a "resolved" notification when alerts clear up.
+     */
+    private function sendResolutionNotice(array $checks): void
+    {
+        $msg = "✅ *Olinora — Alertas resueltas* — " . now()->format('d/M H:i') . "\n\n";
+        $msg .= "Todos los checks OK:\n";
+        $msg .= "• Disco: `{$checks['disco']}` · RAM: `{$checks['ram']}`\n";
+        $msg .= "• PG: `{$checks['postgresql']}` · Redis: `{$checks['redis']}`\n";
+        $msg .= "• Supervisor: `{$checks['supervisor']}`";
+
+        $this->sendTelegram($msg);
     }
 
     /**
@@ -259,18 +363,23 @@ class SystemStatusCommand extends Command
     }
 
     /**
-     * Check supervisor processes using sudo (required for www-data user).
-     * Tries sudo first, falls back to direct call, handles permission errors.
+     * Check supervisor processes.
+     *
+     * Since Session 13 the socket /var/run/supervisor.sock has group www-data,
+     * so direct calls work without sudo. We still keep sudo -n as a fallback
+     * in case the socket permissions are reset in the future.
      */
     private function checkSupervisor(): array
     {
-        $output = shell_exec('sudo /usr/bin/supervisorctl status 2>&1') ?? '';
+        // Attempt 1: direct call (works when socket is group www-data)
+        $output = $this->runSupervisorCommand('/usr/bin/supervisorctl status 2>&1');
 
-        if (str_contains($output, 'Permission denied') || str_contains($output, 'sudo:') || empty(trim($output))) {
-            $output = shell_exec('/usr/bin/supervisorctl status 2>&1') ?? '';
+        // Attempt 2: sudo non-interactive (defensive fallback)
+        if (!$this->isValidSupervisorOutput($output)) {
+            $output = $this->runSupervisorCommand('sudo -n /usr/bin/supervisorctl status 2>&1');
         }
 
-        if (empty(trim($output)) || str_contains($output, 'Permission denied') || str_contains($output, 'error')) {
+        if (!$this->isValidSupervisorOutput($output)) {
             return [
                 'display' => '⚠️ no se pudo verificar',
                 'warning' => '⚠️ Supervisor: sin acceso para verificar estado',
@@ -295,6 +404,48 @@ class SystemStatusCommand extends Command
             'display' => $display,
             'warning' => $warning,
         ];
+    }
+
+    /**
+     * Run a shell command and return its output (empty string on failure).
+     * Isolated method to keep checkSupervisor() testable and allow mocking.
+     */
+    protected function runSupervisorCommand(string $command): string
+    {
+        return @shell_exec($command) ?? '';
+    }
+
+    /**
+     * Validate that supervisor output is usable (has RUNNING entries or process names).
+     * Empty output, permission errors, or sudo prompts are all invalid.
+     */
+    private function isValidSupervisorOutput(string $output): bool
+    {
+        $trimmed = trim($output);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        $failurePatterns = [
+            'Permission denied',
+            'refused connection',
+            'password is required',
+            'sudo:',
+            'command not found',
+            'no such file',
+        ];
+
+        foreach ($failurePatterns as $pattern) {
+            if (stripos($trimmed, $pattern) !== false) {
+                return false;
+            }
+        }
+
+        // Valid supervisor output contains at least one state keyword
+        return str_contains($trimmed, 'RUNNING')
+            || str_contains($trimmed, 'STOPPED')
+            || str_contains($trimmed, 'FATAL')
+            || str_contains($trimmed, 'STARTING');
     }
 
     private function getMemoryInfo(): array
