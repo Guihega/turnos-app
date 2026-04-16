@@ -129,7 +129,9 @@ jobs:
             npm ci --production=false
 
             echo "▸ Building assets..."
+            rm -rf public/build
             npm run build
+            chown -R www-data:www-data public/build
 
             echo "▸ Running migrations..."
             php artisan migrate --force
