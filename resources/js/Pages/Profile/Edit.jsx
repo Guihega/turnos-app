@@ -6,6 +6,7 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import SocialAccountsSection from '@/Components/SocialAccountsSection';
+import TwoFactorSection from './Partials/TwoFactorSection';
 
 export default function Edit({ mustVerifyEmail, status }) {
     const { auth } = usePage().props;
@@ -34,6 +35,10 @@ export default function Edit({ mustVerifyEmail, status }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <Card accent={T.purple}>
                             <UpdatePasswordForm />
+                        </Card>
+
+                        <Card accent={T.blue}>
+                            <TwoFactorSection />
                         </Card>
 
                         <Card accent={T.red}>

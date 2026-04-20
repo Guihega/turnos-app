@@ -19,6 +19,8 @@ use App\Http\Controllers\GeoController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +54,13 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:30,1')
         ->name('onboarding.check-slug');
 });
+
+// Two-Factor Authentication Challenge (post-login, before full auth)
+Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+    ->name('two-factor.challenge');
+Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('two-factor.challenge.verify');
 
 // OAuth — Social Login (guests: login + registro)
 Route::middleware('guest')->group(function () {
@@ -132,6 +141,11 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // ── Two-Factor Authentication Setup ──
+    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
+    Route::post('/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('two-factor.confirm');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
 
     // ── Operador (requiere permiso tickets.call) ──
     Route::middleware('role:operator')->group(function () {

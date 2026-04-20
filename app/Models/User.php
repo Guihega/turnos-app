@@ -30,9 +30,10 @@ class User extends Authenticatable implements MustVerifyEmail, CipherSweetEncryp
         'tenant_id', 'name', 'email', 'phone', 'password', 'role',
         'avatar_url', 'locale', 'preferences', 'is_active',
         'last_login_at', 'last_login_ip',
+        'two_factor_secret', 'two_factor_confirmed_at', 'two_factor_recovery_codes',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     protected function casts(): array
     {
@@ -43,6 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail, CipherSweetEncryp
             'password' => 'hashed',
             'preferences' => 'array',
             'is_active' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
