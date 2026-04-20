@@ -52,13 +52,11 @@ class OnboardingTest extends TestCase
             'is_active' => true,
         ]);
 
-        // User created with correct role
-        $this->assertDatabaseHas('users', [
-            'email' => 'maria@nueva-empresa.com',
-            'role'  => UserRole::TENANT_ADMIN->value,
-        ]);
+        // User created with correct role (email is encrypted, can't use assertDatabaseHas)
+        $user = User::findByEmail('maria@nueva-empresa.com');
+        $this->assertNotNull($user);
+        $this->assertEquals(UserRole::TENANT_ADMIN, $user->role);
 
-        $user = User::where('email', 'maria@nueva-empresa.com')->first();
         $tenant = Tenant::where('slug', 'clinica-santa-fe')->first();
 
         $this->assertEquals($tenant->id, $user->tenant_id);
@@ -93,7 +91,7 @@ class OnboardingTest extends TestCase
         $this->post('/onboarding', $this->validData(['branch_code' => '']));
 
         $this->assertDatabaseMissing('tenants', ['slug' => 'clinica-santa-fe']);
-        $this->assertDatabaseMissing('users', ['email' => 'maria@nueva-empresa.com']);
+        $this->assertNull(User::findByEmail('maria@nueva-empresa.com'));
     }
 
     public function test_password_is_hashed(): void
@@ -102,7 +100,7 @@ class OnboardingTest extends TestCase
 
         $this->post('/onboarding', $this->validData());
 
-        $user = User::where('email', 'maria@nueva-empresa.com')->first();
+        $user = User::findByEmail('maria@nueva-empresa.com');
         $this->assertNotEquals('Olinora2026!', $user->password);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('Olinora2026!', $user->password));
     }

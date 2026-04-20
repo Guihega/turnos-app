@@ -67,7 +67,7 @@ class SocialAuthController extends Controller
         }
 
         // Buscar si existe un usuario con ese email
-        $existingUser = User::where('email', $socialUser->getEmail())->first();
+        $existingUser = User::findByEmail($socialUser->getEmail());
 
         if ($existingUser) {
             // Vincular automáticamente y hacer login

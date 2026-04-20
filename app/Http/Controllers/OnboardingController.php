@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Spatie\LaravelCipherSweet\Rules\EncryptedUniqueRule;
 
 class OnboardingController extends Controller
 {
@@ -51,7 +52,7 @@ class OnboardingController extends Controller
         $validated = $request->validate([
             // Step 1 — User account
             'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email'    => ['required', 'string', 'email', 'max:255', new EncryptedUniqueRule(User::class, 'email_index')],
             'password' => [$isSocialRegistration ? 'nullable' : 'required', 'confirmed', Password::defaults()],
 
             // Step 2 — Tenant / Company

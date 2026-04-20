@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\LaravelCipherSweet\Rules\EncryptedUniqueRule;
 
 class UserController extends Controller
 {
@@ -56,7 +57,7 @@ class UserController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->where('tenant_id', $tenantId)],
+            'email' => ['required', 'email', new EncryptedUniqueRule(User::class, 'email_index')],
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::enum(UserRole::class)],
@@ -121,7 +122,7 @@ class UserController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)->where('tenant_id', $tenantId)],
+            'email' => ['required', 'email', (new EncryptedUniqueRule(User::class, 'email_index'))->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
             'role' => ['required', Rule::enum(UserRole::class)],

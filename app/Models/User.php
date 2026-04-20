@@ -17,10 +17,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use ParagonIE\CipherSweet\BlindIndex;
+use ParagonIE\CipherSweet\EncryptedRow;
+use Spatie\LaravelCipherSweet\Concerns\UsesCipherSweet;
+use Spatie\LaravelCipherSweet\Contracts\CipherSweetEncrypted;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, CipherSweetEncrypted
 {
-    use HasApiTokens, HasFactory, HasUlids, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUlids, Notifiable, SoftDeletes, UsesCipherSweet;
 
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'password', 'role',
@@ -40,6 +44,27 @@ class User extends Authenticatable implements MustVerifyEmail
             'preferences' => 'array',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Configure CipherSweet field-level encryption.
+     *
+     * Encrypted fields:
+     *  - email: with blind index for login lookups and uniqueness validation
+     *  - phone: optional (nullable), no search needed
+     *  - last_login_ip: optional (nullable), no search needed
+     *
+     * Note: 'name' is intentionally NOT encrypted to preserve LIKE search
+     * capability in the admin user management panel. Name alone does not
+     * constitute a unique identifier without email/phone context.
+     */
+    public static function configureCipherSweet(EncryptedRow $encryptedRow): void
+    {
+        $encryptedRow
+            ->addField('email')
+            ->addOptionalTextField('phone')
+            ->addOptionalTextField('last_login_ip')
+            ->addBlindIndex('email', new BlindIndex('email_index'));
     }
 
     // ── Relationships ──
@@ -136,5 +161,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeOperators($query)
     {
         return $query->where('role', UserRole::OPERATOR);
+    }
+
+    /**
+     * Find a user by their email using the blind index.
+     *
+     * This replaces any User::where('email', $email)->first() calls
+     * since the email column is now encrypted and cannot be searched directly.
+     */
+    public static function findByEmail(string $email): ?self
+    {
+        return static::whereBlind('email', 'email_index', $email)->first();
     }
 }
