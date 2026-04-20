@@ -219,17 +219,7 @@ class SocialAuthController extends Controller
             'provider_avatar' => $socialUser->getAvatar(),
         ]);
 
-        $user = $socialAccount->user;
-
-        // Actualizar login tracking
-        $user->update([
-            'last_login_at' => now(),
-            'last_login_ip' => request()->ip(),
-        ]);
-
-        Auth::login($user, remember: true);
-
-        return redirect()->intended(route('dashboard'));
+        return $this->authenticateOrChallenge($socialAccount->user);
     }
 
     /**
@@ -249,7 +239,24 @@ class SocialAuthController extends Controller
             ],
         ]);
 
-        // Actualizar login tracking
+        return $this->authenticateOrChallenge($user);
+    }
+
+    /**
+     * Complete login or redirect to 2FA challenge if enabled.
+     * Shared by loginExistingUser() and linkAndLogin().
+     */
+    private function authenticateOrChallenge(User $user): RedirectResponse
+    {
+        // If user has 2FA enabled, redirect to challenge instead of logging in
+        if ($user->two_factor_confirmed_at) {
+            session()->put('two_factor:user_id', $user->id);
+            session()->put('two_factor:remember', true);
+
+            return redirect()->route('two-factor.challenge');
+        }
+
+        // No 2FA — complete login directly
         $user->update([
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
