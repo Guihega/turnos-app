@@ -91,6 +91,7 @@ jobs:
           echo "CACHE_STORE=redis" >> .env
           echo "REDIS_HOST=127.0.0.1" >> .env
           echo "BROADCAST_CONNECTION=null" >> .env
+          echo "CIPHERSWEET_KEY=${{ secrets.CIPHERSWEET_KEY }}" >> .env
 
       - name: Run migrations
         run: php artisan migrate --force
