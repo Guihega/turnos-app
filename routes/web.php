@@ -23,6 +23,7 @@ use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Public\LeadController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,8 +34,21 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
-});
+    // Usuarios autenticados van directo a su dashboard; invitados ven landing.
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+        'canResetPassword' => Route::has('password.request'),
+    ]);
+})->name('welcome');
+
+// Captura de leads desde la landing pública (5 por minuto por IP)
+Route::post('/leads', [LeadController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('leads.store');
 
 // Legal pages (public)
 Route::get('/privacidad', [LegalController::class, 'privacy'])->name('legal.privacy');
