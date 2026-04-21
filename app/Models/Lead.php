@@ -19,6 +19,11 @@ class Lead extends Model
         'ip',
         'user_agent',
         'referrer',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_term',
+        'utm_content',
         'status',
         'notes',
         'contacted_at',
@@ -70,5 +75,25 @@ class Lead extends Model
             '20+' => 'Más de 20 sucursales',
             default => $this->size,
         };
+    }
+
+    /**
+     * Filtrar leads por fuente de origen (utm_source).
+     *
+     * Ejemplo: Lead::fromSource('facebook')->count()
+     */
+    public function scopeFromSource($query, string $source)
+    {
+        return $query->where('utm_source', $source);
+    }
+
+    /**
+     * Filtrar leads por campaña específica (utm_campaign).
+     *
+     * Ejemplo: Lead::fromCampaign('lanzamiento-2026-04')->count()
+     */
+    public function scopeFromCampaign($query, string $campaign)
+    {
+        return $query->where('utm_campaign', $campaign);
     }
 }

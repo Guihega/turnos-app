@@ -26,6 +26,13 @@ class StoreLeadRequest extends FormRequest
             'size' => ['required', Rule::in(Lead::SIZES)],
             'message' => ['nullable', 'string', 'max:500'],
 
+            // UTM parameters — si vienen, validar; si no, pasan como null.
+            'utm_source' => ['nullable', 'string', 'max:255'],
+            'utm_medium' => ['nullable', 'string', 'max:255'],
+            'utm_campaign' => ['nullable', 'string', 'max:255'],
+            'utm_term' => ['nullable', 'string', 'max:255'],
+            'utm_content' => ['nullable', 'string', 'max:255'],
+
             // Honeypot — debe venir vacío. Si un bot lo llena, rechazamos.
             'website' => ['nullable', 'string', 'max:0'],
         ];
@@ -50,11 +57,22 @@ class StoreLeadRequest extends FormRequest
 
     /**
      * Datos limpios listos para persistir (sin el honeypot).
+     *
+     * Los UTMs vienen del form (useForm en Welcome.jsx los captura de la URL).
+     * La metadata del request (ip/ua/referrer) la extrae el backend.
      */
     public function cleanData(): array
     {
-        return collect($this->validated())
-            ->except('website')
+        $validated = collect($this->validated())->except(['website']);
+
+        // Normalizar UTMs vacíos o whitespace a null (mejor para filtros SQL).
+        foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as $utm) {
+            if ($validated->has($utm) && trim((string) $validated->get($utm)) === '') {
+                $validated->put($utm, null);
+            }
+        }
+
+        return $validated
             ->merge([
                 'ip' => $this->ip(),
                 'user_agent' => substr((string) $this->userAgent(), 0, 512),

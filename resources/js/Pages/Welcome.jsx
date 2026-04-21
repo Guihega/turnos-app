@@ -80,7 +80,30 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
         size: '',
         message: '',
         website: '', // honeypot
+        utm_source: '',
+        utm_medium: '',
+        utm_campaign: '',
+        utm_term: '',
+        utm_content: '',
     });
+
+    // Capturar UTMs de la URL al cargar la landing.
+    // Si el link fue olinora.com.mx/?utm_source=facebook&utm_campaign=launch,
+    // los valores quedan listos para cuando el usuario envíe el formulario.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const utms = {};
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(key => {
+            const value = params.get(key);
+            if (value) {
+                // Truncar a 255 por seguridad (aunque el backend también lo valida).
+                utms[key] = value.slice(0, 255);
+            }
+        });
+        if (Object.keys(utms).length > 0) {
+            setData(prev => ({ ...prev, ...utms }));
+        }
+    }, []);
 
     const submitLead = (e) => {
         e.preventDefault();

@@ -187,4 +187,90 @@ class LeadCaptureTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseCount('leads', 1);
     }
+
+    public function test_lead_se_persiste_con_parametros_utm(): void
+    {
+        Mail::fake();
+
+        $response = $this->post('/leads', [
+            'name' => 'Juan',
+            'email' => 'juan@demo.com',
+            'organization' => 'Test',
+            'sector' => 'salud',
+            'size' => '1',
+            'utm_source' => 'facebook',
+            'utm_medium' => 'organic',
+            'utm_campaign' => 'lanzamiento-2026-04',
+            'utm_term' => 'gestion-turnos',
+            'utm_content' => 'post-dashboard',
+        ]);
+
+        $response->assertRedirect();
+
+        $lead = Lead::first();
+        $this->assertNotNull($lead);
+        $this->assertEquals('facebook', $lead->utm_source);
+        $this->assertEquals('organic', $lead->utm_medium);
+        $this->assertEquals('lanzamiento-2026-04', $lead->utm_campaign);
+        $this->assertEquals('gestion-turnos', $lead->utm_term);
+        $this->assertEquals('post-dashboard', $lead->utm_content);
+    }
+
+    public function test_lead_sin_utms_guarda_nulls(): void
+    {
+        Mail::fake();
+
+        $this->post('/leads', [
+            'name' => 'Juan',
+            'email' => 'juan@demo.com',
+            'organization' => 'Test',
+            'sector' => 'salud',
+            'size' => '1',
+        ]);
+
+        $lead = Lead::first();
+        $this->assertNotNull($lead);
+        $this->assertNull($lead->utm_source);
+        $this->assertNull($lead->utm_medium);
+        $this->assertNull($lead->utm_campaign);
+        $this->assertNull($lead->utm_term);
+        $this->assertNull($lead->utm_content);
+    }
+
+    public function test_utm_mayor_a_255_caracteres_es_rechazado(): void
+    {
+        $response = $this->post('/leads', [
+            'name' => 'Juan',
+            'email' => 'juan@demo.com',
+            'organization' => 'Test',
+            'sector' => 'salud',
+            'size' => '1',
+            'utm_source' => str_repeat('a', 256),
+        ]);
+
+        $response->assertSessionHasErrors('utm_source');
+        $this->assertDatabaseCount('leads', 0);
+    }
+
+    public function test_utms_vacios_se_normalizan_a_null(): void
+    {
+        Mail::fake();
+
+        $this->post('/leads', [
+            'name' => 'Juan',
+            'email' => 'juan@demo.com',
+            'organization' => 'Test',
+            'sector' => 'salud',
+            'size' => '1',
+            'utm_source' => '',
+            'utm_medium' => '   ', // solo whitespace
+            'utm_campaign' => '',
+        ]);
+
+        $lead = Lead::first();
+        $this->assertNotNull($lead);
+        $this->assertNull($lead->utm_source);
+        $this->assertNull($lead->utm_medium);
+        $this->assertNull($lead->utm_campaign);
+    }
 }
