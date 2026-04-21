@@ -132,7 +132,7 @@ Route::middleware('auth')->group(function () {
 | All authenticated routes enforce tenant isolation via middleware.
 */
 
-Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant.scope', \App\Http\Middleware\EnsureTwoFactorForAdmins::class])->group(function () {
 
     // ── Dashboard ──
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -143,6 +143,7 @@ Route::middleware(['auth', 'verified', 'tenant.scope'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // ── Two-Factor Authentication Setup ──
+    Route::get('/two-factor/setup', [TwoFactorController::class, 'setup'])->name('two-factor.setup');
     Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->name('two-factor.enable');
     Route::post('/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('two-factor.confirm');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');

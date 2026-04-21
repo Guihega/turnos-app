@@ -22,6 +22,40 @@ class TwoFactorController extends Controller
     }
 
     /**
+     * Show mandatory 2FA setup page for admin users.
+     * This page is shown when an admin has not yet configured 2FA.
+     */
+    public function setup(Request $request)
+    {
+        $user = $request->user();
+
+        // If already confirmed, redirect to dashboard
+        if ($user->two_factor_confirmed_at) {
+            return redirect()->route('dashboard');
+        }
+
+        // If setup was already started (secret exists), generate QR data
+        $setupData = null;
+        if ($user->two_factor_secret) {
+            $secret = Crypt::decryptString($user->two_factor_secret);
+            $qrUrl = $this->google2fa->getQRCodeUrl(
+                config('app.name', 'Olinora'),
+                $user->email,
+                $secret
+            );
+            $setupData = [
+                'qrUrl' => $qrUrl,
+                'secret' => $secret,
+                'showSetup' => true,
+            ];
+        }
+
+        return Inertia::render('Auth/TwoFactorSetup', [
+            'twoFactorData' => $setupData,
+        ]);
+    }
+
+    /**
      * Enable 2FA: generate secret, return QR code data.
      * User still needs to confirm with a valid code before 2FA is active.
      */
@@ -83,22 +117,36 @@ class TwoFactorController extends Controller
             'two_factor_recovery_codes' => Crypt::encryptString($recoveryCodes->toJson()),
         ]);
 
-        return back()->with('twoFactor', [
+        // If coming from mandatory setup, redirect to dashboard with recovery codes in flash
+        $redirectData = [
             'recoveryCodes' => $recoveryCodes->all(),
             'showRecoveryCodes' => true,
-        ]);
+        ];
+
+        return back()->with('twoFactor', $redirectData);
     }
 
     /**
      * Disable 2FA. Requires current password.
+     * Admin users cannot disable 2FA — it is mandatory for their role.
      */
     public function disable(Request $request)
     {
+        $user = $request->user();
+
+        // Block admins from disabling 2FA
+        if ($user->role === \App\Enums\UserRole::TENANT_ADMIN
+            || $user->role === \App\Enums\UserRole::SUPER_ADMIN) {
+            return back()->withErrors([
+                'password' => 'La autenticación en dos pasos es obligatoria para administradores.',
+            ]);
+        }
+
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);
 
-        $request->user()->update([
+        $user->update([
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
