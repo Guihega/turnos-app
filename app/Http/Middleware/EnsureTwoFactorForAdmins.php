@@ -17,6 +17,10 @@ use Symfony\Component\HttpFoundation\Response;
  * access any other authenticated route until 2FA is confirmed.
  *
  * Operators and staff are not affected — 2FA remains optional for them.
+ *
+ * Exception: Demo accounts (listed in DEMO_EMAILS) are exempt from
+ * the 2FA enforcement so prospects can explore the panel without
+ * needing access to a TOTP authenticator app.
  */
 class EnsureTwoFactorForAdmins
 {
@@ -31,12 +35,31 @@ class EnsureTwoFactorForAdmins
         'logout',
     ];
 
+    /**
+     * Demo accounts exempt from mandatory 2FA enforcement.
+     *
+     * These accounts are used for public demonstrations of the platform.
+     * Prospects can log in and explore the admin panel without needing
+     * a TOTP authenticator app.
+     *
+     * IMPORTANT: These accounts should only hold demo data and never
+     * be used for production operations.
+     */
+    private const DEMO_EMAILS = [
+        'admin@empresa.com',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         // Only enforce for authenticated admin users
         if (! $user) {
+            return $next($request);
+        }
+
+        // Demo accounts are exempt from 2FA enforcement
+        if (in_array($user->email, self::DEMO_EMAILS, true)) {
             return $next($request);
         }
 
