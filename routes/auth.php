@@ -16,6 +16,16 @@ Route::middleware('guest')->group(function () {
     // Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     // Route::post('register', [RegisteredUserController::class, 'store']);
 
+    // Redirect /register a la landing durante programa piloto.
+    // El nombre de ruta 'register' se mantiene para que route('register') en views de Breeze siga resolviendo.
+    Route::get('register', function () {
+        return redirect('/#demo-form');
+    })->name('register');
+
+    Route::post('register', function () {
+        return redirect('/#demo-form');
+    });
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

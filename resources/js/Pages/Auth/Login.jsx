@@ -246,12 +246,12 @@ export default function Login({ status, canResetPassword }) {
                     <SocialAuthButtons action="login" />
                 </div>
 
-                {/* Register link */}
+                {/* Demo link — durante programa piloto no hay self-serve */}
                 <div className="login-anim login-anim-3" style={{ textAlign: 'center', marginTop: 20 }}>
                     <span style={{ fontSize: 13, color: T.textMuted }}>
-                        ¿No tienes cuenta?{' '}
-                        <Link href="/onboarding" style={{ color: T.blue, textDecoration: 'none', fontWeight: 600 }}>
-                            Regístrate gratis
+                        ¿Quiere conocer Olinora?{' '}
+                        <Link href="/#demo-form" style={{ color: T.blue, textDecoration: 'none', fontWeight: 600 }}>
+                            Agendar demostración
                         </Link>
                     </span>
                 </div>

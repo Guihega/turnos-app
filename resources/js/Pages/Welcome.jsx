@@ -148,7 +148,7 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
         { label: 'Funciones', href: '#features' },
         { label: 'Cómo funciona', href: '#how' },
         { label: 'Sectores', href: '#sectors' },
-        { label: 'Empezar', href: '#empezar' },
+        { label: 'Empezar', href: '#demo-form' },
     ];
 
     return (<>
@@ -178,12 +178,17 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
                             </a>
                         ))}
                         {canLogin && (
-                            <Link href={route('login')} style={{ marginLeft: 12, padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', background: L.blue, borderRadius: 10, textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', boxShadow: `0 4px 16px ${L.blueGlow}` }}
-                                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${L.blueGlow}`; }}
-                                  onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = `0 4px 16px ${L.blueGlow}`; }}>
+                            <Link href={route('login')} style={{ marginRight: 4, padding: '9px 16px', fontSize: 13, fontWeight: 600, color: L.textSoft, textDecoration: 'none', transition: 'color 0.15s' }}
+                                  onMouseEnter={e => e.currentTarget.style.color = L.text}
+                                  onMouseLeave={e => e.currentTarget.style.color = L.textSoft}>
                                 Iniciar sesión
                             </Link>
                         )}
+                        <a href="#demo-form" style={{ marginLeft: 8, padding: '9px 22px', fontSize: 13, fontWeight: 700, color: '#fff', background: L.blue, borderRadius: 10, textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', boxShadow: `0 4px 16px ${L.blueGlow}` }}
+                              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${L.blueGlow}`; }}
+                              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = `0 4px 16px ${L.blueGlow}`; }}>
+                            Agendar demostración
+                        </a>
                     </div>
 
                     <button className="lp-nav-mobile" onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'none', border: 'none', color: L.textSoft, cursor: 'pointer', padding: 6, display: 'none' }}>
@@ -199,7 +204,8 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
                         {navLinks.map(n => (
                             <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '12px 0', fontSize: 15, fontWeight: 600, color: L.textSoft, textDecoration: 'none' }}>{n.label}</a>
                         ))}
-                        {canLogin && <Link href={route('login')} style={{ display: 'inline-block', marginTop: 8, padding: '10px 24px', fontSize: 14, fontWeight: 700, color: '#fff', background: L.blue, borderRadius: 10, textDecoration: 'none' }}>Iniciar sesión</Link>}
+                        <a href="#demo-form" onClick={() => setMenuOpen(false)} style={{ display: 'inline-block', marginTop: 8, padding: '10px 24px', fontSize: 14, fontWeight: 700, color: '#fff', background: L.blue, borderRadius: 10, textDecoration: 'none' }}>Agendar demostración</a>
+                        {canLogin && <Link href={route('login')} onClick={() => setMenuOpen(false)} style={{ display: 'block', marginTop: 12, padding: '8px 0', fontSize: 13, fontWeight: 600, color: L.textSoft, textDecoration: 'none' }}>Iniciar sesión</Link>}
                     </div>
                 )}
             </nav>
@@ -218,30 +224,25 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
                                 <span style={{ fontSize: 11, fontWeight: 700, color: L.green, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Disponible · Abriendo programa piloto</span>
                             </div>
 
-                            <h1 className="lp-fade" style={{ fontSize: 'clamp(34px, 5.5vw, 56px)', fontWeight: 900, lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 20, animationDelay: '100ms' }}>
-                                Adiós a las filas.<br />
-                                <span style={{ color: L.blue }}>Hola, Olinora.</span>
+                            <h1 className="lp-fade" style={{ fontSize: 'clamp(36px, 5.5vw, 58px)', fontWeight: 900, lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 20, animationDelay: '100ms' }}>
+                                Ordene su sala de espera<br />
+                                <span style={{ color: L.blue }}>sin instalar nada.</span>
                             </h1>
 
-                            <p className="lp-fade" style={{ fontSize: 17, color: L.textSoft, lineHeight: 1.7, marginBottom: 32, maxWidth: 480, animationDelay: '200ms' }}>
-                                Sistema de gestión de turnos para clínicas, bancos y oficinas de gobierno. Sus clientes escanean un código QR, toman turno desde su celular y siguen su posición en tiempo real. Sin aplicación. Sin registro.
+                            <p className="lp-fade" style={{ fontSize: 17, color: L.textSoft, lineHeight: 1.7, marginBottom: 32, maxWidth: 520, animationDelay: '200ms' }}>
+                                El sistema de turnos que sus clientes toman desde el celular. Escanean un código QR, siguen su posición en tiempo real, llegan cuando es su turno. Para clínicas, bancos y oficinas de gobierno en Latinoamérica.
                             </p>
 
                             <div className="lp-fade" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animationDelay: '300ms' }}>
-                                <Link href="/onboarding" style={{ padding: '14px 32px', fontSize: 15, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 12, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
+                                <a href="#demo-form" style={{ padding: '14px 32px', fontSize: 15, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 12, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s', display: 'inline-block' }}
                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                                    onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                    Crear cuenta gratuita
-                                </Link>
-                                <a href="#empezar" style={{ padding: '14px 28px', fontSize: 15, fontWeight: 700, color: L.text, background: L.card, border: `1px solid ${L.blue}40`, borderRadius: 12, textDecoration: 'none', transition: 'all 0.2s' }}
-                                   onMouseEnter={e => { e.currentTarget.style.borderColor = L.blue; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                   onMouseLeave={e => { e.currentTarget.style.borderColor = `${L.blue}40`; e.currentTarget.style.transform = 'none'; }}>
-                                    Hablar con el equipo
+                                    Agendar demostración
                                 </a>
                             </div>
 
-                            <p className="lp-fade" style={{ fontSize: 12, color: L.textMuted, marginTop: 16, animationDelay: '400ms' }}>
-                                Sin tarjeta de crédito. Configuración en minutos.
+                            <p className="lp-fade" style={{ fontSize: 13, color: L.textMuted, marginTop: 16, animationDelay: '400ms' }}>
+                                Programa piloto · Sin costo durante el piloto · Respuesta en 24 horas hábiles
                             </p>
                         </div>
 
@@ -379,103 +380,6 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
                 </Section>
             </div>
 
-            {/* ══════════════ CÓMO EMPEZAR — Dos caminos diferenciados ══════════════ */}
-            <div id="empezar" style={{ background: L.dark, position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 800, height: 600, borderRadius: '50%', background: `radial-gradient(circle, ${L.blueGlow}, transparent 70%)`, filter: 'blur(100px)', pointerEvents: 'none' }} />
-
-                <Section style={{ position: 'relative' }}>
-                    <SectionTitle
-                        tag="Empezar"
-                        title="Dos formas de conocer Olinora"
-                        subtitle="Elija el camino que mejor se ajuste a su organización. Ambos son gratuitos."
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 960, margin: '0 auto' }} className="lp-paths-grid">
-
-                        {/* ── Camino 1: Self-serve ── */}
-                        <div className="lp-fade lp-card-hover" style={{ background: L.card, border: `1px solid ${L.blue}30`, borderRadius: 20, padding: '36px 32px', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${L.blue}, transparent)` }} />
-
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: L.blueGlow, borderRadius: 20, padding: '5px 14px', marginBottom: 20, fontSize: 10, fontWeight: 700, color: L.blue, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                                Opción rápida
-                            </div>
-
-                            <h3 style={{ fontSize: 24, fontWeight: 900, color: L.text, marginBottom: 12, letterSpacing: '-0.02em' }}>
-                                Probar por su cuenta
-                            </h3>
-
-                            <p style={{ fontSize: 14, color: L.textSoft, lineHeight: 1.6, marginBottom: 24 }}>
-                                Cree una cuenta gratuita, configure su primera sucursal y empiece a emitir turnos en minutos. Sin llamadas. Sin formularios largos.
-                            </p>
-
-                            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0' }}>
-                                {[
-                                    'Acceso inmediato al sistema completo',
-                                    'Configuración guiada paso a paso',
-                                    'Sin tarjeta de crédito',
-                                    'Su información permanece privada',
-                                ].map((item, i) => (
-                                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, fontSize: 13, color: L.textSoft, lineHeight: 1.5 }}>
-                                        <span style={{ color: L.blue, fontWeight: 900, flexShrink: 0, marginTop: 1 }}>✓</span>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <Link href="/onboarding" style={{ display: 'block', textAlign: 'center', padding: '14px 24px', fontSize: 15, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${L.blue}, ${L.purple})`, borderRadius: 12, textDecoration: 'none', boxShadow: `0 8px 32px ${L.blueGlow}`, transition: 'transform 0.2s' }}
-                                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                Crear cuenta gratuita
-                            </Link>
-
-                            <p style={{ fontSize: 11, color: L.textMuted, textAlign: 'center', marginTop: 12 }}>
-                                Recomendado para una sola sucursal o consultorio individual.
-                            </p>
-                        </div>
-
-                        {/* ── Camino 2: Sales-led ── */}
-                        <div className="lp-fade lp-card-hover" style={{ background: L.card, border: `1px solid ${L.purple}30`, borderRadius: 20, padding: '36px 32px', position: 'relative', overflow: 'hidden', animationDelay: '150ms' }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${L.purple}, transparent)` }} />
-
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: L.purpleGlow, borderRadius: 20, padding: '5px 14px', marginBottom: 20, fontSize: 10, fontWeight: 700, color: L.purple, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                                Opción guiada
-                            </div>
-
-                            <h3 style={{ fontSize: 24, fontWeight: 900, color: L.text, marginBottom: 12, letterSpacing: '-0.02em' }}>
-                                Demostración guiada
-                            </h3>
-
-                            <p style={{ fontSize: 14, color: L.textSoft, lineHeight: 1.6, marginBottom: 24 }}>
-                                Una sesión de veinte minutos en la que le mostramos el sistema funcionando, respondemos sus preguntas específicas, y le ayudamos a planear la implementación.
-                            </p>
-
-                            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0' }}>
-                                {[
-                                    'Ideal para operaciones multi-sucursal',
-                                    'Útil si requiere aprobación interna o comité',
-                                    'Resolvemos dudas de integración y compliance',
-                                    'Acompañamiento durante el piloto',
-                                ].map((item, i) => (
-                                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, fontSize: 13, color: L.textSoft, lineHeight: 1.5 }}>
-                                        <span style={{ color: L.purple, fontWeight: 900, flexShrink: 0, marginTop: 1 }}>✓</span>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <a href="#demo-form" style={{ display: 'block', textAlign: 'center', padding: '14px 24px', fontSize: 15, fontWeight: 700, color: L.text, background: L.dark, border: `1px solid ${L.purple}60`, borderRadius: 12, textDecoration: 'none', transition: 'all 0.2s' }}
-                               onMouseEnter={e => { e.currentTarget.style.borderColor = L.purple; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                               onMouseLeave={e => { e.currentTarget.style.borderColor = `${L.purple}60`; e.currentTarget.style.transform = 'none'; }}>
-                                Agendar demostración
-                            </a>
-
-                            <p style={{ fontSize: 11, color: L.textMuted, textAlign: 'center', marginTop: 12 }}>
-                                Recomendado para bancos, gobierno y redes de clínicas.
-                            </p>
-                        </div>
-                    </div>
-                </Section>
-            </div>
 
             {/* ══════════════ LEAD FORM ══════════════ */}
             <div id="demo-form" style={{ background: L.navy, position: 'relative', overflow: 'hidden' }}>
@@ -506,17 +410,21 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }} className="lp-form-grid">
                                 <FormField label="Nombre completo" error={errors.name}>
                                     <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} required
+                                        autoComplete="name"
                                         style={inputStyle} placeholder="Juan Pérez" />
                                 </FormField>
 
                                 <FormField label="Correo corporativo" error={errors.email}>
                                     <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} required
+                                        autoComplete="email"
+                                        inputMode="email"
                                         style={inputStyle} placeholder="juan@organizacion.com" />
                                 </FormField>
                             </div>
 
                             <FormField label="Organización" error={errors.organization} style={{ marginBottom: 16 }}>
                                 <input type="text" value={data.organization} onChange={e => setData('organization', e.target.value)} required
+                                    autoComplete="organization"
                                     style={inputStyle} placeholder="Clínica San Rafael" />
                             </FormField>
 

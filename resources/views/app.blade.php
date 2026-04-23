@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#3B82F6">
+        <meta name="theme-color" content="#0B1121" media="(prefers-color-scheme: dark)">
+        <meta name="theme-color" content="#F5F6FA" media="(prefers-color-scheme: light)">
         
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -12,10 +13,6 @@
         <link rel="manifest" href="/site.webmanifest">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes
