@@ -7,7 +7,7 @@ import SocialAuthButtons from '@/Components/SocialAuthButtons';
 export default function Login({ status, canResetPassword }) {
     const { flash } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '', password: '', remember: false,
+        email: 'admin@empresa.com', password: 'Olinora2026!', remember: false,
     });
     const [focused, setFocused] = useState(null);
 
@@ -118,7 +118,19 @@ export default function Login({ status, canResetPassword }) {
                             fontWeight: 900, fontSize: 18, color: '#fff',
                         }}>O</div>
                         <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Iniciar Sesión</h2>
-                        <p style={{ fontSize: 13, color: T.textMuted }}>Ingresa tus credenciales</p>
+                        <p style={{ fontSize: 13, color: T.textMuted }}>Credenciales de demostración cargadas</p>
+                    </div>
+
+                    {/* Banner demo */}
+                    <div style={{
+                        background: `color-mix(in srgb, ${T.blue} 8%, transparent)`,
+                        border: `1px solid color-mix(in srgb, ${T.blue} 20%, transparent)`,
+                        borderRadius: 10, padding: '10px 14px', marginBottom: 20,
+                        fontSize: 12, color: T.textSoft, lineHeight: 1.5,
+                    }}>
+                        <strong style={{ color: T.blue, fontWeight: 700 }}>Modo demostración</strong> · Los campos
+                        están pre-llenados con una cuenta de prueba. Haga clic en "Iniciar Sesión" para explorar
+                        el panel administrativo.
                     </div>
 
                     {/* Flash messages (OAuth errors/info) */}
