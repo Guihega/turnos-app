@@ -13,18 +13,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     // Registration disabled — users are created by tenant admins via /admin/usuarios
+    // Accessing /register returns 404 (Laravel default for undefined routes).
+    // This is intentional: the endpoint is not exposed even as a redirect.
+    //
+    // For user-facing "sign up" flow, landing page points to /#demo-form
+    // (lead capture form for piloto program).
+    //
     // Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     // Route::post('register', [RegisteredUserController::class, 'store']);
-
-    // Redirect /register a la landing durante programa piloto.
-    // El nombre de ruta 'register' se mantiene para que route('register') en views de Breeze siga resolviendo.
-    Route::get('register', function () {
-        return redirect('/#demo-form');
-    })->name('register');
-
-    Route::post('register', function () {
-        return redirect('/#demo-form');
-    });
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
