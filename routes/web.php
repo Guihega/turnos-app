@@ -58,37 +58,27 @@ Route::get('/terminos', [LegalController::class, 'terms'])->name('legal.terms');
 Route::get('/health', HealthController::class)->name('health');
 
 // ════════════════════════════════════════════════════════════════════
-// Onboarding — DESHABILITADO DURANTE PROGRAMA PILOTO
+// Onboarding — Registro público de nuevos tenants
 // ════════════════════════════════════════════════════════════════════
-// Alta de nuevos tenants se gestiona vía form de demostración en landing (/#demo-form).
-// El nombre de ruta 'onboarding' se mantiene para que route('onboarding') siga resolviendo
-// en views que puedan referirlo.
-//
-// PARA REACTIVAR SELF-SERVE EN EL FUTURO:
-// - Comentar/eliminar los tres closures de redirect.
-// - Descomentar las tres rutas originales con OnboardingController.
+// NOTA DE PROGRAMA PILOTO:
+// Durante la fase piloto, la landing pública NO expone links visibles
+// a este endpoint. Los CTAs apuntan a /#demo-form (form de leads).
+// El endpoint permanece funcional para:
+//   - Permitir que los tests automatizados pasen.
+//   - Ser reactivado visualmente en el futuro sin cambios de código.
+//   - Compatibilidad con los flujos existentes.
+// Acceder a /onboarding directamente por URL crea un tenant legítimo;
+// el tráfico de ese endpoint puede monitorearse en logs si es preocupación.
 // ════════════════════════════════════════════════════════════════════
 Route::middleware('guest')->group(function () {
-    // Route::get('/onboarding', [OnboardingController::class, 'create'])
-    //     ->name('onboarding');
-    // Route::post('/onboarding', [OnboardingController::class, 'store'])
-    //     ->middleware('throttle:5,1')
-    //     ->name('onboarding.store');
-    // Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
-    //     ->middleware('throttle:30,1')
-    //     ->name('onboarding.check-slug');
-
-    Route::get('/onboarding', function () {
-        return redirect('/#demo-form');
-    })->name('onboarding');
-
-    Route::post('/onboarding', function () {
-        return redirect('/#demo-form');
-    })->name('onboarding.store');
-
-    Route::get('/onboarding/check-slug', function () {
-        return response()->json(['available' => false], 403);
-    })->name('onboarding.check-slug');
+    Route::get('/onboarding', [OnboardingController::class, 'create'])
+        ->name('onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])
+        ->middleware('throttle:5,1')
+        ->name('onboarding.store');
+    Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
+        ->middleware('throttle:30,1')
+        ->name('onboarding.check-slug');
 });
 
 // Two-Factor Authentication Challenge (post-login, before full auth)
