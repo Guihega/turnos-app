@@ -80,18 +80,18 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          # Override for CI
-          echo "" >> .env
-          echo "DB_CONNECTION=pgsql" >> .env
-          echo "DB_HOST=127.0.0.1" >> .env
-          echo "DB_PORT=5432" >> .env
-          echo "DB_DATABASE=turnospro_test" >> .env
-          echo "DB_USERNAME=turnospro" >> .env
-          echo "DB_PASSWORD=testing" >> .env
-          echo "CACHE_STORE=redis" >> .env
-          echo "REDIS_HOST=127.0.0.1" >> .env
-          echo "BROADCAST_CONNECTION=null" >> .env
-          echo "CIPHERSWEET_KEY=${{ secrets.CIPHERSWEET_KEY }}" >> .env
+          # Override for CI — sed replaces existing lines to avoid duplicates
+          # (duplicate env vars break Laravel: first occurrence wins)
+          sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=pgsql|" .env
+          sed -i "s|^DB_HOST=.*|DB_HOST=127.0.0.1|" .env
+          sed -i "s|^DB_PORT=.*|DB_PORT=5432|" .env
+          sed -i "s|^DB_DATABASE=.*|DB_DATABASE=turnospro_test|" .env
+          sed -i "s|^DB_USERNAME=.*|DB_USERNAME=turnospro|" .env
+          sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=testing|" .env
+          sed -i "s|^CACHE_STORE=.*|CACHE_STORE=redis|" .env
+          sed -i "s|^REDIS_HOST=.*|REDIS_HOST=127.0.0.1|" .env
+          sed -i "s|^BROADCAST_CONNECTION=.*|BROADCAST_CONNECTION=null|" .env
+          sed -i "s|^CIPHERSWEET_KEY=.*|CIPHERSWEET_KEY=${{ secrets.CIPHERSWEET_KEY }}|" .env
 
       - name: Run migrations
         run: php artisan migrate --force
