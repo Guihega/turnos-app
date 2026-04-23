@@ -387,4 +387,363 @@ export function PageShell({ children }) {
     );
 }
 
-export default { T, theme: T, statusMap, Card, GlassCard, StatusBadge, Btn, Input, Select, PageHeader, DataTable, Stat, FlashMessages, useAutoRefresh, LiveDot, MetricBar, PageShell, fmtSeconds, fmtMinutes };
+// ══════════════════════════════════════════════════════════════════════
+// Componentes v4 — agregados en Fase 1 para compatibilidad con páginas Admin
+// ══════════════════════════════════════════════════════════════════════
+
+// ── Badge ── chip de estado / etiqueta. Acepta color semántico o custom.
+export function Badge({ children, color = 'neutral', size = 'md', style: sx = {} }) {
+    const colors = {
+        neutral: { bg: 'color-mix(in srgb, var(--t-text-muted) 15%, transparent)', fg: T.textSoft, border: T.border },
+        blue: { bg: T.blueGlow, fg: T.blue, border: `color-mix(in srgb, ${T.blue} 30%, transparent)` },
+        green: { bg: T.greenGlow, fg: T.green, border: `color-mix(in srgb, ${T.green} 30%, transparent)` },
+        amber: { bg: T.amberGlow, fg: T.amber, border: `color-mix(in srgb, ${T.amber} 30%, transparent)` },
+        red: { bg: T.redGlow, fg: T.red, border: `color-mix(in srgb, ${T.red} 30%, transparent)` },
+        purple: { bg: T.purpleGlow, fg: T.purple, border: `color-mix(in srgb, ${T.purple} 30%, transparent)` },
+        cyan: { bg: T.cyanGlow, fg: T.cyan, border: `color-mix(in srgb, ${T.cyan} 30%, transparent)` },
+    };
+    const c = colors[color] || colors.neutral;
+    const sizes = {
+        sm: { fontSize: 10, padding: '3px 8px' },
+        md: { fontSize: 11, padding: '4px 10px' },
+        lg: { fontSize: 12, padding: '5px 12px' },
+    };
+    const s = sizes[size] || sizes.md;
+    return (
+        <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            ...s,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: c.fg,
+            background: c.bg,
+            border: `1px solid ${c.border}`,
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            ...sx,
+        }}>
+            {children}
+        </span>
+    );
+}
+
+// ── Avatar ── círculo con iniciales o imagen
+export function Avatar({ name = '', src, size = 36, color, style: sx = {} }) {
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(w => w[0])
+        .join('')
+        .toUpperCase();
+
+    // Color derivado del nombre (hash simple)
+    const colors = [T.blue, T.green, T.amber, T.red, T.purple, T.cyan];
+    const hash = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    const bg = color || colors[hash % colors.length];
+
+    const baseStyle = {
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 700,
+        fontSize: Math.round(size * 0.4),
+        color: '#fff',
+        background: bg,
+        flexShrink: 0,
+        ...sx,
+    };
+
+    if (src) {
+        return (
+            <img
+                src={src}
+                alt={name}
+                aria-label={name}
+                style={{ ...baseStyle, objectFit: 'cover' }}
+            />
+        );
+    }
+
+    return (
+        <span
+            aria-label={name}
+            role="img"
+            style={baseStyle}
+        >
+            {initials || '?'}
+        </span>
+    );
+}
+
+// ── EmptyState ── para listas y tablas vacías
+export function EmptyState({ icon, title, subtitle, action, style: sx = {} }) {
+    return (
+        <div style={{
+            textAlign: 'center',
+            padding: '48px 24px',
+            color: T.textSoft,
+            ...sx,
+        }}>
+            {icon && (
+                <div style={{
+                    fontSize: 48,
+                    marginBottom: 16,
+                    opacity: 0.5,
+                    color: T.textMuted,
+                }}>
+                    {icon}
+                </div>
+            )}
+            {title && (
+                <div style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: T.text,
+                    marginBottom: 8,
+                }}>
+                    {title}
+                </div>
+            )}
+            {subtitle && (
+                <div style={{
+                    fontSize: 13,
+                    color: T.textMuted,
+                    lineHeight: 1.5,
+                    maxWidth: 420,
+                    margin: '0 auto 20px',
+                }}>
+                    {subtitle}
+                </div>
+            )}
+            {action && (
+                <div style={{ marginTop: 16 }}>
+                    {action}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── SearchInput ── input de búsqueda con icono
+export function SearchInput({ value, onChange, placeholder = 'Buscar...', style: sx = {} }) {
+    return (
+        <div style={{ position: 'relative', ...sx }}>
+            <span style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: 14,
+                color: T.textMuted,
+                pointerEvents: 'none',
+            }}>
+                🔍
+            </span>
+            <input
+                type="search"
+                value={value}
+                onChange={e => onChange && onChange(e.target.value)}
+                placeholder={placeholder}
+                style={{
+                    width: '100%',
+                    padding: '10px 14px 10px 36px',
+                    fontSize: 13,
+                    color: T.text,
+                    background: T.card,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 8,
+                    outline: 'none',
+                    fontFamily: T.font,
+                }}
+            />
+        </div>
+    );
+}
+
+// ── Divider ── separador horizontal
+export function Divider({ label, style: sx = {} }) {
+    if (!label) {
+        return (
+            <div style={{
+                height: 1,
+                background: T.border,
+                margin: '20px 0',
+                ...sx,
+            }} />
+        );
+    }
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            margin: '20px 0',
+            ...sx,
+        }}>
+            <div style={{ flex: 1, height: 1, background: T.border }} />
+            <span style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: T.textMuted,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+            }}>
+                {label}
+            </span>
+            <div style={{ flex: 1, height: 1, background: T.border }} />
+        </div>
+    );
+}
+
+// ── Tooltip ── básico con hover
+export function Tooltip({ children, content, position = 'top' }) {
+    const [visible, setVisible] = useState(false);
+
+    const positionStyles = {
+        top: { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6 },
+        bottom: { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6 },
+        left: { right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: 6 },
+        right: { left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: 6 },
+    };
+
+    return (
+        <span
+            style={{ position: 'relative', display: 'inline-block' }}
+            onMouseEnter={() => setVisible(true)}
+            onMouseLeave={() => setVisible(false)}
+        >
+            {children}
+            {visible && content && (
+                <span
+                    role="tooltip"
+                    style={{
+                        position: 'absolute',
+                        ...positionStyles[position],
+                        background: T.card,
+                        color: T.text,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: '6px 10px',
+                        borderRadius: 6,
+                        border: `1px solid ${T.border}`,
+                        boxShadow: T.shadow,
+                        whiteSpace: 'nowrap',
+                        zIndex: 1000,
+                        pointerEvents: 'none',
+                    }}
+                >
+                    {content}
+                </span>
+            )}
+        </span>
+    );
+}
+
+// ── ConfirmDialog ── diálogo de confirmación modal
+export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', variant = 'primary' }) {
+    if (!open) return null;
+
+    const confirmColor = variant === 'danger' ? T.red : T.blue;
+
+    return (
+        <div
+            onClick={onClose}
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999,
+                padding: 20,
+                backdropFilter: 'blur(4px)',
+            }}
+        >
+            <div
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                style={{
+                    background: T.card,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 12,
+                    padding: '28px 28px 20px',
+                    maxWidth: 440,
+                    width: '100%',
+                    boxShadow: T.shadowLg,
+                    animation: 'tScaleIn 0.2s ease',
+                }}
+            >
+                {title && (
+                    <h3 style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: T.text,
+                        marginBottom: 8,
+                        letterSpacing: '-0.01em',
+                    }}>
+                        {title}
+                    </h3>
+                )}
+                {message && (
+                    <p style={{
+                        fontSize: 14,
+                        color: T.textSoft,
+                        lineHeight: 1.5,
+                        marginBottom: 24,
+                    }}>
+                        {message}
+                    </p>
+                )}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 10,
+                }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            padding: '9px 18px',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: T.textSoft,
+                            background: 'transparent',
+                            border: `1px solid ${T.border}`,
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontFamily: T.font,
+                        }}
+                    >
+                        {cancelLabel}
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        style={{
+                            padding: '9px 18px',
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#fff',
+                            background: confirmColor,
+                            border: 'none',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontFamily: T.font,
+                        }}
+                    >
+                        {confirmLabel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default { T, theme: T, statusMap, Card, GlassCard, StatusBadge, Btn, Input, Select, PageHeader, DataTable, Stat, FlashMessages, useAutoRefresh, LiveDot, MetricBar, PageShell, Badge, Avatar, EmptyState, SearchInput, Divider, Tooltip, ConfirmDialog, fmtSeconds, fmtMinutes };
