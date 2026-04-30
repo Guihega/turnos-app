@@ -109,7 +109,20 @@ export default function Welcome({ canLogin, canResetPassword, flash }) {
         e.preventDefault();
         post('/leads', {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                // Plausible: custom event con props de contexto (sector, tamaño, UTMs)
+                if (typeof window.plausible === 'function') {
+                    window.plausible('Lead Submitted', {
+                        props: {
+                            sector: data.sector || 'sin-sector',
+                            size: data.size || 'sin-tamano',
+                            utm_source: data.utm_source || 'direct',
+                            utm_campaign: data.utm_campaign || 'none',
+                        },
+                    });
+                }
+                reset();
+            },
         });
     };
 
