@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Cache;
 
 class SystemStatusCommand extends Command
 {
@@ -27,6 +27,7 @@ class SystemStatusCommand extends Command
      * Cache key for tracking alert count over 24h.
      */
     private const ALERT_COUNT_KEY = 'system:alert_count_24h';
+
     private const LAST_ALERT_KEY = 'system:last_alert_details';
 
     /**
@@ -54,7 +55,7 @@ class SystemStatusCommand extends Command
 
         // ── 2. Memory ──
         $memInfo = $this->getMemoryInfo();
-        $checks['ram'] = $memInfo['used_pct'] . '%';
+        $checks['ram'] = $memInfo['used_pct'].'%';
         $checks['swap'] = $memInfo['swap_used'];
         if ($memInfo['used_pct'] > 95) {
             $warnings[] = ['level' => 'critical', 'msg' => "🔴 RAM al {$memInfo['used_pct']}%"];
@@ -78,7 +79,7 @@ class SystemStatusCommand extends Command
             $checks['pg_connections'] = $conns[0]->cnt;
         } catch (\Throwable $e) {
             $checks['postgresql'] = '❌ DOWN';
-            $warnings[] = ['level' => 'critical', 'msg' => "🔴 PostgreSQL DOWN: " . $e->getMessage()];
+            $warnings[] = ['level' => 'critical', 'msg' => '🔴 PostgreSQL DOWN: '.$e->getMessage()];
         }
 
         // ── 4. Redis ──
@@ -94,7 +95,7 @@ class SystemStatusCommand extends Command
             $checks['redis_keys'] = $redisInfo['db0'] ?? '0 keys';
         } catch (\Throwable $e) {
             $checks['redis'] = '❌ DOWN';
-            $warnings[] = ['level' => 'critical', 'msg' => "🔴 Redis DOWN: " . $e->getMessage()];
+            $warnings[] = ['level' => 'critical', 'msg' => '🔴 Redis DOWN: '.$e->getMessage()];
         }
 
         // ── 5. Queue Health ──
@@ -145,6 +146,7 @@ class SystemStatusCommand extends Command
                 $this->trackAlert($warnings);
             }
             $this->sendDailySummary($checks, $warnings);
+
             return self::SUCCESS;
         }
 
@@ -188,7 +190,7 @@ class SystemStatusCommand extends Command
         }
 
         // Case A: resolved — previously had alerts, now clean
-        if (!$hasWarnings && $lastHash !== null) {
+        if (! $hasWarnings && $lastHash !== null) {
             $this->sendResolutionNotice($checks);
             try {
                 Cache::forget(self::LAST_ALERT_HASH_KEY);
@@ -196,12 +198,14 @@ class SystemStatusCommand extends Command
                 // Non-critical
             }
             $this->info('Alerts resolved, notice sent.');
+
             return self::SUCCESS;
         }
 
         // Case B: all clean, no previous alert — silent
-        if (!$hasWarnings) {
+        if (! $hasWarnings) {
             $this->info('All checks passed, no alert sent.');
+
             return self::SUCCESS;
         }
 
@@ -211,6 +215,7 @@ class SystemStatusCommand extends Command
         // Case C: same alert as last time — dedup, stay silent
         if ($currentHash === $lastHash) {
             $this->info('Same alert as previous run, dedup suppressed notification.');
+
             return self::FAILURE;
         }
 
@@ -241,7 +246,7 @@ class SystemStatusCommand extends Command
         }
 
         $signature = array_map(
-            fn($w) => ($w['level'] ?? 'warning') . '|' . ($w['msg'] ?? ''),
+            fn ($w) => ($w['level'] ?? 'warning').'|'.($w['msg'] ?? ''),
             $warnings
         );
         sort($signature);
@@ -254,7 +259,7 @@ class SystemStatusCommand extends Command
      */
     private function sendResolutionNotice(array $checks): void
     {
-        $msg = "✅ *Olinora — Alertas resueltas* — " . now()->format('d/M H:i') . "\n\n";
+        $msg = '✅ *Olinora — Alertas resueltas* — '.now()->format('d/M H:i')."\n\n";
         $msg .= "Todos los checks OK:\n";
         $msg .= "• Disco: `{$checks['disco']}` · RAM: `{$checks['ram']}`\n";
         $msg .= "• PG: `{$checks['postgresql']}` · Redis: `{$checks['redis']}`\n";
@@ -276,7 +281,7 @@ class SystemStatusCommand extends Command
             // Store last alert details for daily summary context
             $lastAlert = [
                 'time' => now()->format('H:i'),
-                'warnings' => array_map(fn($w) => $w['msg'], $warnings),
+                'warnings' => array_map(fn ($w) => $w['msg'], $warnings),
             ];
             Cache::put(self::LAST_ALERT_KEY, $lastAlert, now()->addHours(24));
         } catch (\Throwable) {
@@ -306,7 +311,7 @@ class SystemStatusCommand extends Command
         $hasWarnings = count($warnings) > 0;
         $emoji = $hasWarnings ? '🟡' : '✅';
 
-        $msg = "{$emoji} *Olinora Daily* — " . now()->format('d/M H:i') . "\n\n";
+        $msg = "{$emoji} *Olinora Daily* — ".now()->format('d/M H:i')."\n\n";
 
         // Condensed one-line metrics
         $msg .= "Disco: `{$checks['disco']}` · RAM: `{$checks['ram']}` · Swap: `{$checks['swap']}`\n";
@@ -317,18 +322,18 @@ class SystemStatusCommand extends Command
         // 24h alert summary
         $msg .= "\n";
         if ($alertCount === 0) {
-            $msg .= "🛡 Sin alertas en las últimas 24h";
+            $msg .= '🛡 Sin alertas en las últimas 24h';
         } else {
             $msg .= "⚠️ {$alertCount} alerta(s) en las últimas 24h";
             if ($lastAlert) {
-                $msg .= "\nÚltima: " . implode(', ', $lastAlert['warnings']) . " ({$lastAlert['time']})";
+                $msg .= "\nÚltima: ".implode(', ', $lastAlert['warnings'])." ({$lastAlert['time']})";
             }
         }
 
         // Current warnings if any
         if ($hasWarnings) {
             $msg .= "\n\n*Alertas activas:*\n";
-            $msg .= implode("\n", array_map(fn($w) => $w['msg'], $warnings));
+            $msg .= implode("\n", array_map(fn ($w) => $w['msg'], $warnings));
         }
 
         $this->sendTelegram($msg);
@@ -347,7 +352,7 @@ class SystemStatusCommand extends Command
             $emoji = '🔴';
         }
 
-        $msg = "{$emoji} *Olinora Status* — " . now()->format('d/M H:i') . "\n\n";
+        $msg = "{$emoji} *Olinora Status* — ".now()->format('d/M H:i')."\n\n";
 
         foreach ($checks as $key => $value) {
             $label = str_replace('_', ' ', ucfirst($key));
@@ -356,7 +361,7 @@ class SystemStatusCommand extends Command
 
         if ($hasWarnings) {
             $msg .= "\n*Alertas:*\n";
-            $msg .= implode("\n", array_map(fn($w) => $w['msg'], $warnings));
+            $msg .= implode("\n", array_map(fn ($w) => $w['msg'], $warnings));
         }
 
         $this->sendTelegram($msg);
@@ -375,11 +380,11 @@ class SystemStatusCommand extends Command
         $output = $this->runSupervisorCommand('/usr/bin/supervisorctl status 2>&1');
 
         // Attempt 2: sudo non-interactive (defensive fallback)
-        if (!$this->isValidSupervisorOutput($output)) {
+        if (! $this->isValidSupervisorOutput($output)) {
             $output = $this->runSupervisorCommand('sudo -n /usr/bin/supervisorctl status 2>&1');
         }
 
-        if (!$this->isValidSupervisorOutput($output)) {
+        if (! $this->isValidSupervisorOutput($output)) {
             return [
                 'display' => '⚠️ no se pudo verificar',
                 'warning' => '⚠️ Supervisor: sin acceso para verificar estado',
@@ -395,7 +400,7 @@ class SystemStatusCommand extends Command
 
         $warning = null;
         if ($hasFatal || $hasStopped) {
-            $warning = "🔴 Supervisor: procesos FATAL/STOPPED detectados";
+            $warning = '🔴 Supervisor: procesos FATAL/STOPPED detectados';
         } elseif ($runningCount < $expected) {
             $warning = "⚠️ Supervisor: {$runningCount}/{$expected} procesos (esperados {$expected})";
         }
@@ -456,12 +461,12 @@ class SystemStatusCommand extends Command
         preg_match('/SwapTotal:\s+(\d+)/', $meminfo, $swapTotal);
         preg_match('/SwapFree:\s+(\d+)/', $meminfo, $swapFree);
 
-        $totalKb = (int)($total[1] ?? 0);
-        $availableKb = (int)($available[1] ?? 0);
+        $totalKb = (int) ($total[1] ?? 0);
+        $availableKb = (int) ($available[1] ?? 0);
         $usedPct = $totalKb > 0 ? round((1 - $availableKb / $totalKb) * 100, 1) : 0;
 
-        $swapTotalKb = (int)($swapTotal[1] ?? 0);
-        $swapFreeKb = (int)($swapFree[1] ?? 0);
+        $swapTotalKb = (int) ($swapTotal[1] ?? 0);
+        $swapFreeKb = (int) ($swapFree[1] ?? 0);
         $swapUsedMb = round(($swapTotalKb - $swapFreeKb) / 1024);
 
         return [
@@ -475,8 +480,9 @@ class SystemStatusCommand extends Command
         $token = config('services.telegram.bot_token');
         $chatId = config('services.telegram.chat_id');
 
-        if (!$token || !$chatId) {
+        if (! $token || ! $chatId) {
             $this->warn('Telegram not configured');
+
             return;
         }
 
@@ -496,7 +502,7 @@ class SystemStatusCommand extends Command
             curl_exec($ch);
             curl_close($ch);
         } catch (\Throwable $e) {
-            $this->error('Telegram send failed: ' . $e->getMessage());
+            $this->error('Telegram send failed: '.$e->getMessage());
         }
     }
 }

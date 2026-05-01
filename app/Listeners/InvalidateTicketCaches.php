@@ -8,6 +8,7 @@ use App\Events\TicketCalled;
 use App\Events\TicketCompleted;
 use App\Events\TicketIssued;
 use App\Events\TicketTransferred;
+use App\Models\Ticket;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -27,7 +28,9 @@ class InvalidateTicketCaches
     public function handle(object $event): void
     {
         $ticket = $this->extractTicket($event);
-        if (!$ticket) return;
+        if (! $ticket) {
+            return;
+        }
 
         $branchId = $ticket->branch_id;
         $today = today()->toDateString();
@@ -50,7 +53,7 @@ class InvalidateTicketCaches
         }
     }
 
-    private function extractTicket(object $event): ?\App\Models\Ticket
+    private function extractTicket(object $event): ?Ticket
     {
         // All ticket events pass the ticket as first constructor arg
         if (property_exists($event, 'ticket')) {
@@ -64,7 +67,7 @@ class InvalidateTicketCaches
             foreach ($props as $prop) {
                 $prop->setAccessible(true);
                 $val = $prop->getValue($event);
-                if ($val instanceof \App\Models\Ticket) {
+                if ($val instanceof Ticket) {
                     return $val;
                 }
             }

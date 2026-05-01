@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +12,7 @@ class SecuritySettingsTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Tenant $tenant;
 
     protected function setUp(): void

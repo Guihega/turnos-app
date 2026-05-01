@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
-use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;

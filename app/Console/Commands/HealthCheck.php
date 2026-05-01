@@ -7,7 +7,6 @@ namespace App\Console\Commands;
 use App\Services\TelegramAlertService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 
 /**
@@ -29,6 +28,7 @@ class HealthCheck extends Command
     protected $description = 'Check critical services (DB, Redis, Reverb, disk, queue) and alert on failure';
 
     private array $results = [];
+
     private bool $hasFailures = false;
 
     public function handle(): int
@@ -55,6 +55,7 @@ class HealthCheck extends Command
         if ($this->hasFailures) {
             $this->error("Result: {$passed}/{$total} passed — {$failed} FAILED");
             $this->sendTelegramAlert();
+
             return self::FAILURE;
         }
 
@@ -63,7 +64,7 @@ class HealthCheck extends Command
         if ($this->option('alert')) {
             app(TelegramAlertService::class)->sendAlert(
                 'Health Check OK',
-                "All {$total} checks passed.\n" . $this->formatResultsSummary(),
+                "All {$total} checks passed.\n".$this->formatResultsSummary(),
                 'info'
             );
             $this->info('→ Test alert sent to Telegram');
@@ -163,7 +164,7 @@ class HealthCheck extends Command
     {
         $name = 'Storage Writable';
         try {
-            $testFile = storage_path('app/.health_check_' . time());
+            $testFile = storage_path('app/.health_check_'.time());
             file_put_contents($testFile, 'ok');
             $content = file_get_contents($testFile);
             unlink($testFile);
@@ -227,6 +228,7 @@ class HealthCheck extends Command
             $icon = $r['status'] ? '✅' : ($r['level'] === 'critical' ? '🔴' : '🟡');
             $lines[] = "{$icon} {$r['name']}: {$r['detail']}";
         }
+
         return implode("\n", $lines);
     }
 }

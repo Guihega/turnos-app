@@ -18,10 +18,10 @@ class BranchController extends Controller
     public function index(Request $request)
     {
         $branches = Branch::where('tenant_id', $request->user()->tenant_id)
-            ->withCount(['tickets as today_tickets' => fn($q) => $q->whereDate('created_at', today())])
+            ->withCount(['tickets as today_tickets' => fn ($q) => $q->whereDate('created_at', today())])
             ->orderBy('name')
             ->get()
-            ->map(fn($b) => [
+            ->map(fn ($b) => [
                 'id' => $b->id, 'name' => $b->name, 'code' => $b->code, 'city' => $b->city,
                 'is_active' => $b->is_active, 'is_open' => $b->isOpen(), 'phone' => $b->phone,
                 'today_tickets' => $b->today_tickets, 'max_daily_tickets' => $b->max_daily_tickets,
@@ -114,6 +114,7 @@ class BranchController extends Controller
         $this->authorizeTenantOwnership($branch, $request);
 
         $branch->delete();
+
         return redirect()->route('admin.sucursales.index')->with('success', 'Sucursal eliminada.');
     }
 }

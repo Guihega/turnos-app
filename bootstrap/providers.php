@@ -1,9 +1,13 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\CipherSweetAuthServiceProvider;
+use App\Providers\HorizonServiceProvider;
+use App\Providers\RepositoryServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\CipherSweetAuthServiceProvider::class,
-    App\Providers\HorizonServiceProvider::class,
-    App\Providers\RepositoryServiceProvider::class, 
+    AppServiceProvider::class,
+    CipherSweetAuthServiceProvider::class,
+    HorizonServiceProvider::class,
+    RepositoryServiceProvider::class,
 ];
- 

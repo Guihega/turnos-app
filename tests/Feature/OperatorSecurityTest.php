@@ -20,15 +20,25 @@ class OperatorSecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private Branch $branchA;
+
     private Branch $branchB;
+
     private Queue $queueA;
+
     private Queue $queueB;
+
     private Service $serviceA;
+
     private Counter $counterA;
+
     private Counter $counterB;
+
     private User $operatorA;
+
     private User $operatorB;
 
     protected function setUp(): void
@@ -185,9 +195,9 @@ class OperatorSecurityTest extends TestCase
             'branch_id' => $branch->id,
             'queue_id' => $queue->id,
             'service_id' => $this->serviceA->id,
-            'ticket_number' => 'A-' . fake()->unique()->numberBetween(100, 999),
+            'ticket_number' => 'A-'.fake()->unique()->numberBetween(100, 999),
             'daily_sequence' => fake()->unique()->numberBetween(1, 999),
-            'display_number' => 'TST-A-' . fake()->unique()->numberBetween(100, 999),
+            'display_number' => 'TST-A-'.fake()->unique()->numberBetween(100, 999),
             'status' => TicketStatus::WAITING,
             'priority' => TicketPriority::NORMAL,
             'priority_score' => TicketPriority::NORMAL->weight(),
@@ -201,6 +211,7 @@ class OperatorSecurityTest extends TestCase
         $counter->update(['current_operator_id' => $operator->id]);
         $ticket->transitionTo(TicketStatus::CALLED, $operator->id);
         $ticket->update(['served_by' => $operator->id, 'counter_id' => $counter->id]);
+
         return $ticket;
     }
 
@@ -208,6 +219,7 @@ class OperatorSecurityTest extends TestCase
     {
         $ticket = $this->createCalledTicket($branch, $queue, $service, $operator, $counter);
         $ticket->transitionTo(TicketStatus::IN_PROGRESS, $operator->id);
+
         return $ticket;
     }
 }

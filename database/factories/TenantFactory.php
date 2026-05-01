@@ -15,9 +15,10 @@ class TenantFactory extends Factory
     public function definition(): array
     {
         $name = fake()->company();
+
         return [
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . Str::random(4),
+            'slug' => Str::slug($name).'-'.Str::random(4),
             'email' => fake()->companyEmail(),
             'phone' => fake()->phoneNumber(),
             'timezone' => 'America/Mexico_City',

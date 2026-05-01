@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -43,10 +44,11 @@ class TwoFactorChallengeController extends Controller
             return redirect()->route('login');
         }
 
-        $user = \App\Models\User::find($userId);
+        $user = User::find($userId);
 
         if (! $user || ! $user->two_factor_secret) {
             $request->session()->forget(['two_factor:user_id', 'two_factor:remember']);
+
             return redirect()->route('login');
         }
 
@@ -54,7 +56,7 @@ class TwoFactorChallengeController extends Controller
 
         // Try TOTP code first
         if ($request->filled('code')) {
-            $google2fa = new Google2FA();
+            $google2fa = new Google2FA;
 
             if (! $google2fa->verifyKey($secret, $request->code)) {
                 return back()->withErrors(['code' => 'El código es inválido.']);
@@ -65,8 +67,7 @@ class TwoFactorChallengeController extends Controller
             if (! $this->useRecoveryCode($user, $request->recovery_code)) {
                 return back()->withErrors(['recovery_code' => 'El código de recuperación es inválido.']);
             }
-        }
-        else {
+        } else {
             return back()->withErrors(['code' => 'Ingresa un código de verificación.']);
         }
 
@@ -90,7 +91,7 @@ class TwoFactorChallengeController extends Controller
     /**
      * Validate and consume a recovery code.
      */
-    private function useRecoveryCode(\App\Models\User $user, string $code): bool
+    private function useRecoveryCode(User $user, string $code): bool
     {
         if (! $user->two_factor_recovery_codes) {
             return false;

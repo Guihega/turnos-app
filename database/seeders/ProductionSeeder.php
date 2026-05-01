@@ -29,9 +29,9 @@ class ProductionSeeder extends Seeder
         $adminEmail = env('PILOT_ADMIN_EMAIL', 'admin@empresa.com');
         $adminPassword = env('PILOT_ADMIN_PASSWORD', 'Olinora2026!');
 
-        $this->command->info("╔══════════════════════════════════════════╗");
-        $this->command->info("║  Olinora — Production Seeder            ║");
-        $this->command->info("╚══════════════════════════════════════════╝");
+        $this->command->info('╔══════════════════════════════════════════╗');
+        $this->command->info('║  Olinora — Production Seeder            ║');
+        $this->command->info('╚══════════════════════════════════════════╝');
         $this->command->info('');
 
         // ── Create Tenant ──
@@ -70,15 +70,15 @@ class ProductionSeeder extends Seeder
 
         $this->command->info("✓ Admin: {$admin->name} <{$admin->email}>");
         $this->command->info('');
-        $this->command->info("┌─────────────────────────────────────────┐");
-        $this->command->info("│ Acceso al sistema:                      │");
-        $this->command->info("│ URL:   https://olinora.com.mx           │");
+        $this->command->info('┌─────────────────────────────────────────┐');
+        $this->command->info('│ Acceso al sistema:                      │');
+        $this->command->info('│ URL:   https://olinora.com.mx           │');
         $this->command->info("│ Email: {$adminEmail}");
         $this->command->info("│ Pass:  {$adminPassword}");
-        $this->command->info("└─────────────────────────────────────────┘");
+        $this->command->info('└─────────────────────────────────────────┘');
         $this->command->info('');
-        $this->command->info("El admin puede configurar sucursales, servicios,");
-        $this->command->info("colas, ventanillas y usuarios desde el panel.");
+        $this->command->info('El admin puede configurar sucursales, servicios,');
+        $this->command->info('colas, ventanillas y usuarios desde el panel.');
     }
 
     private function defaultSettings(string $tenantName): array

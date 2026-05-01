@@ -22,18 +22,18 @@ class EnsureRole
      * Level shortcuts for common role groups.
      */
     private const LEVEL_SHORTCUTS = [
-        'admin'    => 80, // tenant_admin+
-        'manager'  => 60, // branch_manager+
+        'admin' => 80, // tenant_admin+
+        'manager' => 60, // branch_manager+
         'operator' => 40, // operator+
-        'staff'    => 30, // receptionist+
-        'viewer'   => 10, // viewer+
+        'staff' => 30, // receptionist+
+        'viewer' => 10, // viewer+
     ];
 
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(403, 'No autenticado.');
         }
 
@@ -42,11 +42,12 @@ class EnsureRole
             if ($user->role->level() < self::LEVEL_SHORTCUTS[$permission]) {
                 abort(403, 'No tiene permisos suficientes para acceder a esta sección.');
             }
+
             return $next($request);
         }
 
         // Check by specific permission string
-        if (!$user->role->hasPermission($permission)) {
+        if (! $user->role->hasPermission($permission)) {
             abort(403, "No tiene el permiso: {$permission}");
         }
 

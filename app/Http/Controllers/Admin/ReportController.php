@@ -25,7 +25,7 @@ class ReportController extends Controller
         // Summary stats
         $summary = $branchId ? DB::table('tickets')
             ->where('branch_id', $branchId)
-            ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+            ->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
             ->selectRaw("
                 COUNT(*) as total,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
@@ -40,7 +40,7 @@ class ReportController extends Controller
         // Daily breakdown
         $daily = $branchId ? DB::table('tickets')
             ->where('branch_id', $branchId)
-            ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+            ->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
             ->selectRaw("
                 DATE(created_at) as date,
                 COUNT(*) as total,
@@ -56,13 +56,13 @@ class ReportController extends Controller
             ->join('users', 'tickets.served_by', '=', 'users.id')
             ->where('tickets.branch_id', $branchId)
             ->whereNotNull('tickets.served_by')
-            ->whereBetween('tickets.created_at', [$dateFrom, $dateTo . ' 23:59:59'])
-            ->selectRaw("
+            ->whereBetween('tickets.created_at', [$dateFrom, $dateTo.' 23:59:59'])
+            ->selectRaw('
                 users.name,
                 COUNT(*) as served,
                 ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL))::int as avg_time,
                 ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as rating
-            ")
+            ')
             ->groupBy('users.name')
             ->orderByDesc('served')
             ->get() : collect();
@@ -70,10 +70,10 @@ class ReportController extends Controller
         // Recent tickets
         $tickets = $branchId ? Ticket::with(['queue:id,name', 'service:id,name,color', 'servedBy:id,name'])
             ->where('branch_id', $branchId)
-            ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+            ->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
             ->orderByDesc('created_at')
             ->paginate(20)
-            ->through(fn($t) => [
+            ->through(fn ($t) => [
                 'id' => $t->id, 'display_number' => $t->display_number,
                 'customer_name' => $t->customer_name, 'status' => $t->status->value,
                 'status_label' => $t->status->label(), 'status_color' => $t->status->color(),
@@ -84,7 +84,7 @@ class ReportController extends Controller
             ]) : null;
 
         return Inertia::render('Admin/Reports/Index', [
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name]),
             'currentBranchId' => $branchId,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
@@ -126,15 +126,15 @@ class ReportController extends Controller
 
             // ── Header section ──
             fputcsv($handle, ['Reporte de Turnos — TurnosPro']);
-            fputcsv($handle, ['Sucursal', $branch->name . ' (' . $branch->code . ')']);
-            fputcsv($handle, ['Período', $dateFrom . ' al ' . $dateTo]);
+            fputcsv($handle, ['Sucursal', $branch->name.' ('.$branch->code.')']);
+            fputcsv($handle, ['Período', $dateFrom.' al '.$dateTo]);
             fputcsv($handle, ['Generado', now()->format('d/m/Y H:i:s')]);
             fputcsv($handle, []); // blank row
 
             // ── Summary ──
             $summary = DB::table('tickets')
                 ->where('branch_id', $branchId)
-                ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
                 ->selectRaw("
                     COUNT(*) as total,
                     COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
@@ -161,13 +161,13 @@ class ReportController extends Controller
                 ->join('users', 'tickets.served_by', '=', 'users.id')
                 ->where('tickets.branch_id', $branchId)
                 ->whereNotNull('tickets.served_by')
-                ->whereBetween('tickets.created_at', [$dateFrom, $dateTo . ' 23:59:59'])
-                ->selectRaw("
+                ->whereBetween('tickets.created_at', [$dateFrom, $dateTo.' 23:59:59'])
+                ->selectRaw('
                     users.name,
                     COUNT(*) as served,
                     ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL))::int as avg_time,
                     ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as rating
-                ")
+                ')
                 ->groupBy('users.name')
                 ->orderByDesc('served')
                 ->get();
@@ -193,7 +193,7 @@ class ReportController extends Controller
 
             Ticket::with(['queue:id,name', 'service:id,name', 'servedBy:id,name'])
                 ->where('branch_id', $branchId)
-                ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
                 ->orderByDesc('created_at')
                 ->chunk(200, function ($tickets) use ($handle) {
                     foreach ($tickets as $t) {

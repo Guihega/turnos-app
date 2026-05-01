@@ -21,10 +21,15 @@ class TicketFlowTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Branch $branch;
+
     private Queue $queue;
+
     private Service $service;
+
     private Counter $counter;
+
     private User $operator;
 
     protected function setUp(): void
@@ -143,7 +148,7 @@ class TicketFlowTest extends TestCase
 
         // Sync the cache so getDailySequence() won't collide with the
         // manually-created ticket (daily_sequence = 1).
-        $cacheKey = "branch:{$this->branch->id}:daily_seq:" . today()->format('Y-m-d');
+        $cacheKey = "branch:{$this->branch->id}:daily_seq:".today()->format('Y-m-d');
         Cache::put($cacheKey, 1, now()->endOfDay());
 
         $this->withoutExceptionHandling();
@@ -234,6 +239,7 @@ class TicketFlowTest extends TestCase
         $this->counter->update(['current_operator_id' => $this->operator->id, 'status' => 'open']);
         $ticket->transitionTo(TicketStatus::CALLED, $this->operator->id);
         $ticket->update(['served_by' => $this->operator->id, 'counter_id' => $this->counter->id]);
+
         return $ticket;
     }
 
@@ -241,6 +247,7 @@ class TicketFlowTest extends TestCase
     {
         $ticket = $this->createCalledTicket();
         $ticket->transitionTo(TicketStatus::IN_PROGRESS, $this->operator->id);
+
         return $ticket;
     }
 }

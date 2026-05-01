@@ -20,11 +20,11 @@ class KioskController extends Controller
     {
         $queues = Queue::where('branch_id', $branch->id)
             ->where('is_active', true)
-            ->with(['services' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->with(['services' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->get();
 
         $services = $queues->flatMap(function ($queue) {
-            return $queue->services->map(fn($s) => [
+            return $queue->services->map(fn ($s) => [
                 'id' => $s->id, 'name' => $s->name, 'code' => $s->code, 'color' => $s->color,
                 'icon' => $s->icon, 'description' => $s->description,
                 'estimated_minutes' => $s->estimated_duration_minutes,
@@ -82,9 +82,9 @@ class KioskController extends Controller
         }
 
         $request->validate([
-            'service_id'     => 'required|exists:services,id',
-            'queue_id'       => 'required|exists:queues,id',
-            'customer_name'  => [$requireName ? 'required' : 'nullable', 'string', 'max:255'],
+            'service_id' => 'required|exists:services,id',
+            'queue_id' => 'required|exists:queues,id',
+            'customer_name' => [$requireName ? 'required' : 'nullable', 'string', 'max:255'],
             'customer_phone' => 'nullable|string|max:20',
         ]);
 
@@ -94,7 +94,7 @@ class KioskController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$queue) {
+        if (! $queue) {
             return back()->withErrors(['branch' => 'Cola no válida para esta sucursal.']);
         }
 
@@ -104,7 +104,7 @@ class KioskController extends Controller
             ->where('services.is_active', true)
             ->exists();
 
-        if (!$serviceLinked) {
+        if (! $serviceLinked) {
             return back()->withErrors(['branch' => 'Servicio no disponible en esta cola.']);
         }
 

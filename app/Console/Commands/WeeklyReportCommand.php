@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class WeeklyReportCommand extends Command
 {
     protected $signature = 'report:weekly';
+
     protected $description = 'Generate and send weekly KPI report via Telegram';
 
     public function handle(): int
     {
         $from = now()->subWeek()->startOfWeek();
         $to = now()->subWeek()->endOfWeek();
-        $period = $from->format('d/M') . ' — ' . $to->format('d/M Y');
+        $period = $from->format('d/M').' — '.$to->format('d/M Y');
 
         // ── Global stats ──
         $global = DB::table('tickets')
@@ -53,12 +55,12 @@ class WeeklyReportCommand extends Command
             ->join('users', 'tickets.served_by', '=', 'users.id')
             ->whereBetween('tickets.created_at', [$from, $to])
             ->where('tickets.status', 'completed')
-            ->selectRaw("
+            ->selectRaw('
                 users.name,
                 COUNT(*) as served,
                 COALESCE(ROUND(AVG(tickets.service_time_seconds) / 60, 1), 0) as avg_min,
                 ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as rating
-            ")
+            ')
             ->groupBy('users.name')
             ->orderByDesc('served')
             ->limit(5)
@@ -67,7 +69,7 @@ class WeeklyReportCommand extends Command
         // ── Peak day ──
         $peakDay = DB::table('tickets')
             ->whereBetween('created_at', [$from, $to])
-            ->selectRaw("DATE(created_at) as date, COUNT(*) as total")
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
             ->groupByRaw('DATE(created_at)')
             ->orderByDesc('total')
             ->first();
@@ -99,10 +101,10 @@ class WeeklyReportCommand extends Command
         $msg .= "• Cancelados: `{$global->cancelled}` · No show: `{$global->no_show}`\n";
         $msg .= "• Espera prom: `{$global->avg_wait_min} min`\n";
         $msg .= "• Servicio prom: `{$global->avg_service_min} min`\n";
-        $msg .= "• Rating: `" . ($global->avg_rating ?? '—') . "/5` ({$global->total_ratings} eval)\n";
+        $msg .= '• Rating: `'.($global->avg_rating ?? '—')."/5` ({$global->total_ratings} eval)\n";
 
         if ($peakDay) {
-            $peakDate = \Carbon\Carbon::parse($peakDay->date)->format('l d/M');
+            $peakDate = Carbon::parse($peakDay->date)->format('l d/M');
             $msg .= "• Día pico: `{$peakDate}` con `{$peakDay->total}` turnos\n";
         }
 
@@ -119,13 +121,15 @@ class WeeklyReportCommand extends Command
         if ($operators->isNotEmpty()) {
             $msg .= "\n*Top Operadores*\n";
             foreach ($operators as $i => $op) {
-                $medal = match($i) { 0 => '🥇', 1 => '🥈', 2 => '🥉', default => '•' };
+                $medal = match ($i) {
+                    0 => '🥇', 1 => '🥈', 2 => '🥉', default => '•'
+                };
                 $r = $op->rating ? " ★{$op->rating}" : '';
                 $msg .= "{$medal} {$op->name}: `{$op->served}` turnos, ~{$op->avg_min}min{$r}\n";
             }
         }
 
-        $msg .= "\n_Generado: " . now()->format('d/M/Y H:i') . "_";
+        $msg .= "\n_Generado: ".now()->format('d/M/Y H:i').'_';
 
         // Send
         $this->sendTelegram($msg);
@@ -139,8 +143,9 @@ class WeeklyReportCommand extends Command
         $token = config('services.telegram.bot_token');
         $chatId = config('services.telegram.chat_id');
 
-        if (!$token || !$chatId) {
+        if (! $token || ! $chatId) {
             $this->warn('Telegram not configured');
+
             return;
         }
 
@@ -160,7 +165,7 @@ class WeeklyReportCommand extends Command
             curl_exec($ch);
             curl_close($ch);
         } catch (\Throwable $e) {
-            $this->error('Telegram send failed: ' . $e->getMessage());
+            $this->error('Telegram send failed: '.$e->getMessage());
         }
     }
 }

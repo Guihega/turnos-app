@@ -92,8 +92,8 @@ class TicketActionController extends Controller
     {
         // F-06: Validate ticket belongs to user's tenant
         // Use withoutGlobalScopes to load the branch even if it belongs to another tenant
-        $branch = \App\Models\Branch::withoutGlobalScopes()->find($ticket->branch_id);
-        if (!$branch || $branch->tenant_id !== $request->user()->tenant_id) {
+        $branch = Branch::withoutGlobalScopes()->find($ticket->branch_id);
+        if (! $branch || $branch->tenant_id !== $request->user()->tenant_id) {
             abort(403, 'No tiene acceso a este turno.');
         }
 
@@ -130,7 +130,7 @@ class TicketActionController extends Controller
                 'started_at' => $ticket->started_at?->format('d/m/Y H:i:s'),
                 'completed_at' => $ticket->completed_at?->format('d/m/Y H:i:s'),
                 'cancelled_at' => $ticket->cancelled_at?->format('d/m/Y H:i:s'),
-                'events' => $ticket->events->map(fn($e) => [
+                'events' => $ticket->events->map(fn ($e) => [
                     'type' => $e->event_type,
                     'from' => $e->from_status,
                     'to' => $e->to_status,

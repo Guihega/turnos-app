@@ -32,9 +32,9 @@ class DisplayAnnouncement extends Model
     {
         return [
             'is_active' => 'boolean',
-            'priority'  => 'integer',
+            'priority' => 'integer',
             'starts_at' => 'datetime',
-            'ends_at'   => 'datetime',
+            'ends_at' => 'datetime',
         ];
     }
 
@@ -67,7 +67,7 @@ class DisplayAnnouncement extends Model
     {
         return $query->where(function ($q) use ($branchId) {
             $q->whereNull('branch_id')         // Aplica a todas las sucursales
-              ->orWhere('branch_id', $branchId); // O específico a esta
+                ->orWhere('branch_id', $branchId); // O específico a esta
         });
     }
 
@@ -80,9 +80,16 @@ class DisplayAnnouncement extends Model
 
     public function isCurrentlyActive(): bool
     {
-        if (!$this->is_active) return false;
-        if ($this->starts_at && $this->starts_at->isFuture()) return false;
-        if ($this->ends_at && $this->ends_at->isPast()) return false;
+        if (! $this->is_active) {
+            return false;
+        }
+        if ($this->starts_at && $this->starts_at->isFuture()) {
+            return false;
+        }
+        if ($this->ends_at && $this->ends_at->isPast()) {
+            return false;
+        }
+
         return true;
     }
 }

@@ -80,11 +80,11 @@ final class IssueTicketAction
 
     private function validateBranchCanIssue(Branch $branch): void
     {
-        if (!$branch->is_active) {
+        if (! $branch->is_active) {
             throw new RuntimeException('La sucursal no está activa.');
         }
 
-        if (!$branch->isOpen()) {
+        if (! $branch->isOpen()) {
             throw new RuntimeException('La sucursal está cerrada en este momento.');
         }
 
@@ -95,7 +95,7 @@ final class IssueTicketAction
 
     private function validateQueueCapacity(Queue $queue): void
     {
-        if (!$queue->is_active) {
+        if (! $queue->is_active) {
             throw new RuntimeException('Esta cola no está activa.');
         }
 

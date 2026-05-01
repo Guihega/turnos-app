@@ -9,6 +9,7 @@ use App\Actions\CompleteTicketAction;
 use App\Actions\IssueTicketAction;
 use App\Actions\IssueTicketData;
 use App\Actions\TransferTicketAction;
+use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\IssueTicketRequest;
 use App\Http\Requests\TransferTicketRequest;
@@ -84,7 +85,7 @@ class TicketController extends Controller
     {
         $ticket = $this->ticketRepo->findById($id);
 
-        abort_if(!$ticket, 404, 'Turno no encontrado.');
+        abort_if(! $ticket, 404, 'Turno no encontrado.');
 
         return new TicketResource($ticket->load('events'));
     }
@@ -124,9 +125,9 @@ class TicketController extends Controller
     public function startServing(string $id, Request $request): TicketResource
     {
         $ticket = $this->ticketRepo->findById($id);
-        abort_if(!$ticket, 404);
+        abort_if(! $ticket, 404);
 
-        $ticket->transitionTo(\App\Enums\TicketStatus::IN_PROGRESS, $request->user()->id);
+        $ticket->transitionTo(TicketStatus::IN_PROGRESS, $request->user()->id);
 
         return new TicketResource($ticket->fresh());
     }
@@ -194,9 +195,9 @@ class TicketController extends Controller
     public function cancel(string $id, Request $request): TicketResource
     {
         $ticket = $this->ticketRepo->findById($id);
-        abort_if(!$ticket, 404);
+        abort_if(! $ticket, 404);
 
-        $ticket->transitionTo(\App\Enums\TicketStatus::CANCELLED, $request->user()->id);
+        $ticket->transitionTo(TicketStatus::CANCELLED, $request->user()->id);
 
         return new TicketResource($ticket->fresh());
     }

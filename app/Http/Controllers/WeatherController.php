@@ -24,7 +24,7 @@ class WeatherController extends Controller
     {
         $apiKey = config('services.openweathermap.key');
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return response()->json(['error' => 'API key no configurada'], 503);
         }
 
@@ -35,33 +35,33 @@ class WeatherController extends Controller
                 $params = $this->resolveLocation($branch);
                 $params['appid'] = $apiKey;
                 $params['units'] = 'metric';
-                $params['lang']  = 'es';
+                $params['lang'] = 'es';
 
                 $response = Http::timeout(5)->get(
                     'https://api.openweathermap.org/data/2.5/weather',
                     $params
                 );
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     return null;
                 }
 
                 $data = $response->json();
 
                 return [
-                    'temp'        => round($data['main']['temp'] ?? 0),
-                    'feels_like'  => round($data['main']['feels_like'] ?? 0),
-                    'humidity'    => $data['main']['humidity'] ?? 0,
+                    'temp' => round($data['main']['temp'] ?? 0),
+                    'feels_like' => round($data['main']['feels_like'] ?? 0),
+                    'humidity' => $data['main']['humidity'] ?? 0,
                     'description' => ucfirst($data['weather'][0]['description'] ?? ''),
-                    'icon'        => $data['weather'][0]['icon'] ?? '01d',
-                    'city'        => $data['name'] ?? $branch->city ?? '',
+                    'icon' => $data['weather'][0]['icon'] ?? '01d',
+                    'city' => $data['name'] ?? $branch->city ?? '',
                 ];
             } catch (\Exception $e) {
                 return null;
             }
         });
 
-        if (!$weather) {
+        if (! $weather) {
             return response()->json(['error' => 'No se pudo obtener el clima'], 503);
         }
 
@@ -80,7 +80,7 @@ class WeatherController extends Controller
     private function resolveLocation(Branch $branch): array
     {
         // 1. Coordenadas — más preciso
-        if (!empty($branch->latitude) && !empty($branch->longitude)) {
+        if (! empty($branch->latitude) && ! empty($branch->longitude)) {
             return [
                 'lat' => $branch->latitude,
                 'lon' => $branch->longitude,
@@ -88,14 +88,14 @@ class WeatherController extends Controller
         }
 
         // 2. Ciudad + País
-        if (!empty($branch->city)) {
+        if (! empty($branch->city)) {
             $query = $branch->city;
 
-            if (!empty($branch->state)) {
+            if (! empty($branch->state)) {
                 $query .= ",{$branch->state}";
             }
 
-            if (!empty($branch->country)) {
+            if (! empty($branch->country)) {
                 $query .= ",{$branch->country}";
             }
 
@@ -103,9 +103,10 @@ class WeatherController extends Controller
         }
 
         // 3. Dirección como fallback
-        if (!empty($branch->address)) {
+        if (! empty($branch->address)) {
             $country = $branch->country ?? '';
-            return ['q' => $branch->address . ($country ? ",{$country}" : '')];
+
+            return ['q' => $branch->address.($country ? ",{$country}" : '')];
         }
 
         // 4. Fallback por timezone
@@ -124,36 +125,36 @@ class WeatherController extends Controller
         $map = [
             // México
             'America/Mexico_City' => 'Ciudad de Mexico,MX',
-            'America/Monterrey'   => 'Monterrey,MX',
-            'America/Cancun'      => 'Cancun,MX',
-            'America/Tijuana'     => 'Tijuana,MX',
-            'America/Merida'      => 'Merida,MX',
-            'America/Hermosillo'  => 'Hermosillo,MX',
-            'America/Chihuahua'   => 'Chihuahua,MX',
-            'America/Mazatlan'    => 'Mazatlan,MX',
+            'America/Monterrey' => 'Monterrey,MX',
+            'America/Cancun' => 'Cancun,MX',
+            'America/Tijuana' => 'Tijuana,MX',
+            'America/Merida' => 'Merida,MX',
+            'America/Hermosillo' => 'Hermosillo,MX',
+            'America/Chihuahua' => 'Chihuahua,MX',
+            'America/Mazatlan' => 'Mazatlan,MX',
             // Centroamérica
-            'America/Guatemala'      => 'Ciudad de Guatemala,GT',
-            'America/Costa_Rica'     => 'San Jose,CR',
-            'America/Panama'         => 'Ciudad de Panama,PA',
-            'America/El_Salvador'    => 'San Salvador,SV',
-            'America/Tegucigalpa'    => 'Tegucigalpa,HN',
-            'America/Managua'        => 'Managua,NI',
-            'America/Santo_Domingo'  => 'Santo Domingo,DO',
+            'America/Guatemala' => 'Ciudad de Guatemala,GT',
+            'America/Costa_Rica' => 'San Jose,CR',
+            'America/Panama' => 'Ciudad de Panama,PA',
+            'America/El_Salvador' => 'San Salvador,SV',
+            'America/Tegucigalpa' => 'Tegucigalpa,HN',
+            'America/Managua' => 'Managua,NI',
+            'America/Santo_Domingo' => 'Santo Domingo,DO',
             // Sudamérica
-            'America/Bogota'                  => 'Bogota,CO',
-            'America/Lima'                    => 'Lima,PE',
-            'America/Santiago'                => 'Santiago,CL',
-            'America/Argentina/Buenos_Aires'  => 'Buenos Aires,AR',
-            'America/Guayaquil'               => 'Guayaquil,EC',
-            'America/La_Paz'                  => 'La Paz,BO',
-            'America/Asuncion'                => 'Asuncion,PY',
-            'America/Montevideo'              => 'Montevideo,UY',
-            'America/Caracas'                 => 'Caracas,VE',
-            'America/Sao_Paulo'               => 'Sao Paulo,BR',
+            'America/Bogota' => 'Bogota,CO',
+            'America/Lima' => 'Lima,PE',
+            'America/Santiago' => 'Santiago,CL',
+            'America/Argentina/Buenos_Aires' => 'Buenos Aires,AR',
+            'America/Guayaquil' => 'Guayaquil,EC',
+            'America/La_Paz' => 'La Paz,BO',
+            'America/Asuncion' => 'Asuncion,PY',
+            'America/Montevideo' => 'Montevideo,UY',
+            'America/Caracas' => 'Caracas,VE',
+            'America/Sao_Paulo' => 'Sao Paulo,BR',
             // Norteamérica
-            'America/New_York'    => 'New York,US',
-            'America/Chicago'     => 'Chicago,US',
-            'America/Denver'      => 'Denver,US',
+            'America/New_York' => 'New York,US',
+            'America/Chicago' => 'Chicago,US',
+            'America/Denver' => 'Denver,US',
             'America/Los_Angeles' => 'Los Angeles,US',
             // Europa
             'Europe/Madrid' => 'Madrid,ES',

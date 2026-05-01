@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\BranchUser;
 
 class Branch extends Model
 {
@@ -93,7 +92,7 @@ class Branch extends Model
 
     public function isOpen(): bool
     {
-        if (!$this->operating_hours) {
+        if (! $this->operating_hours) {
             return true;
         }
 
@@ -101,7 +100,7 @@ class Branch extends Model
         $day = strtolower($now->format('D'));
         $hours = $this->operating_hours[$day] ?? null;
 
-        if (!$hours || !isset($hours['open'], $hours['close'])) {
+        if (! $hours || ! isset($hours['open'], $hours['close'])) {
             return false;
         }
 

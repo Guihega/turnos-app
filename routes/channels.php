@@ -39,5 +39,6 @@ Broadcast::channel('operators.{branchId}', function ($user, $branchId) {
             'role' => $user->role->value,
         ];
     }
+
     return false;
 });

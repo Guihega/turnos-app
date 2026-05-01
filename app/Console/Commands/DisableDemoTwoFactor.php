@@ -41,16 +41,18 @@ class DisableDemoTwoFactor extends Command
             $this->line('Si estás seguro que la cuenta existe, verifica:');
             $this->line('  php artisan tinker');
             $this->line("  App\\Models\\User::whereBlind('email', 'email_index', '{$email}')->first();");
+
             return self::FAILURE;
         }
 
         $this->info("Usuario encontrado: {$user->name} ({$user->email})");
         $this->line("ID: {$user->id}");
-        $this->line("Rol: " . ($user->role->value ?? 'N/A'));
-        $this->line("2FA actual: " . ($user->two_factor_confirmed_at ? 'Activado' : 'Desactivado'));
+        $this->line('Rol: '.($user->role->value ?? 'N/A'));
+        $this->line('2FA actual: '.($user->two_factor_confirmed_at ? 'Activado' : 'Desactivado'));
 
         if (! $user->two_factor_confirmed_at) {
             $this->warn('El 2FA ya está desactivado. No se requieren cambios.');
+
             return self::SUCCESS;
         }
 
@@ -65,13 +67,14 @@ class DisableDemoTwoFactor extends Command
         // Validar que realmente se desactivó
         if ($user->two_factor_confirmed_at !== null) {
             $this->error('Error: 2FA no se desactivó correctamente.');
+
             return self::FAILURE;
         }
 
         $this->info('✓ 2FA desactivado exitosamente para la cuenta demo.');
         $this->line('');
         $this->line('Siguiente paso: probar login en ventana incógnita.');
-        $this->line('URL: ' . config('app.url') . '/login');
+        $this->line('URL: '.config('app.url').'/login');
         $this->line('');
         $this->line('Los campos deben venir pre-llenados con las credenciales.');
         $this->line('Al hacer clic en "Iniciar Sesión" debe entrar al dashboard directo.');

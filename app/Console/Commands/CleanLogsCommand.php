@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Carbon\Carbon;
 
 class CleanLogsCommand extends Command
 {
     protected $signature = 'logs:clean {--days=7 : Delete logs older than this many days}';
+
     protected $description = 'Clean old log files to free disk space';
 
     public function handle(): int
@@ -25,12 +26,16 @@ class CleanLogsCommand extends Command
         ];
 
         foreach ($logPaths as $path) {
-            if (!is_dir($path)) continue;
+            if (! is_dir($path)) {
+                continue;
+            }
 
             $files = File::glob("{$path}/*.log");
             foreach ($files as $file) {
                 // Never delete the current laravel.log
-                if (basename($file) === 'laravel.log') continue;
+                if (basename($file) === 'laravel.log') {
+                    continue;
+                }
 
                 $modified = Carbon::createFromTimestamp(filemtime($file));
                 if ($modified->lt($cutoff)) {
@@ -38,7 +43,7 @@ class CleanLogsCommand extends Command
                     File::delete($file);
                     $totalFreed += $size;
                     $filesDeleted++;
-                    $this->line("  Deleted: " . basename($file) . " (" . $this->formatBytes($size) . ")");
+                    $this->line('  Deleted: '.basename($file).' ('.$this->formatBytes($size).')');
                 }
             }
         }
@@ -49,7 +54,7 @@ class CleanLogsCommand extends Command
             $size = filesize($currentLog);
             file_put_contents($currentLog, '');
             $totalFreed += $size;
-            $this->line("  Truncated: laravel.log (" . $this->formatBytes($size) . ")");
+            $this->line('  Truncated: laravel.log ('.$this->formatBytes($size).')');
         }
 
         // Clean old scheduler output logs
@@ -66,20 +71,27 @@ class CleanLogsCommand extends Command
                 $size = filesize($logFile);
                 file_put_contents($logFile, '');
                 $totalFreed += $size;
-                $this->line("  Truncated: " . basename($logFile) . " (" . $this->formatBytes($size) . ")");
+                $this->line('  Truncated: '.basename($logFile).' ('.$this->formatBytes($size).')');
             }
         }
 
-        $this->info("Cleaned {$filesDeleted} files, freed " . $this->formatBytes($totalFreed));
+        $this->info("Cleaned {$filesDeleted} files, freed ".$this->formatBytes($totalFreed));
 
         return self::SUCCESS;
     }
 
     private function formatBytes(int $bytes): string
     {
-        if ($bytes >= 1073741824) return round($bytes / 1073741824, 1) . 'GB';
-        if ($bytes >= 1048576) return round($bytes / 1048576, 1) . 'MB';
-        if ($bytes >= 1024) return round($bytes / 1024, 1) . 'KB';
-        return $bytes . 'B';
+        if ($bytes >= 1073741824) {
+            return round($bytes / 1073741824, 1).'GB';
+        }
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 1).'MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 1).'KB';
+        }
+
+        return $bytes.'B';
     }
 }

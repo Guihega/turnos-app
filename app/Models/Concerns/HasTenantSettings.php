@@ -12,39 +12,39 @@ trait HasTenantSettings
     {
         return [
             'branding' => [
-                'primary_color'     => '#3B82F6',
-                'secondary_color'   => '#8B5CF6',
-                'accent_color'      => '#10B981',
-                'logo_shape'        => 'rounded',
+                'primary_color' => '#3B82F6',
+                'secondary_color' => '#8B5CF6',
+                'accent_color' => '#10B981',
+                'logo_shape' => 'rounded',
                 'dark_mode_default' => true,
             ],
             'display' => [
-                'show_queue_name'    => true,
-                'show_service_name'  => true,
-                'show_wait_time'     => true,
-                'show_recent_count'  => 5,
-                'announcement_text'  => null,
-                'call_sound'         => 'chime',
+                'show_queue_name' => true,
+                'show_service_name' => true,
+                'show_wait_time' => true,
+                'show_recent_count' => 5,
+                'announcement_text' => null,
+                'call_sound' => 'chime',
             ],
             'kiosk' => [
-                'welcome_text'         => 'Bienvenido',
+                'welcome_text' => 'Bienvenido',
                 'show_priority_option' => false,
-                'show_estimated_wait'  => true,
-                'print_ticket'         => false,
+                'show_estimated_wait' => true,
+                'print_ticket' => false,
             ],
             'tickets' => [
-                'prefix'             => 'A',
-                'daily_reset'        => true,
+                'prefix' => 'A',
+                'daily_reset' => true,
                 'auto_close_minutes' => 120,
-                'no_show_minutes'    => 15,
+                'no_show_minutes' => 15,
             ],
             'security' => [
-                'max_tickets_per_hour'      => 60,   // Per branch, all IPs combined
+                'max_tickets_per_hour' => 60,   // Per branch, all IPs combined
                 'max_tickets_per_ip_minute' => 3,    // Per IP per branch per minute
-                'max_concurrent_waiting'    => 50,    // Max tickets in waiting status
-                'max_daily_tickets'         => 500,   // Per branch per day
-                'bot_protection'            => true,  // Honeypot + timing check
-                'require_customer_name'     => false, // Force name field on kiosk
+                'max_concurrent_waiting' => 50,    // Max tickets in waiting status
+                'max_daily_tickets' => 500,   // Per branch per day
+                'bot_protection' => true,  // Honeypot + timing check
+                'require_customer_name' => false, // Force name field on kiosk
             ],
         ];
     }
@@ -110,12 +110,12 @@ trait HasTenantSettings
         $effective = $this->getEffectiveSettings();
 
         return [
-            'name'       => $this->name,
-            'logo_url'   => $this->logo_url ? asset('storage/' . $this->logo_url) : null,
-            'branding'   => $effective['branding'],
-            'display'    => $effective['display'],
-            'kiosk'      => $effective['kiosk'],
-            'tickets'    => $effective['tickets'],
+            'name' => $this->name,
+            'logo_url' => $this->logo_url ? asset('storage/'.$this->logo_url) : null,
+            'branding' => $effective['branding'],
+            'display' => $effective['display'],
+            'kiosk' => $effective['kiosk'],
+            'tickets' => $effective['tickets'],
         ];
     }
 }

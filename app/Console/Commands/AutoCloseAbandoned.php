@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\TicketStatus;
+use App\Models\Counter;
 use App\Models\Ticket;
 use Illuminate\Console\Command;
 
@@ -43,7 +44,7 @@ class AutoCloseAbandoned extends Command
                     $ticket->update([
                         'status' => TicketStatus::CANCELLED,
                         'cancelled_at' => now(),
-                        'notes' => ($ticket->notes ? $ticket->notes . ' | ' : '') . 'Auto-cancelado: tiempo de espera excedido',
+                        'notes' => ($ticket->notes ? $ticket->notes.' | ' : '').'Auto-cancelado: tiempo de espera excedido',
                     ]);
 
                     $ticket->events()->create([
@@ -76,12 +77,12 @@ class AutoCloseAbandoned extends Command
                     $ticket->update([
                         'status' => TicketStatus::NO_SHOW,
                         'cancelled_at' => now(),
-                        'notes' => ($ticket->notes ? $ticket->notes . ' | ' : '') . 'Auto no-show: no se presentó a ventanilla',
+                        'notes' => ($ticket->notes ? $ticket->notes.' | ' : '').'Auto no-show: no se presentó a ventanilla',
                     ]);
 
                     // Free the counter if assigned
                     if ($ticket->counter_id) {
-                        \App\Models\Counter::where('id', $ticket->counter_id)->update([
+                        Counter::where('id', $ticket->counter_id)->update([
                             'current_ticket_id' => null,
                             'status' => 'open',
                         ]);
@@ -102,7 +103,7 @@ class AutoCloseAbandoned extends Command
         }
 
         $total = $closedWaiting + $closedCalled;
-        if ($total === 0 && !$dryRun) {
+        if ($total === 0 && ! $dryRun) {
             $this->info('No hay turnos abandonados para cerrar.');
         }
 

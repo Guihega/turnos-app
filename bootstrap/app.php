@@ -1,9 +1,19 @@
 <?php
 
+use App\Http\Middleware\EnsureBranchAccess;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureTenantScope;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Services\TelegramAlertService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,30 +25,30 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         $middleware->alias([
-            'tenant.scope'  => \App\Http\Middleware\EnsureTenantScope::class,
-            'branch.access' => \App\Http\Middleware\EnsureBranchAccess::class,
-            'role'           => \App\Http\Middleware\EnsureRole::class,
+            'tenant.scope' => EnsureTenantScope::class,
+            'branch.access' => EnsureBranchAccess::class,
+            'role' => EnsureRole::class,
         ]);
 
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->report(function (\Throwable $e) {
+        $exceptions->report(function (Throwable $e) {
             if (app()->isProduction()
-                && !$e instanceof \Illuminate\Auth\AuthenticationException
-                && !$e instanceof \Illuminate\Validation\ValidationException
-                && !$e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-                && !$e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException
-                && !$e instanceof \Illuminate\Session\TokenMismatchException
+                && ! $e instanceof AuthenticationException
+                && ! $e instanceof ValidationException
+                && ! $e instanceof NotFoundHttpException
+                && ! $e instanceof MethodNotAllowedHttpException
+                && ! $e instanceof TokenMismatchException
             ) {
                 try {
                     app(TelegramAlertService::class)->sendError($e);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     // Never let alerting break the app
                 }
             }

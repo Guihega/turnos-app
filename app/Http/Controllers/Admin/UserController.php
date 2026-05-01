@@ -27,26 +27,27 @@ class UserController extends Controller
         $users = User::where('tenant_id', $tenantId)
             ->with('branches:id,name,code')
             ->orderBy('name')->get()
-            ->map(fn($u) => [
+            ->map(fn ($u) => [
                 'id' => $u->id, 'name' => $u->name, 'email' => $u->email,
                 'role' => $u->role->value, 'role_label' => $u->role->label(),
                 'is_active' => $u->is_active,
-                'branches' => $u->branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name]),
+                'branches' => $u->branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name]),
                 'last_login_at' => $u->last_login_at?->diffForHumans(),
             ]);
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'roles' => collect(UserRole::cases())->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
+            'roles' => collect(UserRole::cases())->map(fn ($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
         ]);
     }
 
     public function create(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
+
         return Inertia::render('Admin/Users/Form', [
             'user' => null,
-            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
+            'roles' => collect(UserRole::cases())->filter(fn ($r) => $r !== UserRole::SUPER_ADMIN)->map(fn ($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
             'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'code']),
         ]);
     }
@@ -66,7 +67,7 @@ class UserController extends Controller
         ]);
 
         // Verify all branch_ids belong to the user's tenant
-        if (!empty($data['branch_ids'])) {
+        if (! empty($data['branch_ids'])) {
             $this->validateBranchIds($data['branch_ids'], $tenantId);
         }
 
@@ -85,7 +86,7 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        if (!empty($data['branch_ids'])) {
+        if (! empty($data['branch_ids'])) {
             foreach ($data['branch_ids'] as $branchId) {
                 $user->branches()->attach($branchId, [
                     'id' => (string) Str::ulid(),
@@ -103,13 +104,14 @@ class UserController extends Controller
         $this->authorizeTenantOwnership($user, $request);
 
         $tenantId = $request->user()->tenant_id;
+
         return Inertia::render('Admin/Users/Form', [
             'user' => [
                 'id' => $user->id, 'name' => $user->name, 'email' => $user->email,
                 'phone' => $user->phone, 'role' => $user->role->value, 'is_active' => $user->is_active,
                 'branch_ids' => $user->branches->pluck('id'),
             ],
-            'roles' => collect(UserRole::cases())->filter(fn($r) => $r !== UserRole::SUPER_ADMIN)->map(fn($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
+            'roles' => collect(UserRole::cases())->filter(fn ($r) => $r !== UserRole::SUPER_ADMIN)->map(fn ($r) => ['value' => $r->value, 'label' => $r->label()])->values(),
             'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name', 'code']),
         ]);
     }
@@ -132,7 +134,7 @@ class UserController extends Controller
         ]);
 
         // Verify all branch_ids belong to the user's tenant
-        if (!empty($data['branch_ids'])) {
+        if (! empty($data['branch_ids'])) {
             $this->validateBranchIds($data['branch_ids'], $tenantId);
         }
 
@@ -142,7 +144,7 @@ class UserController extends Controller
         }
 
         $updateData = collect($data)->except(['password', 'branch_ids', 'password_confirmation'])->toArray();
-        if (!empty($data['password'])) {
+        if (! empty($data['password'])) {
             $updateData['password'] = Hash::make($data['password']);
         }
 
@@ -174,6 +176,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => false]);
         $user->delete();
+
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario desactivado.');
     }
 

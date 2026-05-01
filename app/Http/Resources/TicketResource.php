@@ -84,14 +84,13 @@ class TicketResource extends JsonResource
             'transfer_count' => $this->transfer_count,
             'notes' => $this->when($request->user()?->hasPermission('tickets.view'), $this->notes),
 
-            'events' => $this->when($this->relationLoaded('events'), fn () =>
-                $this->events->map(fn ($e) => [
-                    'type' => $e->event_type,
-                    'from' => $e->from_status,
-                    'to' => $e->to_status,
-                    'at' => $e->occurred_at->toIso8601String(),
-                    'user' => $e->user?->name,
-                ])
+            'events' => $this->when($this->relationLoaded('events'), fn () => $this->events->map(fn ($e) => [
+                'type' => $e->event_type,
+                'from' => $e->from_status,
+                'to' => $e->to_status,
+                'at' => $e->occurred_at->toIso8601String(),
+                'user' => $e->user?->name,
+            ])
             ),
 
             'created_at' => $this->created_at->toIso8601String(),
