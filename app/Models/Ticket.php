@@ -90,7 +90,7 @@ class Ticket extends Model
 
     public function transitionTo(TicketStatus $newStatus, ?string $userId = null): self
     {
-        if (!$this->status->canTransitionTo($newStatus)) {
+        if (! $this->status->canTransitionTo($newStatus)) {
             throw new InvalidArgumentException(
                 "Cannot transition from {$this->status->value} to {$newStatus->value}"
             );
@@ -116,7 +116,7 @@ class Ticket extends Model
         // Record event for audit trail
         $this->events()->create([
             'user_id' => $userId,
-            'event_type' => "status_changed",
+            'event_type' => 'status_changed',
             'from_status' => $oldStatus->value,
             'to_status' => $newStatus->value,
             'occurred_at' => $now,
@@ -187,7 +187,7 @@ class Ticket extends Model
 
     public function estimatedWaitMinutes(): int
     {
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return 0;
         }
 

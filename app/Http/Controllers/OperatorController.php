@@ -8,6 +8,7 @@ use App\Actions\CallNextTicketAction;
 use App\Actions\CompleteTicketAction;
 use App\Actions\TransferTicketAction;
 use App\Enums\TicketStatus;
+use App\Events\TicketCalled;
 use App\Models\Branch;
 use App\Models\Counter;
 use App\Models\Queue;
@@ -26,13 +27,13 @@ class OperatorController extends Controller
         $branches = ($user->isSuperAdmin() || $user->isTenantAdmin())
             ? Branch::where('tenant_id', $tenantId)->where('is_active', true)->get()
             : Branch::where('is_active', true)
-                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
                 ->get();
 
         $branchId = $request->input('branch_id', $branches->first()?->id);
         $branch = $branches->firstWhere('id', $branchId);
 
-        if (!$branch) {
+        if (! $branch) {
             return Inertia::render('Operator/Index', [
                 'branches' => collect(), 'currentBranch' => null, 'counter' => null,
                 'availableCounters' => collect(), 'currentTicket' => null,
@@ -43,15 +44,15 @@ class OperatorController extends Controller
         }
 
         return Inertia::render('Operator/Index', [
-            'branches'          => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
-            'currentBranch'     => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
-            'counter'           => $this->getOperatorCounter($branch, $user),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
+            'currentBranch' => ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code],
+            'counter' => $this->getOperatorCounter($branch, $user),
             'availableCounters' => $this->getAvailableCounters($branch, $user),
-            'currentTicket'     => $this->getCurrentTicket($user),
-            'waitingTickets'    => $this->getWaitingTickets($branch),
-            'queues'            => $this->getQueuesWithCounts($branch),
-            'allQueues'         => Queue::where('branch_id', $branch->id)->where('is_active', true)->get(['id', 'name', 'prefix']),
-            'myStats'           => $this->getOperatorStats($user),
+            'currentTicket' => $this->getCurrentTicket($user),
+            'waitingTickets' => $this->getWaitingTickets($branch),
+            'queues' => $this->getQueuesWithCounts($branch),
+            'allQueues' => Queue::where('branch_id', $branch->id)->where('is_active', true)->get(['id', 'name', 'prefix']),
+            'myStats' => $this->getOperatorStats($user),
         ]);
     }
 
@@ -62,7 +63,7 @@ class OperatorController extends Controller
     {
         $request->validate([
             'counter_id' => 'required|exists:counters,id',
-            'queue_id'   => 'nullable|exists:queues,id',
+            'queue_id' => 'nullable|exists:queues,id',
         ]);
 
         // F-15: Validate counter belongs to operator's branch/tenant
@@ -106,7 +107,7 @@ class OperatorController extends Controller
 
         $request->validate([
             'rating' => 'nullable|integer|min:1|max:5',
-            'notes'  => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -160,7 +161,7 @@ class OperatorController extends Controller
 
         $request->validate([
             'target_queue_id' => 'required|exists:queues,id',
-            'reason'          => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         // F-15: Validate target queue belongs to same branch
@@ -196,8 +197,9 @@ class OperatorController extends Controller
         }
 
         try {
-            \App\Events\TicketCalled::dispatch($ticket->load(['queue', 'service', 'counter', 'servedBy']));
-        } catch (\Throwable) {}
+            TicketCalled::dispatch($ticket->load(['queue', 'service', 'counter', 'servedBy']));
+        } catch (\Throwable) {
+        }
 
         return back()->with('success', "Turno {$ticket->display_number} rellamado.");
     }
@@ -224,11 +226,11 @@ class OperatorController extends Controller
         // Load branch to check tenant
         $ticket->loadMissing('branch');
 
-        if (!$ticket->branch || $ticket->branch->tenant_id !== $user->tenant_id) {
+        if (! $ticket->branch || $ticket->branch->tenant_id !== $user->tenant_id) {
             abort(403, 'No tiene acceso a este turno.');
         }
 
-        if (!$user->isSuperAdmin() && !$user->isTenantAdmin() && !$user->belongsToBranch($ticket->branch_id)) {
+        if (! $user->isSuperAdmin() && ! $user->isTenantAdmin() && ! $user->belongsToBranch($ticket->branch_id)) {
             abort(403, 'No tiene acceso a esta sucursal.');
         }
     }
@@ -241,11 +243,11 @@ class OperatorController extends Controller
         $counter = Counter::findOrFail($counterId);
         $counter->loadMissing('branch');
 
-        if (!$counter->branch || $counter->branch->tenant_id !== $user->tenant_id) {
+        if (! $counter->branch || $counter->branch->tenant_id !== $user->tenant_id) {
             abort(403, 'No tiene acceso a esta ventanilla.');
         }
 
-        if (!$user->isSuperAdmin() && !$user->isTenantAdmin() && !$user->belongsToBranch($counter->branch_id)) {
+        if (! $user->isSuperAdmin() && ! $user->isTenantAdmin() && ! $user->belongsToBranch($counter->branch_id)) {
             abort(403, 'No tiene acceso a esta sucursal.');
         }
     }
@@ -272,10 +274,10 @@ class OperatorController extends Controller
     private function getAvailableCounters(Branch $branch, $user)
     {
         return Counter::where('branch_id', $branch->id)
-            ->where(fn($q) => $q->whereNull('current_operator_id')->orWhere('current_operator_id', $user->id))
+            ->where(fn ($q) => $q->whereNull('current_operator_id')->orWhere('current_operator_id', $user->id))
             ->orderBy('number')
             ->get()
-            ->map(fn($c) => [
+            ->map(fn ($c) => [
                 'id' => $c->id, 'name' => $c->name, 'number' => $c->number,
                 'status' => $c->status, 'is_mine' => $c->current_operator_id === $user->id,
             ]);
@@ -288,7 +290,9 @@ class OperatorController extends Controller
             ->whereIn('status', [TicketStatus::CALLED, TicketStatus::IN_PROGRESS])
             ->first();
 
-        if (!$ticket) return null;
+        if (! $ticket) {
+            return null;
+        }
 
         return [
             'id' => $ticket->id, 'display_number' => $ticket->display_number,
@@ -315,7 +319,7 @@ class OperatorController extends Controller
             ->orderBy('issued_at')
             ->limit(50)
             ->get()
-            ->map(fn($t) => [
+            ->map(fn ($t) => [
                 'id' => $t->id, 'display_number' => $t->display_number,
                 'customer_name' => $t->customer_name,
                 'priority' => $t->priority->value, 'priority_label' => $t->priority->label(),
@@ -330,9 +334,9 @@ class OperatorController extends Controller
     {
         return Queue::where('branch_id', $branch->id)
             ->where('is_active', true)
-            ->withCount(['tickets as waiting_count' => fn($q) => $q->where('status', TicketStatus::WAITING)])
+            ->withCount(['tickets as waiting_count' => fn ($q) => $q->where('status', TicketStatus::WAITING)])
             ->get()
-            ->map(fn($q) => ['id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix, 'waiting' => $q->waiting_count]);
+            ->map(fn ($q) => ['id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix, 'waiting' => $q->waiting_count]);
     }
 
     private function getOperatorStats($user): array

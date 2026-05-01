@@ -22,7 +22,7 @@ final class CompleteTicketAction
                 throw new RuntimeException('Solo el operador asignado puede completar este turno.');
             }
 
-            if (!$ticket->status->canTransitionTo(TicketStatus::COMPLETED)) {
+            if (! $ticket->status->canTransitionTo(TicketStatus::COMPLETED)) {
                 throw new RuntimeException("No se puede completar un turno en estado {$ticket->status->label()}.");
             }
 

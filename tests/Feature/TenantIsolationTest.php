@@ -14,10 +14,15 @@ class TenantIsolationTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private User $adminA;
+
     private User $adminB;
+
     private Branch $branchA;
+
     private Branch $branchB;
 
     protected function setUp(): void

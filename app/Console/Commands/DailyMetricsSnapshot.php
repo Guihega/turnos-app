@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\Branch;
 use App\Models\MetricsSnapshot;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +20,7 @@ class DailyMetricsSnapshot extends Command
     public function handle(): int
     {
         $date = $this->option('date')
-            ? \Carbon\Carbon::parse($this->option('date'))
+            ? Carbon::parse($this->option('date'))
             : now()->subDay();
 
         $dateStr = $date->toDateString();
@@ -27,6 +28,7 @@ class DailyMetricsSnapshot extends Command
 
         if ($branches->isEmpty()) {
             $this->warn('No hay sucursales activas.');
+
             return self::SUCCESS;
         }
 
@@ -116,8 +118,11 @@ class DailyMetricsSnapshot extends Command
 
     private function percentile($sorted, int $pct): int
     {
-        if ($sorted->isEmpty()) return 0;
+        if ($sorted->isEmpty()) {
+            return 0;
+        }
         $index = max(0, ceil(($pct / 100) * $sorted->count()) - 1);
+
         return (int) ($sorted->values()[$index] ?? 0);
     }
 }

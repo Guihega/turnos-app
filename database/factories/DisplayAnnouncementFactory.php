@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Branch;
 use App\Models\DisplayAnnouncement;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,15 +13,15 @@ class DisplayAnnouncementFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id'  => Tenant::factory(),
-            'branch_id'  => null,
-            'type'       => $this->faker->randomElement(['announcement', 'news', 'promo']),
-            'title'      => $this->faker->sentence(4),
-            'body'       => $this->faker->optional()->paragraph(),
-            'priority'   => $this->faker->numberBetween(0, 10),
-            'is_active'  => true,
-            'starts_at'  => null,
-            'ends_at'    => null,
+            'tenant_id' => Tenant::factory(),
+            'branch_id' => null,
+            'type' => $this->faker->randomElement(['announcement', 'news', 'promo']),
+            'title' => $this->faker->sentence(4),
+            'body' => $this->faker->optional()->paragraph(),
+            'priority' => $this->faker->numberBetween(0, 10),
+            'is_active' => true,
+            'starts_at' => null,
+            'ends_at' => null,
         ];
     }
 
@@ -50,7 +49,7 @@ class DisplayAnnouncementFactory extends Factory
     {
         return $this->state([
             'starts_at' => now()->subHour(),
-            'ends_at'   => now()->addWeek(),
+            'ends_at' => now()->addWeek(),
         ]);
     }
 
@@ -58,7 +57,7 @@ class DisplayAnnouncementFactory extends Factory
     {
         return $this->state([
             'starts_at' => now()->subWeek(),
-            'ends_at'   => now()->subDay(),
+            'ends_at' => now()->subDay(),
         ]);
     }
 
@@ -66,7 +65,7 @@ class DisplayAnnouncementFactory extends Factory
     {
         return $this->state([
             'starts_at' => now()->addDay(),
-            'ends_at'   => now()->addWeek(),
+            'ends_at' => now()->addWeek(),
         ]);
     }
 }

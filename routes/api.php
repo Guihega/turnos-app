@@ -1,7 +1,14 @@
 <?php
 
+use App\Actions\IssueTicketAction;
+use App\Actions\IssueTicketData;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\TicketController;
+use App\Models\Branch;
+use App\Models\Queue;
+use App\Models\Ticket;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,35 +67,35 @@ Route::prefix('v1/public')->group(function () {
 
     // Customer self-service: issue ticket
     // Uses stricter rate limiter defined in AppServiceProvider
-    Route::post('/branches/{branchId}/tickets', function (\Illuminate\Http\Request $request, string $branchId) {
+    Route::post('/branches/{branchId}/tickets', function (Request $request, string $branchId) {
         $request->validate([
-            'service_id'     => 'required|exists:services,id',
-            'queue_id'       => 'required|exists:queues,id',
-            'customer_name'  => 'nullable|string|max:255',
+            'service_id' => 'required|exists:services,id',
+            'queue_id' => 'required|exists:queues,id',
+            'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
         ]);
 
-        $branch = \App\Models\Branch::where('id', $branchId)
+        $branch = Branch::where('id', $branchId)
             ->where('is_active', true)
             ->firstOrFail();
 
         // Validate branch is open
-        if (!$branch->isOpen()) {
+        if (! $branch->isOpen()) {
             return response()->json(['message' => 'La sucursal está cerrada.'], 422);
         }
 
         // Cross-entity: queue belongs to branch
-        $queue = \App\Models\Queue::where('id', $request->input('queue_id'))
+        $queue = Queue::where('id', $request->input('queue_id'))
             ->where('branch_id', $branch->id)
             ->where('is_active', true)
             ->first();
 
-        if (!$queue) {
+        if (! $queue) {
             return response()->json(['message' => 'Cola no válida.'], 422);
         }
 
         // Cross-entity: service linked to queue
-        if (!$queue->services()->where('services.id', $request->input('service_id'))->exists()) {
+        if (! $queue->services()->where('services.id', $request->input('service_id'))->exists()) {
             return response()->json(['message' => 'Servicio no disponible.'], 422);
         }
 
@@ -97,10 +104,10 @@ Route::prefix('v1/public')->group(function () {
             return response()->json(['message' => 'Demasiados turnos en espera.'], 422);
         }
 
-        $action = app(\App\Actions\IssueTicketAction::class);
+        $action = app(IssueTicketAction::class);
 
         try {
-            $data = new \App\Actions\IssueTicketData(
+            $data = new IssueTicketData(
                 branchId: $branch->id,
                 queueId: $queue->id,
                 serviceId: $request->input('service_id'),
@@ -116,19 +123,19 @@ Route::prefix('v1/public')->group(function () {
                 'status' => 'waiting',
                 'position' => $ticket->positionInQueue(),
             ], 201);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
     })->middleware('throttle:api-public-issue');
 
     // Check ticket status (read-only, less strict)
     Route::get('/tickets/{id}/status', function (string $id) {
-        $ticket = \App\Models\Ticket::select([
+        $ticket = Ticket::select([
             'id', 'display_number', 'status', 'queue_id',
             'issued_at', 'called_at', 'counter_id',
         ])->with(['queue:id,name', 'counter:id,name,number'])->find($id);
 
-        abort_if(!$ticket, 404);
+        abort_if(! $ticket, 404);
 
         return response()->json([
             'display_number' => $ticket->display_number,
@@ -143,18 +150,18 @@ Route::prefix('v1/public')->group(function () {
     // Display board (waiting room screens)
     Route::get('/branches/{branchId}/display', function (string $branchId) {
         // F-08: Cache display data
-        return response()->json(\Illuminate\Support\Facades\Cache::remember(
+        return response()->json(Cache::remember(
             "api:display:{$branchId}",
             5,
             function () use ($branchId) {
-                $tickets = \App\Models\Ticket::with(['queue:id,name,prefix', 'counter:id,name,number'])
+                $tickets = Ticket::with(['queue:id,name,prefix', 'counter:id,name,number'])
                     ->where('branch_id', $branchId)
                     ->whereIn('status', ['called', 'in_progress'])
                     ->orderByDesc('called_at')
                     ->limit(10)
                     ->get(['id', 'display_number', 'queue_id', 'counter_id', 'status', 'called_at']);
 
-                $waiting = \App\Models\Ticket::where('branch_id', $branchId)
+                $waiting = Ticket::where('branch_id', $branchId)
                     ->where('status', 'waiting')
                     ->count();
 

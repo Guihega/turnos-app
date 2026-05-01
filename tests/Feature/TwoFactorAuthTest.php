@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -16,7 +17,9 @@ class TwoFactorAuthTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $user;
+
     private Google2FA $google2fa;
 
     protected function setUp(): void
@@ -29,7 +32,7 @@ class TwoFactorAuthTest extends TestCase
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
         ]);
-        $this->google2fa = new Google2FA();
+        $this->google2fa = new Google2FA;
     }
 
     // ── Enable 2FA ──
@@ -263,7 +266,7 @@ class TwoFactorAuthTest extends TestCase
 
         $recoveryCodes = [];
         for ($i = 0; $i < 8; $i++) {
-            $recoveryCodes[] = \Illuminate\Support\Str::random(10) . '-' . \Illuminate\Support\Str::random(10);
+            $recoveryCodes[] = Str::random(10).'-'.Str::random(10);
         }
 
         $this->user->update([

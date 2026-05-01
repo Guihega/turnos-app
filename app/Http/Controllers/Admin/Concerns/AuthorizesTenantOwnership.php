@@ -27,7 +27,7 @@ trait AuthorizesTenantOwnership
      */
     protected function authorizeTenantOwnership(Model $model, Request $request): void
     {
-        if (!isset($model->tenant_id)) {
+        if (! isset($model->tenant_id)) {
             abort(500, 'Model does not have tenant_id attribute.');
         }
 
@@ -47,7 +47,7 @@ trait AuthorizesTenantOwnership
             ->where('tenant_id', $request->user()->tenant_id)
             ->first();
 
-        if (!$branch) {
+        if (! $branch) {
             abort(403, 'La sucursal no pertenece a su organización.');
         }
 
@@ -62,7 +62,7 @@ trait AuthorizesTenantOwnership
     {
         $model->loadMissing('branch');
 
-        if (!$model->branch || $model->branch->tenant_id !== $request->user()->tenant_id) {
+        if (! $model->branch || $model->branch->tenant_id !== $request->user()->tenant_id) {
             abort(403, 'No tiene acceso a este recurso.');
         }
     }

@@ -14,9 +14,7 @@ class NewLeadNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Lead $lead)
-    {
-    }
+    public function __construct(public Lead $lead) {}
 
     public function envelope(): Envelope
     {
@@ -34,7 +32,7 @@ class NewLeadNotification extends Mailable
             markdown: 'emails.leads.new',
             with: [
                 'lead' => $this->lead,
-                'adminUrl' => config('app.url') . '/admin/leads/' . $this->lead->id,
+                'adminUrl' => config('app.url').'/admin/leads/'.$this->lead->id,
             ],
         );
     }

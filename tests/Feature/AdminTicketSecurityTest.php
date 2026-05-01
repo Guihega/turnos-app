@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Models\Branch;
 use App\Models\Queue;
@@ -18,12 +17,19 @@ class AdminTicketSecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private Branch $branchA;
+
     private Branch $branchB;
+
     private Queue $queueA;
+
     private Service $serviceA;
+
     private User $adminA;
+
     private User $staffA;
 
     protected function setUp(): void

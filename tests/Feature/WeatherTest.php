@@ -14,6 +14,7 @@ class WeatherTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Branch $branch;
 
     protected function setUp(): void
@@ -23,18 +24,18 @@ class WeatherTest extends TestCase
         $this->tenant = Tenant::factory()->create();
         $this->branch = Branch::factory()->create([
             'tenant_id' => $this->tenant->id,
-            'city'      => 'Puebla',
-            'state'     => 'Puebla',
-            'country'   => 'MX',
+            'city' => 'Puebla',
+            'state' => 'Puebla',
+            'country' => 'MX',
         ]);
     }
 
     private function fakeWeatherResponse(array $overrides = []): array
     {
         return array_merge([
-            'main'    => ['temp' => 22.5, 'feels_like' => 21.0, 'humidity' => 65],
+            'main' => ['temp' => 22.5, 'feels_like' => 21.0, 'humidity' => 65],
             'weather' => [['description' => 'cielo claro', 'icon' => '01d']],
-            'name'    => 'Puebla',
+            'name' => 'Puebla',
         ], $overrides);
     }
 
@@ -106,9 +107,9 @@ class WeatherTest extends TestCase
 
         $branch = Branch::factory()->create([
             'tenant_id' => $this->tenant->id,
-            'city'      => 'Puebla',
-            'country'   => 'MX',
-            'latitude'  => 19.0414,
+            'city' => 'Puebla',
+            'country' => 'MX',
+            'latitude' => 19.0414,
             'longitude' => -98.2063,
         ]);
 
@@ -120,6 +121,7 @@ class WeatherTest extends TestCase
 
         Http::assertSent(function ($request) {
             $url = $request->url();
+
             return str_contains($url, 'lat=19.0414') && str_contains($url, 'lon=-98.2063');
         });
     }
@@ -138,6 +140,7 @@ class WeatherTest extends TestCase
 
         Http::assertSent(function ($request) {
             $url = urldecode($request->url());
+
             return str_contains($url, 'Puebla,Puebla,MX');
         });
     }
@@ -148,9 +151,9 @@ class WeatherTest extends TestCase
 
         $branch = Branch::factory()->create([
             'tenant_id' => $this->tenant->id,
-            'city'      => 'Lima',
-            'state'     => 'Lima',
-            'country'   => 'PE',
+            'city' => 'Lima',
+            'state' => 'Lima',
+            'country' => 'PE',
         ]);
 
         Http::fake([
@@ -161,6 +164,7 @@ class WeatherTest extends TestCase
 
         Http::assertSent(function ($request) {
             $url = urldecode($request->url());
+
             return str_contains($url, 'Lima,Lima,PE');
         });
     }
@@ -174,13 +178,13 @@ class WeatherTest extends TestCase
         $tenant = Tenant::factory()->create(['timezone' => 'America/Bogota']);
         $branch = Branch::factory()->create([
             'tenant_id' => $tenant->id,
-            'city'      => null,
-            'state'     => null,
-            'address'   => null,
-            'country'   => '',
-            'latitude'  => null,
+            'city' => null,
+            'state' => null,
+            'address' => null,
+            'country' => '',
+            'latitude' => null,
             'longitude' => null,
-            'timezone'  => 'America/Bogota',
+            'timezone' => 'America/Bogota',
         ]);
 
         Http::fake([
@@ -192,6 +196,7 @@ class WeatherTest extends TestCase
 
         Http::assertSent(function ($request) {
             $url = urldecode($request->url());
+
             return str_contains($url, 'Bogota,CO');
         });
     }
@@ -204,9 +209,9 @@ class WeatherTest extends TestCase
 
         $branch = Branch::factory()->create([
             'tenant_id' => $this->tenant->id,
-            'city'      => 'Puebla',
-            'country'   => 'MX',
-            'latitude'  => 19.0414,
+            'city' => 'Puebla',
+            'country' => 'MX',
+            'latitude' => 19.0414,
             'longitude' => -98.2063,
         ]);
 
@@ -219,7 +224,8 @@ class WeatherTest extends TestCase
         // Debe usar lat/lon, NO q=Puebla
         Http::assertSent(function ($request) {
             $url = $request->url();
-            return str_contains($url, 'lat=') && !str_contains($url, 'q=Puebla');
+
+            return str_contains($url, 'lat=') && ! str_contains($url, 'q=Puebla');
         });
     }
 }

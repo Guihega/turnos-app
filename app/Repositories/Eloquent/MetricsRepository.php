@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Repositories\Eloquent;
 
 use App\Models\MetricsSnapshot;
-use App\Models\Ticket;
 use App\Repositories\Contracts\MetricsRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -119,13 +118,13 @@ class MetricsRepository implements MetricsRepositoryInterface
             ->where('tickets.branch_id', $branchId)
             ->whereNotNull('tickets.served_by')
             ->whereBetween('tickets.created_at', [$dateFrom, $dateTo])
-            ->selectRaw("
+            ->selectRaw('
                 users.id, users.name, users.avatar_url,
                 COUNT(*) as tickets_served,
                 ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL)) as avg_service_time,
                 ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 2) as avg_rating,
                 COUNT(tickets.rating) as ratings_count
-            ")
+            ')
             ->groupBy('users.id', 'users.name', 'users.avatar_url')
             ->orderByDesc('tickets_served')
             ->get();
@@ -153,9 +152,9 @@ class MetricsRepository implements MetricsRepositoryInterface
     {
         $metricColumn = match ($metric) {
             'tickets' => 'COUNT(*)',
-            'avg_wait' => "ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL))",
-            'avg_service' => "ROUND(AVG(service_time_seconds) FILTER (WHERE service_time_seconds IS NOT NULL))",
-            'avg_rating' => "ROUND(AVG(rating) FILTER (WHERE rating IS NOT NULL), 2)",
+            'avg_wait' => 'ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL))',
+            'avg_service' => 'ROUND(AVG(service_time_seconds) FILTER (WHERE service_time_seconds IS NOT NULL))',
+            'avg_rating' => 'ROUND(AVG(rating) FILTER (WHERE rating IS NOT NULL), 2)',
             'completed' => "COUNT(CASE WHEN status = 'completed' THEN 1 END)",
             default => 'COUNT(*)',
         };
@@ -196,7 +195,7 @@ class MetricsRepository implements MetricsRepositoryInterface
         $stats = DB::table('tickets')
             ->where('branch_id', $branchId)
             ->whereDate('created_at', $date)
-            ->whereRaw("EXTRACT(HOUR FROM created_at) = ?", [$hour])
+            ->whereRaw('EXTRACT(HOUR FROM created_at) = ?', [$hour])
             ->selectRaw("
                 COUNT(*) as issued,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as served,

@@ -24,20 +24,20 @@ class QueueController extends Controller
 
         $queues = $branchId ? Queue::where('branch_id', $branchId)
             ->with(['services:id,name,color'])
-            ->withCount(['tickets as waiting_count' => fn($q) => $q->where('status', 'waiting')])
+            ->withCount(['tickets as waiting_count' => fn ($q) => $q->where('status', 'waiting')])
             ->orderBy('prefix')
             ->get()
-            ->map(fn($q) => [
+            ->map(fn ($q) => [
                 'id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix,
                 'priority_algorithm' => ucfirst($q->priority_algorithm ?? 'FIFO'),
                 'max_capacity' => $q->max_capacity, 'waiting' => $q->waiting_count,
                 'is_active' => $q->is_active,
-                'services' => $q->services->map(fn($s) => ['name' => $s->name, 'color' => $s->color]),
+                'services' => $q->services->map(fn ($s) => ['name' => $s->name, 'color' => $s->color]),
             ]) : collect();
 
         return Inertia::render('Admin/Queues/Index', [
             'queues' => $queues,
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name]),
             'currentBranchId' => $branchId,
         ]);
     }
@@ -45,6 +45,7 @@ class QueueController extends Controller
     public function create(Request $request)
     {
         $tenantId = $request->user()->tenant_id;
+
         return Inertia::render('Admin/Queues/Form', [
             'queue' => null,
             'branches' => Branch::where('tenant_id', $tenantId)->where('is_active', true)->get(['id', 'name']),
@@ -76,7 +77,7 @@ class QueueController extends Controller
             'is_active' => true,
         ]);
 
-        if (!empty($data['service_ids'])) {
+        if (! empty($data['service_ids'])) {
             $queue->services()->sync($data['service_ids']);
         }
 
@@ -88,6 +89,7 @@ class QueueController extends Controller
         $this->authorizeBranchChild($queue, $request);
 
         $tenantId = $request->user()->tenant_id;
+
         return Inertia::render('Admin/Queues/Form', [
             'queue' => [
                 'id' => $queue->id, 'branch_id' => $queue->branch_id, 'name' => $queue->name,
@@ -128,6 +130,7 @@ class QueueController extends Controller
 
         $queue->services()->detach();
         $queue->delete();
+
         return redirect()->route('admin.colas.index')->with('success', 'Cola eliminada.');
     }
 }

@@ -18,7 +18,8 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         $services = ['Consulta General', 'Pagos', 'Trámites', 'Reclamaciones', 'Asesoría', 'Caja'];
-        $name = fake()->randomElement($services) . ' ' . fake()->randomNumber(2);
+        $name = fake()->randomElement($services).' '.fake()->randomNumber(2);
+
         return [
             'tenant_id' => Tenant::factory(),
             'name' => $name,

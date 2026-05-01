@@ -234,12 +234,13 @@ class SystemStatusCommandTest extends TestCase
     private function swapHealthySupervisor(): void
     {
         $this->app->bind(SystemStatusCommand::class, function () {
-            return new class extends SystemStatusCommand {
+            return new class extends SystemStatusCommand
+            {
                 protected function runSupervisorCommand(string $command): string
                 {
                     return "olinora-reverb                    RUNNING   pid 1009, uptime 2 days\n"
-                        . "olinora-worker:olinora-worker_00   RUNNING   pid 1010, uptime 2 days\n"
-                        . "olinora-worker:olinora-worker_01   RUNNING   pid 1011, uptime 2 days\n";
+                        ."olinora-worker:olinora-worker_00   RUNNING   pid 1010, uptime 2 days\n"
+                        ."olinora-worker:olinora-worker_01   RUNNING   pid 1011, uptime 2 days\n";
                 }
             };
         });
@@ -251,7 +252,8 @@ class SystemStatusCommandTest extends TestCase
     private function swapFailingSupervisor(): void
     {
         $this->app->bind(SystemStatusCommand::class, function () {
-            return new class extends SystemStatusCommand {
+            return new class extends SystemStatusCommand
+            {
                 protected function runSupervisorCommand(string $command): string
                 {
                     // Empty output = validation fails = warning generated

@@ -16,7 +16,7 @@ class CounterFactory extends Factory
     {
         return [
             'branch_id' => Branch::factory(),
-            'name' => 'Ventanilla ' . fake()->numberBetween(1, 20),
+            'name' => 'Ventanilla '.fake()->numberBetween(1, 20),
             'number' => (string) fake()->unique()->numberBetween(1, 50),
             'status' => 'closed',
         ];

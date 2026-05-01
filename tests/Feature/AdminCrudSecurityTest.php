@@ -24,16 +24,27 @@ class AdminCrudSecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private User $adminA;
+
     private User $adminB;
+
     private Branch $branchA;
+
     private Branch $branchB;
+
     private Service $serviceA;
+
     private Service $serviceB;
+
     private Queue $queueA;
+
     private Queue $queueB;
+
     private Counter $counterA;
+
     private Counter $counterB;
 
     protected function setUp(): void

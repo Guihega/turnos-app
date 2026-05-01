@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -18,7 +19,7 @@ class TwoFactorController extends Controller
 
     public function __construct()
     {
-        $this->google2fa = new Google2FA();
+        $this->google2fa = new Google2FA;
     }
 
     /**
@@ -110,7 +111,7 @@ class TwoFactorController extends Controller
         }
 
         // Generate recovery codes
-        $recoveryCodes = Collection::times(8, fn () => Str::random(10) . '-' . Str::random(10));
+        $recoveryCodes = Collection::times(8, fn () => Str::random(10).'-'.Str::random(10));
 
         $user->update([
             'two_factor_confirmed_at' => now(),
@@ -135,8 +136,8 @@ class TwoFactorController extends Controller
         $user = $request->user();
 
         // Block admins from disabling 2FA
-        if ($user->role === \App\Enums\UserRole::TENANT_ADMIN
-            || $user->role === \App\Enums\UserRole::SUPER_ADMIN) {
+        if ($user->role === UserRole::TENANT_ADMIN
+            || $user->role === UserRole::SUPER_ADMIN) {
             return back()->withErrors([
                 'password' => 'La autenticación en dos pasos es obligatoria para administradores.',
             ]);

@@ -1,29 +1,31 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\BranchController;
-use App\Http\Controllers\Admin\ServiceController;
-use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\CounterController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\OperatorController;
-use App\Http\Controllers\DisplayController;
-use App\Http\Controllers\KioskController;
-use App\Http\Controllers\TicketActionController;
-use App\Http\Controllers\TenantSettingsController;
 use App\Http\Controllers\Admin\DisplayAnnouncementController;
-use App\Http\Controllers\WeatherController;
-use App\Http\Controllers\GeoController;
-use App\Http\Controllers\OnboardingController;
-use App\Http\Controllers\HelpCenterController;
+use App\Http\Controllers\Admin\QueueController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\SocialAuthController;
-use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
-use App\Http\Controllers\LegalController;
+use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisplayController;
+use App\Http\Controllers\GeoController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\HelpCenterController;
+use App\Http\Controllers\KioskController;
+use App\Http\Controllers\LegalController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\OperatorController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\LeadController;
+use App\Http\Controllers\TenantSettingsController;
+use App\Http\Controllers\TicketActionController;
+use App\Http\Controllers\WeatherController;
+use App\Http\Middleware\EnsureTwoFactorForAdmins;
+use App\Models\Branch;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -137,7 +139,7 @@ Route::middleware('throttle:60,1')->prefix('api/geo')->group(function () {
 });
 
 // Ruta corta para QR → redirige al kiosco (ej: olinora.com.mx/t/sede-centro)
-Route::get('/t/{branch:slug}', function (App\Models\Branch $branch) {
+Route::get('/t/{branch:slug}', function (Branch $branch) {
     return redirect()->route('kiosk.public', $branch);
 })->middleware('throttle:kiosk-view')->name('kiosk.shorturl');
 
@@ -158,7 +160,7 @@ Route::middleware('auth')->group(function () {
 | All authenticated routes enforce tenant isolation via middleware.
 */
 
-Route::middleware(['auth', 'verified', 'tenant.scope', \App\Http\Middleware\EnsureTwoFactorForAdmins::class])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant.scope', EnsureTwoFactorForAdmins::class])->group(function () {
 
     // ── Dashboard ──
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -247,4 +249,4 @@ Route::middleware(['auth', 'verified', 'tenant.scope', \App\Http\Middleware\Ensu
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

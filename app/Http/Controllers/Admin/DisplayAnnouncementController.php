@@ -51,24 +51,24 @@ class DisplayAnnouncementController extends Controller
         $tenant = $request->user()->tenant;
 
         $validated = $request->validate([
-            'type'       => ['required', 'in:announcement,news,promo'],
-            'title'      => ['required', 'string', 'max:255'],
-            'body'       => ['nullable', 'string', 'max:1000'],
-            'media'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,mp4,webm', 'max:20480'], // 20MB
+            'type' => ['required', 'in:announcement,news,promo'],
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['nullable', 'string', 'max:1000'],
+            'media' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,mp4,webm', 'max:20480'], // 20MB
             'media_type' => ['nullable', 'in:image,video'],
-            'branch_id'  => ['nullable', 'exists:branches,id'],
-            'priority'   => ['integer', 'min:0', 'max:100'],
-            'is_active'  => ['boolean'],
-            'starts_at'  => ['nullable', 'date'],
-            'ends_at'    => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
+            'priority' => ['integer', 'min:0', 'max:100'],
+            'is_active' => ['boolean'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ]);
 
         // Validar que la branch pertenezca al tenant
-        if (!empty($validated['branch_id'])) {
+        if (! empty($validated['branch_id'])) {
             $branch = Branch::where('id', $validated['branch_id'])
                 ->where('tenant_id', $tenant->id)
                 ->first();
-            if (!$branch) {
+            if (! $branch) {
                 return back()->withErrors(['branch_id' => 'Sucursal no válida.']);
             }
         }
@@ -85,17 +85,17 @@ class DisplayAnnouncementController extends Controller
         }
 
         DisplayAnnouncement::create([
-            'type'       => $validated['type'],
-            'title'      => $validated['title'],
-            'body'       => $validated['body'] ?? null,
-            'branch_id'  => $validated['branch_id'] ?? null,
-            'priority'   => $validated['priority'] ?? 0,
-            'is_active'  => $validated['is_active'] ?? true,
-            'starts_at'  => $validated['starts_at'] ?? null,
-            'ends_at'    => $validated['ends_at'] ?? null,
-            'media_url'  => $mediaUrl,
+            'type' => $validated['type'],
+            'title' => $validated['title'],
+            'body' => $validated['body'] ?? null,
+            'branch_id' => $validated['branch_id'] ?? null,
+            'priority' => $validated['priority'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+            'starts_at' => $validated['starts_at'] ?? null,
+            'ends_at' => $validated['ends_at'] ?? null,
+            'media_url' => $mediaUrl,
             'media_type' => $mediaType,
-            'tenant_id'  => $tenant->id,
+            'tenant_id' => $tenant->id,
         ]);
 
         $this->invalidateAnnouncementCache($tenant->id);
@@ -112,24 +112,24 @@ class DisplayAnnouncementController extends Controller
         }
 
         $validated = $request->validate([
-            'type'       => ['required', 'in:announcement,news,promo'],
-            'title'      => ['required', 'string', 'max:255'],
-            'body'       => ['nullable', 'string', 'max:1000'],
-            'media'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,mp4,webm', 'max:20480'],
+            'type' => ['required', 'in:announcement,news,promo'],
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['nullable', 'string', 'max:1000'],
+            'media' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,mp4,webm', 'max:20480'],
             'media_type' => ['nullable', 'in:image,video'],
-            'branch_id'  => ['nullable', 'exists:branches,id'],
-            'priority'   => ['integer', 'min:0', 'max:100'],
-            'is_active'  => ['boolean'],
-            'starts_at'  => ['nullable', 'date'],
-            'ends_at'    => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
+            'priority' => ['integer', 'min:0', 'max:100'],
+            'is_active' => ['boolean'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'remove_media' => ['nullable', 'boolean'],
         ]);
 
-        if (!empty($validated['branch_id'])) {
+        if (! empty($validated['branch_id'])) {
             $branch = Branch::where('id', $validated['branch_id'])
                 ->where('tenant_id', $tenant->id)
                 ->first();
-            if (!$branch) {
+            if (! $branch) {
                 return back()->withErrors(['branch_id' => 'Sucursal no válida.']);
             }
         }
@@ -145,21 +145,21 @@ class DisplayAnnouncementController extends Controller
             $mediaData['media_type'] = in_array($extension, ['mp4', 'webm']) ? 'video' : 'image';
             $path = $file->store("announcements/{$tenant->id}", 'public');
             $mediaData['media_url'] = Storage::url($path);
-        } elseif (!empty($validated['remove_media'])) {
+        } elseif (! empty($validated['remove_media'])) {
             $this->deleteMedia($announcement);
             $mediaData['media_url'] = null;
             $mediaData['media_type'] = null;
         }
 
         $announcement->update([
-            'type'      => $validated['type'],
-            'title'     => $validated['title'],
-            'body'      => $validated['body'] ?? null,
+            'type' => $validated['type'],
+            'title' => $validated['title'],
+            'body' => $validated['body'] ?? null,
             'branch_id' => $validated['branch_id'] ?? null,
-            'priority'  => $validated['priority'] ?? 0,
+            'priority' => $validated['priority'] ?? 0,
             'is_active' => $validated['is_active'] ?? true,
             'starts_at' => $validated['starts_at'] ?? null,
-            'ends_at'   => $validated['ends_at'] ?? null,
+            'ends_at' => $validated['ends_at'] ?? null,
             ...$mediaData,
         ]);
 
@@ -197,7 +197,7 @@ class DisplayAnnouncementController extends Controller
             abort(403);
         }
 
-        $announcement->update(['is_active' => !$announcement->is_active]);
+        $announcement->update(['is_active' => ! $announcement->is_active]);
 
         $this->invalidateAnnouncementCache($tenant->id);
 

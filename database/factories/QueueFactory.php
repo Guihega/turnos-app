@@ -16,7 +16,7 @@ class QueueFactory extends Factory
     {
         return [
             'branch_id' => Branch::factory(),
-            'name' => 'Cola ' . fake()->word(),
+            'name' => 'Cola '.fake()->word(),
             'prefix' => strtoupper(fake()->randomLetter()),
             'priority_algorithm' => 'fifo',
             'max_capacity' => 100,

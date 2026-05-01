@@ -7,7 +7,6 @@ namespace Database\Seeders;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
-use App\Models\Appointment;
 use App\Models\Branch;
 use App\Models\Counter;
 use App\Models\Queue;
@@ -98,7 +97,7 @@ class DemoSeeder extends Seeder
             $operators[] = User::create([
                 'tenant_id' => $tenant->id,
                 'name' => $name,
-                'email' => Str::slug($name, '.') . '@clinicasanrafael.mx',
+                'email' => Str::slug($name, '.').'@clinicasanrafael.mx',
                 'password' => bcrypt('password'),
                 'role' => $i < 3 ? UserRole::BRANCH_MANAGER : UserRole::OPERATOR,
                 'is_active' => true,
@@ -162,9 +161,9 @@ class DemoSeeder extends Seeder
                     'branch_id' => $branch->id,
                     'queue_id' => $queue->id,
                     'service_id' => $service->id,
-                    'ticket_number' => "{$queue->prefix}-" . str_pad((string) $t, 3, '0', STR_PAD_LEFT),
+                    'ticket_number' => "{$queue->prefix}-".str_pad((string) $t, 3, '0', STR_PAD_LEFT),
                     'daily_sequence' => $t,
-                    'display_number' => "{$branch->code}-{$queue->prefix}" . str_pad((string) $t, 3, '0', STR_PAD_LEFT),
+                    'display_number' => "{$branch->code}-{$queue->prefix}".str_pad((string) $t, 3, '0', STR_PAD_LEFT),
                     'customer_name' => fake('es_MX')->name(),
                     'customer_phone' => fake('es_MX')->phoneNumber(),
                     'status' => $status,
@@ -206,7 +205,7 @@ class DemoSeeder extends Seeder
         }
 
         $this->command->info("Demo data created: {$tenant->name}");
-        $this->command->info("Admin login: admin@clinicasanrafael.mx / password");
-        $this->command->info("Branches: " . $branches->pluck('name')->implode(', '));
+        $this->command->info('Admin login: admin@clinicasanrafael.mx / password');
+        $this->command->info('Branches: '.$branches->pluck('name')->implode(', '));
     }
 }

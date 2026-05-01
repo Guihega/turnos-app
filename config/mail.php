@@ -113,7 +113,6 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
-
     /*
     |--------------------------------------------------------------------------
     | Leads Notification Address

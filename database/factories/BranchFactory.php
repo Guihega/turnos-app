@@ -15,7 +15,8 @@ class BranchFactory extends Factory
 
     public function definition(): array
     {
-        $name = 'Sucursal ' . fake()->city();
+        $name = 'Sucursal '.fake()->city();
+
         return [
             'tenant_id' => Tenant::factory(),
             'name' => $name,
