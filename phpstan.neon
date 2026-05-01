@@ -22,11 +22,13 @@ parameters:
         - tests
         - routes
 
+    # The (?) marks paths as optional — won't fail if they don't exist.
+    # node_modules only exists when npm install runs (not in larastan job).
     excludePaths:
-        - bootstrap/cache
-        - storage
-        - vendor
-        - node_modules
+        - bootstrap/cache (?)
+        - storage (?)
+        - vendor (?)
+        - node_modules (?)
 
     # Treat phpDocs as authoritative when types disagree
     treatPhpDocTypesAsCertain: false
