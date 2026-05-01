@@ -1,0 +1,32 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    # The baseline file lists all current errors so they don't break CI.
+    # New code must pass at the configured level without baseline.
+    # Regenerate the baseline only when fixing real errors:
+    #   vendor/bin/phpstan analyse --generate-baseline
+    - phpstan-baseline.neon
+
+parameters:
+    # Start at level 5 (lax). Raise progressively as we clean up the codebase.
+    # Level reference:
+    #   5 — basic type checks, missing methods
+    #   6 — missing return types
+    #   7 — partial array shape, generics
+    #   8 — strict null checks, impossible comparisons
+    #   9 — typed arrays everywhere
+    level: 5
+
+    paths:
+        - app
+        - database
+        - tests
+        - routes
+
+    excludePaths:
+        - bootstrap/cache
+        - storage
+        - vendor
+        - node_modules
+
+    # Treat phpDocs as authoritative when types disagree
+    treatPhpDocTypesAsCertain: false

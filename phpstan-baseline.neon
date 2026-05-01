@@ -1,0 +1,1717 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Actions/CompleteTicketAction.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Actions/CompleteTicketAction.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Actions/TransferTicketAction.php
+
+		-
+			message: '#^Method App\\Auth\\CipherSweetUserProvider\:\:retrieveByCredentials\(\) should return Illuminate\\Contracts\\Auth\\Authenticatable\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Auth/CipherSweetUserProvider.php
+
+		-
+			message: '#^Parameter \#1 \$value of method Carbon\\Carbon\:\:subDays\(\) expects float\|int, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/CleanLogsCommand.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Console/Commands/DisableDemoTwoFactor.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\HealthCheck\:\:checkWarning\(\) invoked with 1 parameter, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Console/Commands/HealthCheck.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Console/Commands/SystemStatusCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketCalled.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Events/TicketCalled.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketCalled.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketCompleted.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketCompleted.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:activeWaitingCount\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Events/TicketCompleted.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketIssued.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Events/TicketIssued.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:activeWaitingCount\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Events/TicketIssued.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Events/TicketIssued.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/TicketTransferred.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Branch\:\:\$today_tickets\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BranchController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BranchController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Branch\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/BranchController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/CounterController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$display_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/CounterController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/CounterController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Counter\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/CounterController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 9
+			path: app/Http/Controllers/Admin/DisplayAnnouncementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$waiting_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Anonymous function should return array\{id\: string, name\: string, prefix\: string, priority_algorithm\: string, max_capacity\: int\<0, max\>, waiting\: mixed, is_active\: bool, services\: Illuminate\\Support\\Collection\<int, array\{name\: mixed, color\: mixed\}\>\} but returns array\{id\: string, name\: string, prefix\: string, priority_algorithm\: string, max_capacity\: int\<0, max\>, waiting\: mixed, is_active\: bool, services\: Illuminate\\Support\\Collection\<int, array\{name\: string, color\: mixed\}\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Queue\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/QueueController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Admin/ReportController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Http/Controllers/Admin/ReportController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/Admin/ReportController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Admin/ReportController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/Admin/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ServiceController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Anonymous function should return array\{id\: string, name\: string, email\: string, role\: mixed, role_label\: mixed, is_active\: bool, branches\: Illuminate\\Support\\Collection\<int, array\{id\: mixed, name\: mixed\}\>, last_login_at\: mixed\} but returns array\{id\: string, name\: string, email\: string, role\: mixed, role_label\: mixed, is_active\: bool, branches\: Illuminate\\Support\\Collection\<int, array\{id\: string, name\: string\}\>, last_login_at\: mixed\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Cannot call method diffForHumans\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Admin/UserController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Api\\TicketController\:\:authorize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Api/TicketController.php
+
+		-
+			message: '#^Class App\\Http\\Controllers\\Api\\Ticket not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Api/TicketController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$expiresIn\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$refreshToken\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Socialite\\Contracts\\User\:\:\$token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:scopes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:setScopes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Http\\Controllers\\Auth\\SocialAuthController\:\:authenticateOrChallenge\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/SocialAuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$completed_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$in_progress_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$waiting_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$today_served\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$logo_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$prefix\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Cannot call method color\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Queue\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Ticket\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getBrandingForFrontend\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Ticket\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Parameter \#3 \$callback of static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/DisplayController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$estimated_duration_minutes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$icon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, array\{id\: mixed, name\: mixed, code\: mixed, color\: mixed, icon\: mixed, description\: mixed, estimated_minutes\: mixed, queue_id\: string, \.\.\.\}\> but returns Illuminate\\Support\\Collection\<int, array\{id\: string, name\: string, code\: mixed, color\: mixed, icon\: mixed, description\: string\|null, estimated_minutes\: mixed, queue_id\: string, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getBrandingForFrontend\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getEffectiveSettings\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$country\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/OnboardingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$waiting_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$prefix\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tenant_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Queue\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Ticket\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/OperatorController.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Http/Controllers/Public/LeadController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$logo_url\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/TenantSettingsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TenantSettingsController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getEffectiveSettings\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/TenantSettingsController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:updateSettingsSection\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: app/Http/Controllers/TenantSettingsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$event_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$from_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$occurred_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$to_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Cannot call method color\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/TicketActionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$timezone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/WeatherController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timezone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/WeatherController.php
+
+		-
+			message: '#^Cannot call method hasPermission\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Middleware/EnsureRole.php
+
+		-
+			message: '#^Cannot call method level\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Middleware/EnsureRole.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getBrandingForFrontend\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getBrandingForFrontend\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Middleware/ShareTenantBranding.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$called_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$cancelled_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$counter\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$customer_email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$customer_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$customer_phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$display_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$events\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$feedback\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$issued_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$notes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$priority\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$priority_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$queue\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$rating\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$servedBy\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$service\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$service_time_seconds\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$started_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$ticket_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$total_time_seconds\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$transfer_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TicketResource\:\:\$wait_time_seconds\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\TicketResource\:\:estimatedWaitMinutes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\TicketResource\:\:isActive\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\TicketResource\:\:positionInQueue\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\TicketResource\:\:relationLoaded\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: app/Http/Resources/TicketResource.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/DisplayAnnouncement.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/DisplayAnnouncement.php
+
+		-
+			message: '#^Method App\\Models\\Queue\:\:nextTicket\(\) should return App\\Models\\Ticket\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Queue.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Tenant.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$estimated_duration_minutes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Cannot call method canTransitionTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Cannot call method diffInSeconds\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Cannot call method isActive\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$called_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$cancelled_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$completed_at \(string\|null\) does not accept DateTimeInterface\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$started_at \(string\|null\) does not accept DateTimeInterface\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$status \(string\) does not accept App\\Enums\\TicketStatus\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Property App\\Models\\Ticket\:\:\$transferred_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>estimated_duration_minutes" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Ticket.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Relations\\Pivot\:\:\$role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Cannot call method hasPermission\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Cannot call method isActive\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Policies/TicketPolicy.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getEffectiveSettings\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/TelegramAlertService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/TelegramAlertService.php
+
+		-
+			message: '#^Call to an undefined method Faker\\Generator\:\:state\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: database/factories/BranchFactory.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: database/seeders/DemoSeeder.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 4
+			path: database/seeders/ProductionSeeder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: routes/api.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: routes/api.php
+
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: routes/api.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: routes/api.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Ticket\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: routes/api.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$adminB is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$counterA \(App\\Models\\Counter\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$counterA is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$counterB \(App\\Models\\Counter\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$queueA \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$queueA is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$queueB \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$serviceA \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$serviceB \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminCrudSecurityTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminCrudSecurityTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$queueA \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$serviceA \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\AdminTicketSecurityTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/AdminTicketSecurityTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 7
+			path: tests/Feature/ArtisanCommandsTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true and ''Unauthenticated…'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_keys expects array, Illuminate\\Support\\Collection given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\BroadcastChannelTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\BroadcastChannelTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\BroadcastChannelTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\BroadcastChannelTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/BroadcastChannelTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\ConfigurableSecurityTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/ConfigurableSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\ConfigurableSecurityTest\:\:\$queue \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/ConfigurableSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\ConfigurableSecurityTest\:\:\$service \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/ConfigurableSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\ConfigurableSecurityTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/ConfigurableSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplayAnnouncementMediaTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplayAnnouncementMediaTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplayAnnouncementMediaTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplayAnnouncementMediaTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 8
+			path: tests/Feature/DisplayAnnouncementTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplayAnnouncementTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplayAnnouncementTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplayAnnouncementTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplayAnnouncementTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplaySecurityTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplaySecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplaySecurityTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplaySecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplaySecurityTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplaySecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\DisplaySecurityTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/DisplaySecurityTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: tests/Feature/KioskSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\KioskSecurityTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/KioskSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\KioskSecurityTest\:\:\$queue \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/KioskSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\KioskSecurityTest\:\:\$service \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/KioskSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\KioskSecurityTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/KioskSecurityTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/LoginSecurityTest.php
+
+		-
+			message: '#^Cannot call method isToday\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Feature/LoginSecurityTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/OnboardingTest.php
+
+		-
+			message: '#^Offset ''monday'' does not exist on string\.$#'
+			identifier: offsetAccess.notFound
+			count: 3
+			path: tests/Feature/OnboardingTest.php
+
+		-
+			message: '#^Offset ''saturday'' does not exist on string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Feature/OnboardingTest.php
+
+		-
+			message: '#^Offset ''sunday'' does not exist on string\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Feature/OnboardingTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$counterA \(App\\Models\\Counter\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$counterB \(App\\Models\\Counter\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$queueA \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$queueB \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$serviceA \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\OperatorSecurityTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/OperatorSecurityTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\RoleMiddlewareTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/RoleMiddlewareTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\SecuritySettingsTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/SecuritySettingsTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 9
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$expiresIn\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$refreshToken\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:andReturnSelf\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:with\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\SocialAuthTest\:\:mockSocialiteUser\(\) should return Laravel\\Socialite\\Two\\User but returns Mockery\\MockInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/SocialAuthTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TenantIsolationTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$branchB \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TenantIsolationTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$branchB is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Feature/TenantIsolationTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$tenantA \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TenantIsolationTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$tenantB \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TenantIsolationTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TenantSettingsTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TenantSettingsTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TicketFlowTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TicketFlowTest\:\:\$counter \(App\\Models\\Counter\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TicketFlowTest\:\:\$queue \(App\\Models\\Queue\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TicketFlowTest\:\:\$service \(App\\Models\\Service\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TicketFlowTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TicketFlowTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TwoFactorAuthTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TwoFactorAuthTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\TwoFactorEnforcementTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/TwoFactorEnforcementTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\UserEncryptionTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/UserEncryptionTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/WeatherTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\WeatherTest\:\:\$branch \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/WeatherTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\WeatherTest\:\:\$tenant \(App\\Models\\Tenant\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/WeatherTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/ExampleTest.php
