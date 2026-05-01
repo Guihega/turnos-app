@@ -2,9 +2,9 @@ name: Olinora CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'epic/**']
   pull_request:
-    branches: [main]
+    branches: [main, 'epic/**']
 
 env:
   PHP_VERSION: '8.3'
