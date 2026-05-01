@@ -23,7 +23,7 @@ class DisplayController extends Controller
                 ->where('is_active', true)
                 ->get()
             : Branch::where('is_active', true)
-                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
                 ->get();
 
         if ($branches->count() === 1) {
@@ -40,7 +40,7 @@ class DisplayController extends Controller
         }
 
         return Inertia::render('Display/Index', [
-            'branches' => $branches->map(fn($b) => [
+            'branches' => $branches->map(fn ($b) => [
                 'id' => $b->id,
                 'name' => $b->name,
                 'code' => $b->code,
@@ -51,9 +51,9 @@ class DisplayController extends Controller
     public function show(Request $request, Branch $branch): Response
     {
         $user = $request->user();
-        if (!$user->isSuperAdmin() && !$user->isTenantAdmin()) {
+        if (! $user->isSuperAdmin() && ! $user->isTenantAdmin()) {
             $hasAccess = $user->branches()->where('branches.id', $branch->id)->exists();
-            if (!$hasAccess) {
+            if (! $hasAccess) {
                 abort(403, 'No tiene acceso a esta sucursal.');
             }
         }
@@ -69,12 +69,12 @@ class DisplayController extends Controller
     public function public(Request $request, Branch $branch): Response
     {
         // F-08: Validate branch is active and belongs to an active tenant
-        if (!$branch->is_active) {
+        if (! $branch->is_active) {
             abort(404, 'Sucursal no disponible.');
         }
 
         $branch->loadMissing('tenant');
-        if (!$branch->tenant || !$branch->tenant->is_active) {
+        if (! $branch->tenant || ! $branch->tenant->is_active) {
             abort(404, 'Organización no disponible.');
         }
 
@@ -104,7 +104,7 @@ class DisplayController extends Controller
                     ->orderByDesc('called_at')
                     ->limit(8)
                     ->get()
-                    ->map(fn($t) => [
+                    ->map(fn ($t) => [
                         'display_number' => $t->display_number,
                         'counter_number' => $t->counter?->number,
                         'counter_name' => $t->counter?->name,
@@ -122,7 +122,7 @@ class DisplayController extends Controller
                     ->orderByDesc('completed_at')
                     ->limit(10)
                     ->get()
-                    ->map(fn($t) => [
+                    ->map(fn ($t) => [
                         'display_number' => $t->display_number,
                         'counter_number' => $t->counter?->number,
                     ]);
@@ -165,12 +165,12 @@ class DisplayController extends Controller
                     ->orderByDesc('created_at')
                     ->limit(10)
                     ->get()
-                    ->map(fn($a) => [
-                        'id'         => $a->id,
-                        'type'       => $a->type,
-                        'title'      => $a->title,
-                        'body'       => $a->body,
-                        'media_url'  => $a->media_url,
+                    ->map(fn ($a) => [
+                        'id' => $a->id,
+                        'type' => $a->type,
+                        'title' => $a->title,
+                        'body' => $a->body,
+                        'media_url' => $a->media_url,
                         'media_type' => $a->media_type,
                     ])
                     ->toArray();

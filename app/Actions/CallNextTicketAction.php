@@ -34,7 +34,7 @@ final class CallNextTicketAction
 
             $counter = Counter::lockForUpdate()->findOrFail($counterId);
 
-            if (!$counter->isAvailable() && $counter->current_operator_id === $operatorId) {
+            if (! $counter->isAvailable() && $counter->current_operator_id === $operatorId) {
                 // Counter is assigned to this operator but busy — might need to complete current
             }
 
@@ -43,7 +43,7 @@ final class CallNextTicketAction
                 ? $this->ticketRepo->getNextInQueue($queueId)
                 : $this->findNextFromCounterQueues($counter);
 
-            if (!$ticket) {
+            if (! $ticket) {
                 throw new RuntimeException('No hay turnos en espera.');
             }
 

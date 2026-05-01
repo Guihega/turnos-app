@@ -122,16 +122,17 @@ class TicketRepository implements TicketRepositoryInterface
      */
     public function getDailySequence(string $branchId): int
     {
-        $key = "branch:{$branchId}:daily_seq:" . today()->format('Y-m-d');
+        $key = "branch:{$branchId}:daily_seq:".today()->format('Y-m-d');
 
         $store = Cache::getStore();
 
-        if (!$store instanceof ArrayStore) {
+        if (! $store instanceof ArrayStore) {
             // Redis / Memcached / Database — use atomic lock
             return (int) Cache::lock("{$key}:lock", 5)->block(3, function () use ($key) {
                 $current = Cache::get($key, 0);
                 $next = $current + 1;
                 Cache::put($key, $next, now()->endOfDay());
+
                 return $next;
             });
         }
@@ -140,6 +141,7 @@ class TicketRepository implements TicketRepositoryInterface
         $current = Cache::get($key, 0);
         $next = $current + 1;
         Cache::put($key, $next, now()->endOfDay());
+
         return $next;
     }
 
@@ -193,6 +195,7 @@ class TicketRepository implements TicketRepositoryInterface
     public function update(Ticket $ticket, array $data): Ticket
     {
         $ticket->update($data);
+
         return $ticket->fresh();
     }
 

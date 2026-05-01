@@ -19,7 +19,7 @@ class GeoController extends Controller
     {
         $username = config('services.geonames.username');
 
-        if (!$username) {
+        if (! $username) {
             return response()->json(['error' => 'GeoNames no configurado'], 503);
         }
 
@@ -30,29 +30,29 @@ class GeoController extends Controller
             try {
                 // Primero obtener el geonameId del país
                 $countryResponse = Http::timeout(10)->get('http://api.geonames.org/countryInfoJSON', [
-                    'country'  => $country,
+                    'country' => $country,
                     'username' => $username,
                 ]);
 
-                if (!$countryResponse->successful()) {
+                if (! $countryResponse->successful()) {
                     return null;
                 }
 
                 $countryData = $countryResponse->json();
                 $geonameId = $countryData['geonames'][0]['geonameId'] ?? null;
 
-                if (!$geonameId) {
+                if (! $geonameId) {
                     return null;
                 }
 
                 // Obtener las divisiones administrativas nivel 1 (estados/provincias)
                 $response = Http::timeout(10)->get('http://api.geonames.org/childrenJSON', [
                     'geonameId' => $geonameId,
-                    'username'  => $username,
-                    'maxRows'   => 100,
+                    'username' => $username,
+                    'maxRows' => 100,
                 ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     return null;
                 }
 
@@ -60,8 +60,8 @@ class GeoController extends Controller
                 $geonames = $data['geonames'] ?? [];
 
                 return collect($geonames)
-                    ->map(fn($g) => [
-                        'id'   => $g['geonameId'],
+                    ->map(fn ($g) => [
+                        'id' => $g['geonameId'],
                         'name' => $g['name'] ?? $g['toponymName'] ?? '',
                         'code' => $g['adminCode1'] ?? '',
                     ])
@@ -89,7 +89,7 @@ class GeoController extends Controller
     {
         $username = config('services.geonames.username');
 
-        if (!$username) {
+        if (! $username) {
             return response()->json(['error' => 'GeoNames no configurado'], 503);
         }
 
@@ -99,11 +99,11 @@ class GeoController extends Controller
             try {
                 $response = Http::timeout(10)->get('http://api.geonames.org/childrenJSON', [
                     'geonameId' => $stateGeonameId,
-                    'username'  => $username,
-                    'maxRows'   => 500,
+                    'username' => $username,
+                    'maxRows' => 500,
                 ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     return null;
                 }
 
@@ -111,11 +111,11 @@ class GeoController extends Controller
                 $geonames = $data['geonames'] ?? [];
 
                 return collect($geonames)
-                    ->map(fn($g) => [
-                        'id'   => $g['geonameId'],
+                    ->map(fn ($g) => [
+                        'id' => $g['geonameId'],
                         'name' => $g['name'] ?? $g['toponymName'] ?? '',
-                        'lat'  => $g['lat'] ?? null,
-                        'lng'  => $g['lng'] ?? null,
+                        'lat' => $g['lat'] ?? null,
+                        'lng' => $g['lng'] ?? null,
                     ])
                     ->sortBy('name')
                     ->values()
@@ -140,7 +140,7 @@ class GeoController extends Controller
     {
         $username = config('services.geonames.username');
 
-        if (!$username) {
+        if (! $username) {
             return response()->json(['error' => 'GeoNames no configurado'], 503);
         }
 
@@ -150,32 +150,32 @@ class GeoController extends Controller
         }
 
         $country = strtoupper($country);
-        $cacheKey = "geo:search:{$country}:" . md5($query);
+        $cacheKey = "geo:search:{$country}:".md5($query);
 
         $results = Cache::remember($cacheKey, 60 * 60 * 24 * 7, function () use ($country, $query, $username) {
             try {
                 $response = Http::timeout(10)->get('http://api.geonames.org/searchJSON', [
-                    'q'           => $query,
-                    'country'     => $country,
+                    'q' => $query,
+                    'country' => $country,
                     'featureClass' => 'P', // Populated places
-                    'maxRows'     => 15,
-                    'username'    => $username,
-                    'orderby'     => 'relevance',
+                    'maxRows' => 15,
+                    'username' => $username,
+                    'orderby' => 'relevance',
                 ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     return [];
                 }
 
                 $data = $response->json();
 
                 return collect($data['geonames'] ?? [])
-                    ->map(fn($g) => [
-                        'name'  => $g['name'] ?? '',
+                    ->map(fn ($g) => [
+                        'name' => $g['name'] ?? '',
                         'state' => $g['adminName1'] ?? '',
-                        'lat'   => $g['lat'] ?? null,
-                        'lng'   => $g['lng'] ?? null,
-                        'label' => ($g['name'] ?? '') . ', ' . ($g['adminName1'] ?? ''),
+                        'lat' => $g['lat'] ?? null,
+                        'lng' => $g['lng'] ?? null,
+                        'label' => ($g['name'] ?? '').', '.($g['adminName1'] ?? ''),
                     ])
                     ->toArray();
             } catch (\Exception $e) {

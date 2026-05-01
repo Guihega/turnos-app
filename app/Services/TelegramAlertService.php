@@ -23,7 +23,9 @@ use Illuminate\Support\Str;
 class TelegramAlertService
 {
     private string $token;
+
     private string $chatId;
+
     private bool $enabled;
 
     public function __construct()
@@ -38,7 +40,7 @@ class TelegramAlertService
      */
     public function sendError(\Throwable $exception, array $context = []): void
     {
-        if (!$this->enabled || empty($this->token) || empty($this->chatId)) {
+        if (! $this->enabled || empty($this->token) || empty($this->chatId)) {
             return;
         }
 
@@ -56,7 +58,7 @@ class TelegramAlertService
      */
     public function sendAlert(string $title, string $body, string $level = 'warning'): void
     {
-        if (!$this->enabled || empty($this->token) || empty($this->chatId)) {
+        if (! $this->enabled || empty($this->token) || empty($this->chatId)) {
             return;
         }
 
@@ -70,8 +72,8 @@ class TelegramAlertService
 
         try {
             $message = "{$emoji} *{$this->escape($title)}*\n\n{$this->escape($body)}";
-            $message .= "\n\n🕐 " . now()->format('Y-m-d H:i:s') . ' UTC';
-            $message .= "\n🌐 " . config('app.url');
+            $message .= "\n\n🕐 ".now()->format('Y-m-d H:i:s').' UTC';
+            $message .= "\n🌐 ".config('app.url');
             $this->send($message);
         } catch (\Throwable $e) {
             Log::warning("[TelegramAlert] Failed to send alert: {$e->getMessage()}");
@@ -84,7 +86,7 @@ class TelegramAlertService
         $url = $context['url'] ?? request()?->fullUrl() ?? 'N/A';
         $user = $context['user'] ?? (auth()->user()?->email ?? 'guest');
         $class = class_basename($exception);
-        $file = Str::after($exception->getFile(), base_path() . '/');
+        $file = Str::after($exception->getFile(), base_path().'/');
         $line = $exception->getLine();
         $messageText = Str::limit($exception->getMessage(), 300);
 
@@ -98,7 +100,7 @@ class TelegramAlertService
         $text .= "🌐 `{$this->escape($url)}`\n";
         $text .= "👤 `{$this->escape($user)}`\n";
         $text .= "🏗 `{$env}`\n";
-        $text .= "🕐 " . now()->format('Y-m-d H:i:s') . " UTC\n";
+        $text .= '🕐 '.now()->format('Y-m-d H:i:s')." UTC\n";
 
         if ($trace) {
             $text .= "\n📋 *Stack trace:*\n```\n{$trace}\n```";
@@ -118,7 +120,7 @@ class TelegramAlertService
                 'disable_web_page_preview' => true,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::warning("[TelegramAlert] API error: {$response->status()} — {$response->body()}");
         }
     }

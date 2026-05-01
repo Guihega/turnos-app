@@ -118,7 +118,7 @@ class TwoFactorEnforcementTest extends TestCase
 
     public function test_admin_cannot_disable_2fa(): void
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $admin = User::factory()->create([
@@ -143,7 +143,7 @@ class TwoFactorEnforcementTest extends TestCase
 
     public function test_operator_can_disable_2fa(): void
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $operator = User::factory()->create([

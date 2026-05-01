@@ -19,7 +19,7 @@ class ServiceController extends Controller
     {
         $services = Service::where('tenant_id', $request->user()->tenant_id)
             ->orderBy('sort_order')->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'id' => $s->id, 'name' => $s->name, 'code' => $s->code, 'color' => $s->color,
                 'estimated_duration_minutes' => $s->estimated_duration_minutes, 'is_active' => $s->is_active,
                 'requires_appointment' => $s->requires_appointment,
@@ -49,6 +49,7 @@ class ServiceController extends Controller
         $data['is_active'] = true;
 
         Service::create($data);
+
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio creado.');
     }
 
@@ -76,6 +77,7 @@ class ServiceController extends Controller
         ]);
 
         $service->update($data);
+
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio actualizado.');
     }
 
@@ -84,6 +86,7 @@ class ServiceController extends Controller
         $this->authorizeTenantOwnership($service, $request);
 
         $service->delete();
+
         return redirect()->route('admin.servicios.index')->with('success', 'Servicio eliminado.');
     }
 }

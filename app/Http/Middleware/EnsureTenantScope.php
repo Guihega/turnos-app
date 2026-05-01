@@ -26,7 +26,7 @@ class EnsureTenantScope
     {
         $user = $request->user();
 
-        if (!$user || !$user->tenant_id) {
+        if (! $user || ! $user->tenant_id) {
             if ($user?->isSuperAdmin()) {
                 return $next($request);
             }
@@ -53,7 +53,7 @@ class EnsureTenantScope
             // Allow null tenant_id for super_admin users
             $query->where(function ($q) use ($tenantId) {
                 $q->where('users.tenant_id', $tenantId)
-                  ->orWhereNull('users.tenant_id');
+                    ->orWhereNull('users.tenant_id');
             });
         });
 

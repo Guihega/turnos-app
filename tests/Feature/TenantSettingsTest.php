@@ -14,6 +14,7 @@ class TenantSettingsTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Tenant $tenant;
 
     protected function setUp(): void
@@ -81,10 +82,10 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.branding'), [
-                'primary_color'     => '#FF0000',
-                'secondary_color'   => '#00FF00',
-                'accent_color'      => '#0000FF',
-                'logo_shape'        => 'circle',
+                'primary_color' => '#FF0000',
+                'secondary_color' => '#00FF00',
+                'accent_color' => '#0000FF',
+                'logo_shape' => 'circle',
                 'dark_mode_default' => false,
             ])
             ->assertRedirect();
@@ -99,10 +100,10 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.branding'), [
-                'primary_color'     => 'not-a-color',
-                'secondary_color'   => '#00FF00',
-                'accent_color'      => '#0000FF',
-                'logo_shape'        => 'circle',
+                'primary_color' => 'not-a-color',
+                'secondary_color' => '#00FF00',
+                'accent_color' => '#0000FF',
+                'logo_shape' => 'circle',
                 'dark_mode_default' => false,
             ])
             ->assertSessionHasErrors('primary_color');
@@ -114,12 +115,12 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.display'), [
-                'show_queue_name'    => false,
-                'show_service_name'  => true,
-                'show_wait_time'     => false,
-                'show_recent_count'  => 10,
-                'announcement_text'  => 'Horario especial hoy',
-                'call_sound'         => 'bell',
+                'show_queue_name' => false,
+                'show_service_name' => true,
+                'show_wait_time' => false,
+                'show_recent_count' => 10,
+                'announcement_text' => 'Horario especial hoy',
+                'call_sound' => 'bell',
             ])
             ->assertRedirect();
 
@@ -135,10 +136,10 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.kiosk'), [
-                'welcome_text'         => 'Bienvenido a San Rafael',
+                'welcome_text' => 'Bienvenido a San Rafael',
                 'show_priority_option' => true,
-                'show_estimated_wait'  => false,
-                'print_ticket'         => true,
+                'show_estimated_wait' => false,
+                'print_ticket' => true,
             ])
             ->assertRedirect();
 
@@ -153,10 +154,10 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.tickets'), [
-                'prefix'             => 'CSR',
-                'daily_reset'        => false,
+                'prefix' => 'CSR',
+                'daily_reset' => false,
                 'auto_close_minutes' => 60,
-                'no_show_minutes'    => 10,
+                'no_show_minutes' => 10,
             ])
             ->assertRedirect();
 
@@ -170,10 +171,10 @@ class TenantSettingsTest extends TestCase
     {
         $this->actingAs($this->admin)
             ->put(route('admin.settings.tickets'), [
-                'prefix'             => 'A-B',
-                'daily_reset'        => true,
+                'prefix' => 'A-B',
+                'daily_reset' => true,
                 'auto_close_minutes' => 120,
-                'no_show_minutes'    => 15,
+                'no_show_minutes' => 15,
             ])
             ->assertSessionHasErrors('prefix');
     }
@@ -236,20 +237,20 @@ class TenantSettingsTest extends TestCase
         // First set branding
         $this->actingAs($this->admin)
             ->put(route('admin.settings.branding'), [
-                'primary_color'     => '#FF0000',
-                'secondary_color'   => '#00FF00',
-                'accent_color'      => '#0000FF',
-                'logo_shape'        => 'square',
+                'primary_color' => '#FF0000',
+                'secondary_color' => '#00FF00',
+                'accent_color' => '#0000FF',
+                'logo_shape' => 'square',
                 'dark_mode_default' => true,
             ]);
 
         // Then update kiosk — branding should remain untouched
         $this->actingAs($this->admin)
             ->put(route('admin.settings.kiosk'), [
-                'welcome_text'         => 'Hola',
+                'welcome_text' => 'Hola',
                 'show_priority_option' => true,
-                'show_estimated_wait'  => true,
-                'print_ticket'         => false,
+                'show_estimated_wait' => true,
+                'print_ticket' => false,
             ]);
 
         $this->tenant->refresh();

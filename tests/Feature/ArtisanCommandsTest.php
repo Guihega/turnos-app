@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
 use App\Models\Branch;
 use App\Models\Queue;
 use App\Models\Service;
@@ -31,7 +29,7 @@ class ArtisanCommandsTest extends TestCase
             ->artisan('system:status');
 
         $this->assertContains($exitCode, [0, 1],
-            'system:status should return 0 (healthy) or 1 (warnings), got: ' . $exitCode
+            'system:status should return 0 (healthy) or 1 (warnings), got: '.$exitCode
         );
     }
 
@@ -43,7 +41,7 @@ class ArtisanCommandsTest extends TestCase
             ->artisan('system:status', ['--alert-only' => true]);
 
         $this->assertContains($exitCode, [0, 1],
-            'system:status --alert-only should return 0 or 1, got: ' . $exitCode
+            'system:status --alert-only should return 0 or 1, got: '.$exitCode
         );
     }
 

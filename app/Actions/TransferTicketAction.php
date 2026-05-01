@@ -8,6 +8,7 @@ use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Events\TicketTransferred;
 use App\Models\Counter;
+use App\Models\Queue;
 use App\Models\Ticket;
 use App\Repositories\Contracts\TicketRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ final class TransferTicketAction
         return DB::transaction(function () use ($ticketId, $targetQueueId, $operatorId, $reason) {
             $ticket = Ticket::lockForUpdate()->findOrFail($ticketId);
 
-            if (!in_array($ticket->status, [TicketStatus::CALLED, TicketStatus::IN_PROGRESS])) {
+            if (! in_array($ticket->status, [TicketStatus::CALLED, TicketStatus::IN_PROGRESS])) {
                 throw new RuntimeException('Solo se pueden transferir turnos llamados o en atención.');
             }
 
@@ -45,7 +46,7 @@ final class TransferTicketAction
 
             // Create new ticket in target queue with higher priority
             $sequence = $this->ticketRepo->getDailySequence($ticket->branch_id);
-            $queue = \App\Models\Queue::findOrFail($targetQueueId);
+            $queue = Queue::findOrFail($targetQueueId);
             $ticketNumber = sprintf('%s-%03d', $queue->prefix, $sequence);
 
             $newTicket = $this->ticketRepo->create([

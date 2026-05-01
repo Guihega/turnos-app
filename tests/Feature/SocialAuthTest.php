@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
+use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
 use Tests\TestCase;
@@ -31,7 +32,7 @@ class SocialAuthTest extends TestCase
 
     private function mockSocialiteDriver(string $provider, SocialiteUser $user): void
     {
-        $driver = Mockery::mock(\Laravel\Socialite\Two\AbstractProvider::class);
+        $driver = Mockery::mock(AbstractProvider::class);
         $driver->shouldReceive('scopes')->andReturnSelf();
         $driver->shouldReceive('setScopes')->andReturnSelf();
         $driver->shouldReceive('redirect')->andReturn(redirect('https://provider.com/auth'));
@@ -74,7 +75,7 @@ class SocialAuthTest extends TestCase
         $tenant = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-        $socialAccount = new SocialAccount();
+        $socialAccount = new SocialAccount;
         $socialAccount->user_id = $user->id;
         $socialAccount->provider = 'google';
         $socialAccount->provider_id = '123456789';
@@ -160,7 +161,7 @@ class SocialAuthTest extends TestCase
         $user1 = User::factory()->create(['tenant_id' => $tenant->id]);
         $user2 = User::factory()->create(['tenant_id' => $tenant->id]);
 
-        $socialAccount = new SocialAccount();
+        $socialAccount = new SocialAccount;
         $socialAccount->user_id = $user1->id;
         $socialAccount->provider = 'google';
         $socialAccount->provider_id = '123456789';
@@ -187,7 +188,7 @@ class SocialAuthTest extends TestCase
         $tenant = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
-        $socialAccount = new SocialAccount();
+        $socialAccount = new SocialAccount;
         $socialAccount->user_id = $user->id;
         $socialAccount->provider = 'google';
         $socialAccount->provider_id = '111111111';
@@ -215,7 +216,7 @@ class SocialAuthTest extends TestCase
             'password' => bcrypt('password'), // Tiene password, puede desvincular
         ]);
 
-        $socialAccount = new SocialAccount();
+        $socialAccount = new SocialAccount;
         $socialAccount->user_id = $user->id;
         $socialAccount->provider = 'google';
         $socialAccount->provider_id = '123456789';
@@ -242,7 +243,7 @@ class SocialAuthTest extends TestCase
             'password' => '',
         ]);
 
-        $socialAccount = new SocialAccount();
+        $socialAccount = new SocialAccount;
         $socialAccount->user_id = $user->id;
         $socialAccount->provider = 'google';
         $socialAccount->provider_id = '123456789';

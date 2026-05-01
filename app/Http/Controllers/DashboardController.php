@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\TicketStatus;
 use App\Models\Branch;
+use App\Models\Queue;
+use App\Models\Service;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\Service;
-use App\Models\Queue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -39,7 +38,7 @@ class DashboardController extends Controller
                 ->orderBy('issued_at')
                 ->limit(20)
                 ->get()
-                ->map(fn($t) => [
+                ->map(fn ($t) => [
                     'id' => $t->id,
                     'display_number' => $t->display_number,
                     'customer_name' => $t->customer_name,
@@ -65,19 +64,19 @@ class DashboardController extends Controller
             $queues = Queue::where('branch_id', $branch->id)
                 ->where('is_active', true)
                 ->withCount([
-                    'tickets as waiting_count' => fn($q) => $q->where('status', 'waiting')->whereDate('created_at', $today),
-                    'tickets as in_progress_count' => fn($q) => $q->where('status', 'in_progress')->whereDate('created_at', $today),
-                    'tickets as completed_count' => fn($q) => $q->where('status', 'completed')->whereDate('created_at', $today),
+                    'tickets as waiting_count' => fn ($q) => $q->where('status', 'waiting')->whereDate('created_at', $today),
+                    'tickets as in_progress_count' => fn ($q) => $q->where('status', 'in_progress')->whereDate('created_at', $today),
+                    'tickets as completed_count' => fn ($q) => $q->where('status', 'completed')->whereDate('created_at', $today),
                 ])
                 ->get()
-                ->map(fn($q) => [
+                ->map(fn ($q) => [
                     'id' => $q->id, 'name' => $q->name, 'prefix' => $q->prefix,
                     'waiting' => $q->waiting_count, 'in_progress' => $q->in_progress_count, 'completed' => $q->completed_count,
                 ]);
         }
 
         return Inertia::render('Dashboard', [
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
             'currentBranch' => $branch ? ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code] : null,
             'todayStats' => $todayStats,
             'activeTickets' => $activeTickets,
@@ -98,17 +97,17 @@ class DashboardController extends Controller
             ->whereIn('role', ['operator', 'branch_manager'])
             ->where('is_active', true)
             ->when($branchId, function ($query) use ($branchId) {
-                $query->whereHas('branches', fn($q) => $q->where('branches.id', $branchId));
+                $query->whereHas('branches', fn ($q) => $q->where('branches.id', $branchId));
             })
             ->withCount([
-                'servedTickets as today_served' => fn($q) => $q
+                'servedTickets as today_served' => fn ($q) => $q
                     ->where('status', 'completed')
                     ->whereDate('created_at', today())
-                    ->when(request('branch_id'), fn($q2) => $q2->where('branch_id', request('branch_id'))),
+                    ->when(request('branch_id'), fn ($q2) => $q2->where('branch_id', request('branch_id'))),
             ])
             ->orderByDesc('today_served')
             ->get()
-            ->map(fn($u) => [
+            ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'role' => $u->role->label(),
@@ -118,7 +117,7 @@ class DashboardController extends Controller
         $services = Service::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->when($branchId, function ($query) use ($branchId) {
-                $query->whereHas('queues', fn($q) => $q->where('queues.branch_id', $branchId));
+                $query->whereHas('queues', fn ($q) => $q->where('queues.branch_id', $branchId));
             })
             ->orderBy('sort_order')
             ->get();
@@ -134,11 +133,11 @@ class DashboardController extends Controller
         ];
 
         return Inertia::render('Admin/Dashboard', [
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
             'currentBranchId' => $branchId,
             'todayStats' => $todayStats,
             'operators' => $operators,
-            'services' => $services->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'color' => $s->color, 'code' => $s->code]),
+            'services' => $services->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'color' => $s->color, 'code' => $s->code]),
             'branchStats' => $branchStats,
             'countsForNav' => $countsForNav,
         ]);
@@ -156,7 +155,7 @@ class DashboardController extends Controller
         $branch = $branches->firstWhere('id', $branchId) ?? $branches->first();
 
         return Inertia::render('Admin/Analytics', [
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code]),
             'currentBranch' => $branch ? ['id' => $branch->id, 'name' => $branch->name, 'code' => $branch->code] : null,
             'todayStats' => $branchId ? $this->getTodayStats($branchId) : [],
         ]);
@@ -172,7 +171,7 @@ class DashboardController extends Controller
         $branches = Branch::where('tenant_id', $user->tenant_id)
             ->where('is_active', true)
             ->get()
-            ->map(fn($b) => [
+            ->map(fn ($b) => [
                 'id' => $b->id,
                 'name' => $b->name,
                 'slug' => $b->slug,
@@ -184,7 +183,7 @@ class DashboardController extends Controller
             'branches' => $branches,
             'tenant' => [
                 'name' => $tenant->name,
-                'logo_url' => $tenant->logo_url ? asset('storage/' . $tenant->logo_url) : null,
+                'logo_url' => $tenant->logo_url ? asset('storage/'.$tenant->logo_url) : null,
             ],
             'baseUrl' => config('app.url'),
         ]);
@@ -201,6 +200,7 @@ class DashboardController extends Controller
         $data = DB::table('tickets')->where('branch_id', $branch->id)->whereDate('created_at', $date)
             ->selectRaw("EXTRACT(HOUR FROM created_at)::int as hour, COUNT(*) as issued, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed, COALESCE(ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL)),0)::int as avg_wait")
             ->groupByRaw('EXTRACT(HOUR FROM created_at)')->orderBy('hour')->get();
+
         return response()->json(['data' => $data]);
     }
 
@@ -210,6 +210,7 @@ class DashboardController extends Controller
             ->where('tickets.branch_id', $branch->id)->whereDate('tickets.created_at', today())
             ->selectRaw("services.name, services.color, COUNT(*) as total, COUNT(CASE WHEN tickets.status = 'completed' THEN 1 END) as completed, COALESCE(ROUND(AVG(tickets.wait_time_seconds) FILTER (WHERE tickets.wait_time_seconds IS NOT NULL)),0)::int as avg_wait, COALESCE(ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL)),0)::int as avg_service")
             ->groupBy('services.name', 'services.color')->orderByDesc('total')->get();
+
         return response()->json(['data' => $data]);
     }
 
@@ -217,8 +218,9 @@ class DashboardController extends Controller
     {
         $data = DB::table('tickets')->join('users', 'tickets.served_by', '=', 'users.id')
             ->where('tickets.branch_id', $branch->id)->whereNotNull('tickets.served_by')->whereDate('tickets.created_at', today())
-            ->selectRaw("users.name, COUNT(*) as served, COALESCE(ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL)),0)::int as avg_service, ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as avg_rating")
+            ->selectRaw('users.name, COUNT(*) as served, COALESCE(ROUND(AVG(tickets.service_time_seconds) FILTER (WHERE tickets.service_time_seconds IS NOT NULL)),0)::int as avg_service, ROUND(AVG(tickets.rating) FILTER (WHERE tickets.rating IS NOT NULL), 1) as avg_rating')
             ->groupBy('users.name')->orderByDesc('served')->get();
+
         return response()->json(['data' => $data]);
     }
 
@@ -226,8 +228,9 @@ class DashboardController extends Controller
     {
         $days = $request->integer('days', 14);
         $data = DB::table('tickets')->where('branch_id', $branch->id)->where('created_at', '>=', now()->subDays($days))
-            ->selectRaw("DATE(created_at) as date, COUNT(*) as tickets, COALESCE(ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL)),0)::int as avg_wait")
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as tickets, COALESCE(ROUND(AVG(wait_time_seconds) FILTER (WHERE wait_time_seconds IS NOT NULL)),0)::int as avg_wait')
             ->groupByRaw('DATE(created_at)')->orderBy('date')->get();
+
         return response()->json(['data' => $data]);
     }
 
@@ -247,12 +250,12 @@ class DashboardController extends Controller
             ->where('branch_id', $branch->id)
             ->where('created_at', '>=', now()->subDays($days))
             ->whereNotNull('wait_time_seconds')
-            ->selectRaw("
+            ->selectRaw('
                 EXTRACT(ISODOW FROM created_at)::int as day_of_week,
                 EXTRACT(HOUR FROM created_at)::int as hour,
                 ROUND(AVG(wait_time_seconds))::int as avg_wait,
                 COUNT(*) as ticket_count
-            ")
+            ')
             ->groupByRaw('EXTRACT(ISODOW FROM created_at), EXTRACT(HOUR FROM created_at)')
             ->orderBy('day_of_week')
             ->orderBy('hour')
@@ -263,7 +266,7 @@ class DashboardController extends Controller
 
     private function getTodayStats(string $branchId): array
     {
-        return Cache::remember("metrics:today:{$branchId}:" . today()->toDateString(), 30, function () use ($branchId) {
+        return Cache::remember("metrics:today:{$branchId}:".today()->toDateString(), 30, function () use ($branchId) {
             $result = DB::table('tickets')
                 ->where('branch_id', $branchId)
                 ->whereDate('created_at', today())
@@ -282,13 +285,14 @@ class DashboardController extends Controller
                     COUNT(rating) as total_ratings
                 ")
                 ->first();
+
             return $result ? (array) $result : [];
         });
     }
 
     private function getBranchComparison(string $tenantId): array
     {
-        return Cache::remember("metrics:branches:{$tenantId}:" . today()->toDateString(), 30, function () use ($tenantId) {
+        return Cache::remember("metrics:branches:{$tenantId}:".today()->toDateString(), 30, function () use ($tenantId) {
             return DB::table('tickets')
                 ->join('branches', 'tickets.branch_id', '=', 'branches.id')
                 ->where('branches.tenant_id', $tenantId)

@@ -2,16 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
-use App\Enums\UserRole;
 use App\Models\Branch;
-use App\Models\Counter;
 use App\Models\Queue;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\Ticket;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,8 +15,11 @@ class KioskSecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Branch $branch;
+
     private Queue $queue;
+
     private Service $service;
 
     protected function setUp(): void

@@ -24,7 +24,7 @@ class CounterController extends Controller
         $counters = $branchId ? Counter::where('branch_id', $branchId)
             ->with(['currentOperator:id,name', 'currentTicket:id,display_number'])
             ->orderBy('number')->get()
-            ->map(fn($c) => [
+            ->map(fn ($c) => [
                 'id' => $c->id, 'name' => $c->name, 'number' => $c->number, 'status' => $c->status,
                 'operator_name' => $c->currentOperator?->name,
                 'current_ticket' => $c->currentTicket?->display_number,
@@ -32,7 +32,7 @@ class CounterController extends Controller
 
         return Inertia::render('Admin/Counters/Index', [
             'counters' => $counters,
-            'branches' => $branches->map(fn($b) => ['id' => $b->id, 'name' => $b->name]),
+            'branches' => $branches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name]),
             'currentBranchId' => $branchId,
         ]);
     }
@@ -40,6 +40,7 @@ class CounterController extends Controller
     public function create(Request $request)
     {
         $branches = Branch::where('tenant_id', $request->user()->tenant_id)->where('is_active', true)->get(['id', 'name']);
+
         return Inertia::render('Admin/Counters/Form', ['counter' => null, 'branches' => $branches]);
     }
 
@@ -64,6 +65,7 @@ class CounterController extends Controller
         $this->authorizeBranchChild($counter, $request);
 
         $branches = Branch::where('tenant_id', $request->user()->tenant_id)->where('is_active', true)->get(['id', 'name']);
+
         return Inertia::render('Admin/Counters/Form', [
             'counter' => $counter->only(['id', 'branch_id', 'name', 'number', 'status']),
             'branches' => $branches,
@@ -81,6 +83,7 @@ class CounterController extends Controller
         ]);
 
         $counter->update($data);
+
         return redirect()->route('admin.ventanillas.index', ['branch_id' => $counter->branch_id])->with('success', 'Ventanilla actualizada.');
     }
 
@@ -90,6 +93,7 @@ class CounterController extends Controller
 
         $branchId = $counter->branch_id;
         $counter->delete();
+
         return redirect()->route('admin.ventanillas.index', ['branch_id' => $branchId])->with('success', 'Ventanilla eliminada.');
     }
 }

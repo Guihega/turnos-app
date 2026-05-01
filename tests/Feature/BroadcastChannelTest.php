@@ -14,11 +14,17 @@ class BroadcastChannelTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private Branch $branchA;
+
     private Branch $branchB;
+
     private User $operatorA;
+
     private User $operatorB;
+
     private User $adminA;
 
     protected function setUp(): void
@@ -135,8 +141,8 @@ class BroadcastChannelTest extends TestCase
 
         if (! isset($channels[$channelPattern])) {
             $this->fail(
-                "Channel '{$channelPattern}' not registered in channels.php. " .
-                'Registered: ' . implode(', ', array_keys($channels))
+                "Channel '{$channelPattern}' not registered in channels.php. ".
+                'Registered: '.implode(', ', array_keys($channels))
             );
         }
 

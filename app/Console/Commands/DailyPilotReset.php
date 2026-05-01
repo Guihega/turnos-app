@@ -31,9 +31,10 @@ class DailyPilotReset extends Command
 
     public function handle(): int
     {
-        if (app()->isProduction() && !$this->option('force')) {
-            if (!$this->confirm('⚠ This will DELETE transactional data in PRODUCTION. Continue?')) {
+        if (app()->isProduction() && ! $this->option('force')) {
+            if (! $this->confirm('⚠ This will DELETE transactional data in PRODUCTION. Continue?')) {
                 $this->info('Aborted.');
+
                 return self::SUCCESS;
             }
         }
@@ -96,9 +97,9 @@ class DailyPilotReset extends Command
             $total = $ticketCount + $metricsCount + $failedCount;
             Log::info("[PilotReset] Daily reset completed. Deleted: {$total} records.");
 
-            $this->info("════════════════════════════════════════════");
+            $this->info('════════════════════════════════════════════');
             $this->info("  Total records cleaned: {$total}");
-            $this->info("════════════════════════════════════════════");
+            $this->info('════════════════════════════════════════════');
 
             return self::SUCCESS;
 
@@ -106,6 +107,7 @@ class DailyPilotReset extends Command
             DB::rollBack();
             $this->error("✕ Reset failed: {$e->getMessage()}");
             Log::error("[PilotReset] Failed: {$e->getMessage()}", ['exception' => $e]);
+
             return self::FAILURE;
         }
     }

@@ -15,7 +15,9 @@ class DisplayAnnouncementTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $admin;
+
     private Branch $branch;
 
     protected function setUp(): void
@@ -55,9 +57,9 @@ class DisplayAnnouncementTest extends TestCase
     public function test_admin_can_create_announcement(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Horario especial viernes',
-            'body'     => 'Cerraremos a las 14:00',
+            'type' => 'announcement',
+            'title' => 'Horario especial viernes',
+            'body' => 'Cerraremos a las 14:00',
             'priority' => 5,
             'is_active' => true,
         ]);
@@ -67,18 +69,18 @@ class DisplayAnnouncementTest extends TestCase
 
         $this->assertDatabaseHas('display_announcements', [
             'tenant_id' => $this->tenant->id,
-            'title'     => 'Horario especial viernes',
-            'type'      => 'announcement',
+            'title' => 'Horario especial viernes',
+            'type' => 'announcement',
         ]);
     }
 
     public function test_can_create_announcement_for_specific_branch(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'      => 'news',
-            'title'     => 'Nueva ventanilla abierta',
+            'type' => 'news',
+            'title' => 'Nueva ventanilla abierta',
             'branch_id' => $this->branch->id,
-            'priority'  => 0,
+            'priority' => 0,
             'is_active' => true,
         ]);
 
@@ -86,7 +88,7 @@ class DisplayAnnouncementTest extends TestCase
 
         $this->assertDatabaseHas('display_announcements', [
             'branch_id' => $this->branch->id,
-            'title'     => 'Nueva ventanilla abierta',
+            'title' => 'Nueva ventanilla abierta',
         ]);
     }
 

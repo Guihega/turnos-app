@@ -55,7 +55,7 @@ class SocialAuthController extends Controller
             Log::error("OAuth error for {$provider}", ['error' => $e->getMessage()]);
 
             return redirect()->route('login')
-                ->with('error', 'Hubo un error al conectar con ' . ucfirst($provider) . '. Intenta de nuevo.');
+                ->with('error', 'Hubo un error al conectar con '.ucfirst($provider).'. Intenta de nuevo.');
         }
 
         // Buscar si ya existe una cuenta social vinculada
@@ -115,7 +115,7 @@ class SocialAuthController extends Controller
             Log::error("OAuth link error for {$provider}", ['error' => $e->getMessage()]);
 
             return redirect()->route('profile.edit')
-                ->with('error', 'No se pudo conectar con ' . ucfirst($provider) . '.');
+                ->with('error', 'No se pudo conectar con '.ucfirst($provider).'.');
         }
 
         $user = Auth::user();
@@ -125,13 +125,13 @@ class SocialAuthController extends Controller
 
         if ($existing && $existing->user_id !== $user->id) {
             return redirect()->route('profile.edit')
-                ->with('error', 'Esta cuenta de ' . ucfirst($provider) . ' ya está vinculada a otro usuario.');
+                ->with('error', 'Esta cuenta de '.ucfirst($provider).' ya está vinculada a otro usuario.');
         }
 
         // Verificar que el usuario no tenga ya una cuenta de este provider
         if ($user->socialAccounts()->where('provider', $provider)->exists()) {
             return redirect()->route('profile.edit')
-                ->with('error', 'Ya tienes una cuenta de ' . ucfirst($provider) . ' vinculada.');
+                ->with('error', 'Ya tienes una cuenta de '.ucfirst($provider).' vinculada.');
         }
 
         // Crear vinculación
@@ -148,7 +148,7 @@ class SocialAuthController extends Controller
         ]);
 
         return redirect()->route('profile.edit')
-            ->with('success', 'Cuenta de ' . ucfirst($provider) . ' vinculada exitosamente.');
+            ->with('success', 'Cuenta de '.ucfirst($provider).' vinculada exitosamente.');
     }
 
     /**
@@ -177,7 +177,7 @@ class SocialAuthController extends Controller
         $user->socialAccounts()->where('provider', $provider)->delete();
 
         return redirect()->route('profile.edit')
-            ->with('success', 'Cuenta de ' . ucfirst($provider) . ' desvinculada.');
+            ->with('success', 'Cuenta de '.ucfirst($provider).' desvinculada.');
     }
 
     /**
@@ -194,7 +194,7 @@ class SocialAuthController extends Controller
         if ($provider === 'facebook') {
             // setScopes() REPLACES all scopes (including Socialite's default 'email')
             // Facebook Graph API v23+ rejects 'email' as scope — it's included by default
-            //$driver->setScopes([]);
+            // $driver->setScopes([]);
             $driver->setScopes(['email']);
         } else {
             // scopes() ADDS to existing scopes

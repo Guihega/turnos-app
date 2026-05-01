@@ -17,7 +17,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $admin;
+
     private Branch $branch;
 
     protected function setUp(): void
@@ -42,10 +44,10 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_can_create_announcement_with_image(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'promo',
-            'title'    => 'Promo con imagen',
-            'body'     => 'Descripción de la promo',
-            'media'    => UploadedFile::fake()->image('promo.jpg', 800, 600),
+            'type' => 'promo',
+            'title' => 'Promo con imagen',
+            'body' => 'Descripción de la promo',
+            'media' => UploadedFile::fake()->image('promo.jpg', 800, 600),
             'priority' => 5,
             'is_active' => true,
         ]);
@@ -66,9 +68,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_can_create_announcement_with_video(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Anuncio con video',
-            'media'    => UploadedFile::fake()->create('promo.mp4', 5000, 'video/mp4'),
+            'type' => 'announcement',
+            'title' => 'Anuncio con video',
+            'media' => UploadedFile::fake()->create('promo.mp4', 5000, 'video/mp4'),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -83,8 +85,8 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_can_create_announcement_without_media(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'news',
-            'title'    => 'Noticia sin media',
+            'type' => 'news',
+            'title' => 'Noticia sin media',
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -102,9 +104,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_rejects_invalid_file_type(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Test',
-            'media'    => UploadedFile::fake()->create('malware.exe', 100, 'application/x-msdownload'),
+            'type' => 'announcement',
+            'title' => 'Test',
+            'media' => UploadedFile::fake()->create('malware.exe', 100, 'application/x-msdownload'),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -115,9 +117,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_rejects_file_over_20mb(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Test',
-            'media'    => UploadedFile::fake()->create('huge.jpg', 25000, 'image/jpeg'),
+            'type' => 'announcement',
+            'title' => 'Test',
+            'media' => UploadedFile::fake()->create('huge.jpg', 25000, 'image/jpeg'),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -131,9 +133,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     {
         // Crear con imagen inicial
         $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'promo',
-            'title'    => 'Reemplazar media',
-            'media'    => UploadedFile::fake()->image('original.jpg', 400, 300),
+            'type' => 'promo',
+            'title' => 'Reemplazar media',
+            'media' => UploadedFile::fake()->image('original.jpg', 400, 300),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -143,10 +145,10 @@ class DisplayAnnouncementMediaTest extends TestCase
 
         // Actualizar con nueva imagen
         $this->actingAs($this->admin)->post(route('admin.announcements.update', $announcement), [
-            '_method'  => 'PUT',
-            'type'     => 'promo',
-            'title'    => 'Reemplazar media',
-            'media'    => UploadedFile::fake()->image('nueva.png', 600, 400),
+            '_method' => 'PUT',
+            'type' => 'promo',
+            'title' => 'Reemplazar media',
+            'media' => UploadedFile::fake()->image('nueva.png', 600, 400),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -166,9 +168,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     {
         // Crear con imagen
         $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Eliminar media',
-            'media'    => UploadedFile::fake()->image('borrar.jpg', 400, 300),
+            'type' => 'announcement',
+            'title' => 'Eliminar media',
+            'media' => UploadedFile::fake()->image('borrar.jpg', 400, 300),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -178,12 +180,12 @@ class DisplayAnnouncementMediaTest extends TestCase
 
         // Actualizar con remove_media
         $this->actingAs($this->admin)->post(route('admin.announcements.update', $announcement), [
-            '_method'      => 'PUT',
-            'type'         => 'announcement',
-            'title'        => 'Eliminar media',
+            '_method' => 'PUT',
+            'type' => 'announcement',
+            'title' => 'Eliminar media',
             'remove_media' => true,
-            'priority'     => 0,
-            'is_active'    => true,
+            'priority' => 0,
+            'is_active' => true,
         ]);
 
         $announcement->refresh();
@@ -199,9 +201,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_deleting_announcement_removes_media_file(): void
     {
         $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'promo',
-            'title'    => 'Eliminar todo',
-            'media'    => UploadedFile::fake()->image('delete-me.jpg', 400, 300),
+            'type' => 'promo',
+            'title' => 'Eliminar todo',
+            'media' => UploadedFile::fake()->image('delete-me.jpg', 400, 300),
             'priority' => 0,
             'is_active' => true,
         ]);
@@ -222,11 +224,11 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_public_display_includes_media_in_announcements(): void
     {
         DisplayAnnouncement::factory()->create([
-            'tenant_id'  => $this->tenant->id,
-            'title'      => 'Con media',
-            'media_url'  => '/storage/announcements/test/image.jpg',
+            'tenant_id' => $this->tenant->id,
+            'title' => 'Con media',
+            'media_url' => '/storage/announcements/test/image.jpg',
             'media_type' => 'image',
-            'is_active'  => true,
+            'is_active' => true,
         ]);
 
         $response = $this->get(route('display.public', $this->branch));
@@ -245,9 +247,9 @@ class DisplayAnnouncementMediaTest extends TestCase
     public function test_media_stored_in_tenant_specific_folder(): void
     {
         $this->actingAs($this->admin)->post(route('admin.announcements.store'), [
-            'type'     => 'announcement',
-            'title'    => 'Carpeta tenant',
-            'media'    => UploadedFile::fake()->image('tenant-img.jpg', 400, 300),
+            'type' => 'announcement',
+            'title' => 'Carpeta tenant',
+            'media' => UploadedFile::fake()->image('tenant-img.jpg', 400, 300),
             'priority' => 0,
             'is_active' => true,
         ]);

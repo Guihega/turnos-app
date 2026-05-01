@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
 use App\Models\Branch;
 use App\Models\Queue;
 use App\Models\Service;
@@ -17,8 +15,11 @@ class ConfigurableSecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Branch $branch;
+
     private Queue $queue;
+
     private Service $service;
 
     protected function setUp(): void

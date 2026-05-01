@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
 use App\Models\Branch;
 use App\Models\Tenant;
 use App\Models\User;
@@ -14,9 +13,13 @@ class DisplaySecurityTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenantA;
+
     private Tenant $tenantB;
+
     private Branch $branchA;
+
     private Branch $branchB;
+
     private User $operatorA;
 
     protected function setUp(): void

@@ -4,13 +4,14 @@ namespace Database\Factories;
 
 use App\Enums\UserRole;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -37,11 +38,11 @@ class UserFactory extends Factory
      */
     public function configure(): static
     {
-        return $this->afterCreating(function (\App\Models\User $user) {
+        return $this->afterCreating(function (User $user) {
             if (in_array($user->role, [UserRole::TENANT_ADMIN, UserRole::SUPER_ADMIN])
                 && $user->two_factor_confirmed_at === null) {
                 $user->updateQuietly([
-                    'two_factor_secret' => Crypt::encryptString('FACTORYSECRET' . Str::random(19)),
+                    'two_factor_secret' => Crypt::encryptString('FACTORYSECRET'.Str::random(19)),
                     'two_factor_confirmed_at' => now(),
                     'two_factor_recovery_codes' => Crypt::encryptString(json_encode([
                         'recovery-01', 'recovery-02', 'recovery-03', 'recovery-04',

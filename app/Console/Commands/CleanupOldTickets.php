@@ -28,11 +28,13 @@ class CleanupOldTickets extends Command
 
         if ($count === 0) {
             $this->info("No hay turnos anteriores a {$cutoff->toDateString()} para limpiar.");
+
             return self::SUCCESS;
         }
 
         if ($dryRun) {
             $this->warn("[DRY RUN] Se eliminarían {$count} turnos anteriores a {$cutoff->toDateString()}.");
+
             return self::SUCCESS;
         }
 

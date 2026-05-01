@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class OnboardingTest extends TestCase
@@ -18,14 +19,14 @@ class OnboardingTest extends TestCase
     private function validData(array $overrides = []): array
     {
         return array_merge([
-            'name'                  => 'María García',
-            'email'                 => 'maria@nueva-empresa.com',
-            'password'              => 'Olinora2026!',
+            'name' => 'María García',
+            'email' => 'maria@nueva-empresa.com',
+            'password' => 'Olinora2026!',
             'password_confirmation' => 'Olinora2026!',
-            'company_name'          => 'Clínica Santa Fe',
-            'slug'                  => 'clinica-santa-fe',
-            'branch_name'           => 'Sucursal Centro',
-            'branch_code'           => 'CTR',
+            'company_name' => 'Clínica Santa Fe',
+            'slug' => 'clinica-santa-fe',
+            'branch_name' => 'Sucursal Centro',
+            'branch_code' => 'CTR',
         ], $overrides);
     }
 
@@ -64,8 +65,8 @@ class OnboardingTest extends TestCase
         // Branch created
         $this->assertDatabaseHas('branches', [
             'tenant_id' => $tenant->id,
-            'name'      => 'Sucursal Centro',
-            'code'      => 'CTR',
+            'name' => 'Sucursal Centro',
+            'code' => 'CTR',
             'is_active' => true,
         ]);
 
@@ -80,7 +81,7 @@ class OnboardingTest extends TestCase
         $this->assertAuthenticatedAs($user);
 
         // Redirects to verification
-        //$response->assertRedirect(route('verification.notice'));
+        // $response->assertRedirect(route('verification.notice'));
         $response->assertRedirect(route('dashboard'));
     }
 
@@ -102,7 +103,7 @@ class OnboardingTest extends TestCase
 
         $user = User::findByEmail('maria@nueva-empresa.com');
         $this->assertNotEquals('Olinora2026!', $user->password);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('Olinora2026!', $user->password));
+        $this->assertTrue(Hash::check('Olinora2026!', $user->password));
     }
 
     // ─── Validation: Step 1 (Account) ───
@@ -251,7 +252,7 @@ class OnboardingTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $this->post('/onboarding', $this->validData([
                 'email' => "user{$i}@test.com",
-                'slug'  => "tenant-{$i}",
+                'slug' => "tenant-{$i}",
             ]));
             auth()->logout();
         }
@@ -259,7 +260,7 @@ class OnboardingTest extends TestCase
         // 6th should be throttled
         $response = $this->post('/onboarding', $this->validData([
             'email' => 'user6@test.com',
-            'slug'  => 'tenant-6',
+            'slug' => 'tenant-6',
         ]));
 
         $response->assertStatus(429);

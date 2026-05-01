@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Branch;
+use App\Models\Ticket;
+use App\Policies\TicketPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -21,10 +23,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        Model::preventLazyLoading(!$this->app->isProduction());
-        Model::preventSilentlyDiscardingAttributes(!$this->app->isProduction());
+        Model::preventLazyLoading(! $this->app->isProduction());
+        Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
 
-        Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
+        Gate::policy(Ticket::class, TicketPolicy::class);
 
         // ══════════════════════════════════════════════════════════════
         // Rate Limiters — Tenant-configurable defense layers
@@ -44,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
                         return back()->withErrors(['branch' => 'Demasiados turnos emitidos. Espera un momento.']);
                     }),
                 Limit::perMinute($perIpMin)
-                    ->by($request->ip() . '|' . $request->route('branch'))
+                    ->by($request->ip().'|'.$request->route('branch'))
                     ->response(function () {
                         return back()->withErrors(['branch' => 'Demasiados turnos para esta sucursal. Espera un momento.']);
                     }),
@@ -57,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
             $maxPerHour = $settings['max_tickets_per_hour'] ?? 60;
 
             return Limit::perHour($maxPerHour)
-                ->by('branch-hourly:' . $request->route('branch'))
+                ->by('branch-hourly:'.$request->route('branch'))
                 ->response(function () {
                     return back()->withErrors(['branch' => 'Se alcanzó el límite de turnos por hora. Intente más tarde.']);
                 });
@@ -86,7 +88,7 @@ class AppServiceProvider extends ServiceProvider
 
             return [
                 Limit::perMinute($perIpMin)->by($request->ip()),
-                Limit::perHour($maxPerHour)->by('api-branch-hourly:' . $request->route('branchId')),
+                Limit::perHour($maxPerHour)->by('api-branch-hourly:'.$request->route('branchId')),
             ];
         });
     }
@@ -97,7 +99,7 @@ class AppServiceProvider extends ServiceProvider
      */
     private function getBranchSecuritySettings(mixed $branchId): array
     {
-        if (!$branchId) {
+        if (! $branchId) {
             return [];
         }
 
@@ -106,9 +108,10 @@ class AppServiceProvider extends ServiceProvider
             60,
             function () use ($branchId) {
                 $branch = Branch::withoutGlobalScopes()->with('tenant')->find($branchId);
-                if (!$branch || !$branch->tenant) {
+                if (! $branch || ! $branch->tenant) {
                     return [];
                 }
+
                 return $branch->tenant->getEffectiveSettings()['security'] ?? [];
             }
         );

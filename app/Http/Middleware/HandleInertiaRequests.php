@@ -60,9 +60,9 @@ class HandleInertiaRequests extends Middleware
                 },
             ],
             'flash' => [
-                'success'   => fn () => $request->session()->get('success'),
-                'error'     => fn () => $request->session()->get('error'),
-                'info'      => fn () => $request->session()->get('info'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'info' => fn () => $request->session()->get('info'),
                 'twoFactor' => fn () => $request->session()->get('twoFactor'),
             ],
             'tenantBranding' => function () use ($request) {
