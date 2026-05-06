@@ -93,3 +93,116 @@ Equivalente para `business` cuando se decida el precio.
 - Job de reconciliación diario de uso vs límites.
 - Webhook handler para `invoice.created` que adjunte líneas metered.
 - Tests de integración con Stripe Test Clock.
+
+---
+
+## Features documentadas en SPEC.md §4 pero NO sembradas en PR #6
+
+**Estado:** la tabla maestra del SPEC define 17 features. PR #6 sembró 10.
+Las 7 restantes quedan documentadas y se sembrarán en PRs futuros conforme
+el producto las requiera.
+
+### Listado y plan tentativo
+
+| Feature code | Tipo | Razón de aplazamiento | Fase tentativa |
+|---|---|---|---|
+| `branches.metered` | boolean | Requiere infra de metered billing (ver sección Fase 5 arriba). | Fase 5 |
+| `reports.retention_days` | quota | Producto aún no expone reportes con retención variable. Sembrar cuando exista la infra de retention en módulo Reports. | Post-MVP |
+| `whitelabel.custom_domain` | boolean | Requiere DNS automation y validación TLS. Subsistema separado. | Fase 6+ |
+| `announcements.media` | boolean | Feature de producto (anuncios multimedia en pantallas), no de billing. Sembrar cuando el módulo Display soporte media. | Post-MVP |
+| `alerts.telegram` | boolean | Telegram ya está disponible globalmente. Solo tendría sentido gatear si se decide cobrarlo como diferenciador. Decisión pendiente. | TBD |
+| `auth.2fa_required_admins` | boolean | 2FA ya está implementado y forzado para admins en código. Sembrar como feature billing solo si se decide hacerla opcional para algunos planes. | TBD |
+| `audit.advanced` | boolean | Requiere panel de auditoría avanzada (no MVP). | Fase 6+ |
+| `sso.enabled` | boolean | Solo plan `enterprise`. Implementar cuando llegue el primer cliente enterprise. | Pull-driven |
+
+### Cómo sembrar una de éstas en el futuro
+
+`FeaturesSeeder` y `PlansSeeder` son idempotentes. Para incorporar una feature
+del backlog:
+
+1. Agregar entrada en `FeaturesSeeder::features()` con su `code`, `name`,
+   `type` y `metadata`.
+2. Agregar las filas correspondientes en `PlansSeeder::planFeatureMatrix()`
+   para cada plan que la incluya.
+3. Re-correr `php artisan db:seed --class=Database\\Seeders\\Billing\\BillingCatalogSeeder`.
+   Idempotencia garantizada — no toca lo ya sembrado.
+4. Agregar test en `CatalogSeedingTest` que valide el nuevo conteo
+   esperado de features.
+5. Eventualmente, actualizar la tabla maestra en `SPEC.md` §4 cambiando
+   el estado de 📋 backlog a ✅ sembrada.
+
+---
+
+## Migración de secrets a gestor de secretos
+
+**Estado:** diferido en PR #8 (Fase 1b). El proyecto usa `.env` plano por entorno.
+
+### Razón
+
+1. **Tamaño actual del equipo (1 dev solo).** Un secret manager agrega
+   complejidad operativa sin beneficio en proyectos uni-personales.
+2. **No hay multi-environment exigente.** Solo `local` y `production` por
+   ahora. Staging entraría en Fase 2.
+3. **El `.env` plano funciona bien con SSH en VPS dedicado.**
+
+### Cuándo migrar
+
+Trigger principal:
+- Cuando el equipo crezca a 2+ devs con acceso a producción.
+- Cuando se necesite rotación automática de secrets (auditorías SOC 2 lo exigen).
+- Cuando entren ambientes adicionales (staging, preview).
+
+### Opciones evaluadas
+
+| Servicio | Pros | Contras |
+|---|---|---|
+| AWS Secrets Manager | Integración nativa con SDK; rotación automática; audit log; pricing low | Lock-in AWS; requiere IAM bien configurado |
+| Doppler | Free tier generoso; UX excelente; agnóstico de cloud | Dependencia de tercero |
+| HashiCorp Vault | OSS, self-hosted, full-featured | Operativa pesada |
+| 1Password Connect | Integra con manager personal; rotación humana asistida | Pricing por seat |
+
+**Recomendación tentativa:** Doppler para arrancar (free tier suficiente),
+migrar a AWS Secrets Manager si se requiere SOC 2.
+
+### Migración esperada
+
+1. Provisionar el secret manager elegido.
+2. Cargar todos los secrets actuales (Stripe, DB password, Reverb, etc.).
+3. Actualizar `config/billing.php` y demás config files para leer desde
+   el secret manager (vía package oficial o env var dinámica).
+4. Eliminar los secrets de `.env`.
+5. Documentar el procedimiento de rotación en `SECRETS.md`.
+
+---
+
+## CipherSweet de campos PII de billing
+
+**Estado:** mencionado en SPEC §8 como "pendiente de migración follow-up".
+
+### Razón de aplazamiento
+
+CipherSweet ya está instalado en el proyecto y aplicado a campos PII de `User`
+(email, phone, last_login_ip). Aplicarlo a `billing_customers.billing_email`,
+`billing_customers.tax_id` y `billing_customers.billing_address` requiere:
+
+1. Migración aditiva: agregar columnas blind-index correspondientes.
+2. Casts en el modelo `Customer`.
+3. Backfill de registros existentes (cifrar valores en plain).
+4. Tests de roundtrip + búsqueda por blind-index.
+
+Esto es ~1-2 días de trabajo. No bloqueante para Fase 2 — la integración con
+Stripe puede hacerse con los campos en plaintext y después aplicar el cifrado.
+
+### Cuándo aplicar
+
+Al final de Fase 2 (cuando haya datos reales de billing en producción) o al
+inicio de Fase 3 (junto con el backfill de tenants existentes).
+
+### PR esperado
+
+Branch: `feature/billing-pii-encryption`
+Archivos:
+- 1 migración aditiva (blind-index columns).
+- Modificación de `Customer` model (casts).
+- 1 comando artisan `billing:encrypt-existing-customers --dry-run`.
+- Tests.
