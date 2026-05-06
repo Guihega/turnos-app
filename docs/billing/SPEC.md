@@ -1,7 +1,7 @@
 # Olinora Billing — Especificación Técnica
 
-> **Estado:** Draft v1.0
-> **Última actualización:** 2026-04-30
+> **Estado:** Draft v1.1
+> **Última actualización:** 2026-05-06
 > **Owners:** Equipo Olinora
 > **Audiencia:** Desarrolladores, QA, soporte, dirección técnica
 
@@ -18,7 +18,7 @@ Olinora es un SaaS multi-tenant de gestión de turnos / colas / atención presen
 | Aspecto | Decisión |
 |---|---|
 | Unidad de cobro | Tenant |
-| Modelo de pricing | Tiers fijos con sucursales incluidas + cobro por sucursal adicional (metered) |
+| Modelo de pricing | Tiers fijos con sucursales incluidas + cobro por sucursal adicional (metered, **diferido a Fase 5**) |
 | Onboarding gratis | Plan `pilot` con 90 días de expiración → fuerza upgrade |
 | Pasarela primaria (Fase 2) | Stripe |
 | Pasarelas siguientes | Mercado Pago (Fase 4); OpenPay/Conekta y PayPal en backlog |
@@ -31,6 +31,7 @@ Olinora es un SaaS multi-tenant de gestión de turnos / colas / atención presen
 | Auditoría | Inmutable por trigger PostgreSQL |
 | Webhooks | Persistir antes de procesar; deduplicación por `gateway_event_id` |
 | Reconciliación | Job nocturno BD vs pasarela |
+| Gestión de secrets | `.env` plano por entorno (Stripe + otros). Migración a secret manager en backlog |
 
 ---
 
@@ -44,20 +45,22 @@ Olinora es un SaaS multi-tenant de gestión de turnos / colas / atención presen
 - **Feature** — capacidad del producto (boolean | quota | metered | string).
 - **PlanFeature** — entitlements base de cada plan.
 - **Price** — precio concreto de un Plan en una moneda + país + intervalo.
-- **Subscription** — suscripción activa de un Customer a un Plan/Price.
-- **SubscriptionItem** — componentes de la suscripción (base + add-ons + metered).
-- **SubscriptionStateTransition** — auditoría inmutable de cambios de estado.
-- **Entitlement** — vista materializada por tenant que el resto de la app consulta en runtime.
-- **UsageRecord** — registro inmutable e idempotente de consumo.
-- **Invoice** — factura emitida (PDF comercial; CFDI fiscal queda fuera de MVP).
-- **InvoiceLine** — línea de factura.
-- **Payment** — intento de cobro contra una Invoice.
-- **PaymentMethod** — método tokenizado (NUNCA PAN).
-- **RefundRequest** — devolución con flujo de aprobación.
-- **DunningAttempt** — intento de recuperación de cobro fallido.
-- **WebhookEvent** — registro de todo webhook entrante (auditoría + idempotencia).
-- **OutboxEvent** — eventos de dominio pendientes de publicar.
-- **AuditLog** — bitácora de acciones administrativas.
+- **Subscription** — suscripción activa de un Customer a un Plan/Price. *(Fase 2)*
+- **SubscriptionItem** — componentes de la suscripción (base + add-ons + metered). *(Fase 2)*
+- **SubscriptionStateTransition** — auditoría inmutable de cambios de estado. *(Fase 2)*
+- **Entitlement** — vista materializada por tenant que el resto de la app consulta en runtime. *(Fase 3)*
+- **UsageRecord** — registro inmutable e idempotente de consumo. *(Fase 5)*
+- **Invoice** — factura emitida (PDF comercial; CFDI fiscal queda fuera de MVP). *(Fase 2)*
+- **InvoiceLine** — línea de factura. *(Fase 2)*
+- **Payment** — intento de cobro contra una Invoice. *(Fase 2)*
+- **PaymentMethod** — método tokenizado (NUNCA PAN). *(Fase 2)*
+- **RefundRequest** — devolución con flujo de aprobación. *(Fase 2)*
+- **DunningAttempt** — intento de recuperación de cobro fallido. *(Fase 2)*
+- **WebhookEvent** — registro de todo webhook entrante (auditoría + idempotencia). *(Fase 2)*
+- **OutboxEvent** — eventos de dominio pendientes de publicar. *(Fase 2)*
+- **AuditLog** — bitácora de acciones administrativas. *(Fase 2)*
+
+> **Estado a 2026-05-06:** Customer, CustomerGatewayRef, Plan, Feature, PlanFeature, Price implementadas (Fase 1, PRs #5–#7). El resto se construye en fases posteriores.
 
 ### Diagrama de relaciones
 
@@ -89,7 +92,7 @@ Tenant (existente)
 - **Sucursales incluidas:** 1 (sin posibilidad de añadir).
 - **Operadores máximos:** 2.
 - **Tickets/mes:** 500.
-- **Features incluidas:** kiosco, display, atención básica, reportes 7 días.
+- **Features incluidas:** kiosco, display, atención básica, soporte community.
 - **Features excluidas:** white-label, multi-sucursal, API externa, anuncios multimedia, Telegram alerts, soporte prioritario.
 - **Al expirar:**
   - Día 90: estado `past_due` + email de aviso.
@@ -103,28 +106,28 @@ Tenant (existente)
 - **Sucursales incluidas:** 1 (sin extras).
 - **Operadores:** 5.
 - **Tickets/mes:** 5,000.
-- **Features:** pilot + reportes 90 días + branding básico (logo + color).
-- **Precio sugerido:** $29 USD / $499 MXN al mes (anual con 2 meses gratis).
+- **Features:** pilot + branding básico (logo + color).
+- **Precio sugerido:** $29 USD / $499 MXN al mes (anual con descuento ~17%).
 
 ### `professional`
 
 - **Audiencia:** clínicas medianas, retail multi-sucursal.
-- **Sucursales incluidas:** 3, hasta 10 con extras.
-- **Sucursal adicional:** $9 USD / $149 MXN cada una (metered).
+- **Sucursales incluidas:** 3.
+- **Sucursal adicional:** **diferida a Fase 5** ($9 USD/mes proyectado, ver `BACKLOG.md`).
 - **Operadores:** 20.
 - **Tickets/mes:** 25,000.
-- **Features:** starter + white-label completo + anuncios multimedia + API + analytics avanzado + 2FA forzado a admins + Telegram alerts + soporte por email.
-- **Precio sugerido:** $79 USD / $1,399 MXN al mes.
+- **Features:** starter + white-label completo + API + analytics avanzado.
+- **Precio sugerido:** $79 USD / $1,399 MXN al mes (anual con descuento ~17%).
 
 ### `business`
 
 - **Audiencia:** bancos, gobierno, cadenas grandes.
-- **Sucursales incluidas:** 10, hasta 50 con extras.
-- **Sucursal adicional:** $7 USD / $119 MXN cada una.
-- **Operadores:** ilimitado.
-- **Tickets/mes:** ilimitado.
-- **Features:** professional + SLA 99.9% + soporte prioritario + onboarding asistido + auditoría avanzada + custom domain.
-- **Precio sugerido:** $199 USD / $3,499 MXN al mes.
+- **Sucursales incluidas:** 10.
+- **Sucursal adicional:** **diferida a Fase 5** (precio TBD, ver `BACKLOG.md`).
+- **Operadores:** ilimitado (-1).
+- **Tickets/mes:** ilimitado (-1).
+- **Features:** professional + soporte prioritario.
+- **Precio sugerido:** $199 USD / $3,499 MXN al mes (anual con descuento ~17%).
 
 ### `enterprise`
 
@@ -133,7 +136,7 @@ Tenant (existente)
 - Sin checkout público.
 - Soporta features especiales (SSO, integraciones a medida, SLAs negociados).
 
-> **Estos números son orientativos y se ajustan en el seeder antes del lanzamiento.** La estructura es lo permanente.
+> Los precios USD/MXN son los sembrados en producción tras PR #6. Otras monedas (COP/ARS/CLP/PEN) están sembradas con plantilla de referencia ajustable sin deploy. Ver `database/seeders/Billing/PricesSeeder.php`.
 
 ---
 
@@ -141,27 +144,34 @@ Tenant (existente)
 
 ### Tabla maestra
 
-| Feature code | Tipo | pilot | starter | professional | business | enterprise |
-|---|---|---|---|---|---|---|
-| `branches.included` | quota | 1 | 1 | 3 | 10 | custom |
-| `branches.max` | quota | 1 | 1 | 10 | 50 | custom |
-| `branches.metered` | boolean | ❌ | ❌ | ✅ | ✅ | custom |
-| `operators.max` | quota | 2 | 5 | 20 | -1 | -1 |
-| `tickets.monthly` | quota | 500 | 5000 | 25000 | -1 | -1 |
-| `reports.retention_days` | quota | 7 | 90 | 365 | -1 | -1 |
-| `whitelabel.logo` | boolean | ❌ | ✅ | ✅ | ✅ | ✅ |
-| `whitelabel.full` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `whitelabel.custom_domain` | boolean | ❌ | ❌ | ❌ | ✅ | ✅ |
-| `announcements.media` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `api.access` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `analytics.advanced` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `alerts.telegram` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `support.tier` | string | community | email | email-priority | priority | dedicated |
-| `auth.2fa_required_admins` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ |
-| `audit.advanced` | boolean | ❌ | ❌ | ❌ | ✅ | ✅ |
-| `sso.enabled` | boolean | ❌ | ❌ | ❌ | ❌ | ✅ |
+La columna **Estado** indica si la feature está sembrada hoy o aún en backlog. Las sembradas son ground truth y pueden consumirse desde el código del producto. Las del backlog requieren PR de seed antes de consultarse.
 
-> Convención: `-1` significa ilimitado en quotas numéricas.
+| Feature code | Tipo | pilot | starter | professional | business | enterprise | Estado |
+|---|---|---|---|---|---|---|---|
+| `branches.included` | quota | 1 | 1 | 3 | 10 | custom | ✅ sembrada |
+| `branches.max` | quota | 1 | 1 | 10 | 50 | custom | ✅ sembrada |
+| `branches.metered` | boolean | ❌ | ❌ | ✅ | ✅ | custom | 📋 Fase 5 |
+| `operators.max` | quota | 2 | 5 | 20 | -1 | -1 | ✅ sembrada |
+| `tickets.monthly` | quota | 500 | 5000 | 25000 | -1 | -1 | ✅ sembrada |
+| `reports.retention_days` | quota | 7 | 90 | 365 | -1 | -1 | 📋 backlog |
+| `branding.basic` | boolean | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ sembrada |
+| `whitelabel.full` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ sembrada |
+| `whitelabel.custom_domain` | boolean | ❌ | ❌ | ❌ | ✅ | ✅ | 📋 backlog |
+| `announcements.media` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | 📋 backlog |
+| `api.access` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ sembrada |
+| `analytics.advanced` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ sembrada |
+| `alerts.telegram` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | 📋 backlog |
+| `support.tier` | string | community | email | email | priority | dedicated | ✅ sembrada |
+| `auth.2fa_required_admins` | boolean | ❌ | ❌ | ✅ | ✅ | ✅ | 📋 backlog |
+| `audit.advanced` | boolean | ❌ | ❌ | ❌ | ✅ | ✅ | 📋 backlog |
+| `sso.enabled` | boolean | ❌ | ❌ | ❌ | ❌ | ✅ | 📋 backlog |
+| `trial.days` | quota | 90 | 0 | 0 | 0 | 0 | ✅ sembrada |
+
+> **Convenciones:**
+> - `-1` significa ilimitado en quotas numéricas.
+> - Booleanos se siembran SOLO cuando son `true` (ausencia = no granted).
+> - Las features ✅ sembradas suman 10 (PR #6).
+> - Las features 📋 backlog son 7 y se incorporan en PRs futuros. Ver `BACKLOG.md` para el plan de seed.
 
 ### Cómo se consulta desde el resto de la app
 
@@ -185,19 +195,23 @@ abort_if($used >= $max, 403, 'Límite de sucursales alcanzado.');
 $tier = Entitlement::for($tenant)->string('support.tier');
 ```
 
+> El servicio `Entitlement::for()` se implementa en Fase 3. Hasta entonces, lecturas directas a `billing_plan_features` vía Eloquent (uso temporal, refactorizable).
+
 ---
 
 ## 5. Arquitectura técnica
 
 ### Stack
 
-- Laravel 11 + PHP 8.2+
-- PostgreSQL 16
+- Laravel 11.51 + PHP 8.3.6
+- PostgreSQL 16.13
 - Redis (queues, cache, locks)
-- Horizon (queue dashboard, ya en uso)
-- Reverb (broadcast, ya en uso)
-- CipherSweet (PII, ya en uso)
-- Sanctum (auth API, ya en uso)
+- Horizon (queue dashboard)
+- Reverb (broadcast)
+- CipherSweet (PII)
+- Sanctum (auth API)
+- Inertia (frontend)
+- 2FA (auth)
 
 ### Principios
 
@@ -245,11 +259,13 @@ app/
   Policies/Billing/
   Enums/Billing/                   SubscriptionStatus, InvoiceStatus, ...
 
-config/billing.php
-database/migrations/2026_05_*_billing_*.php
-tests/Feature/Billing/
-tests/Unit/Billing/
-docs/billing/
+config/billing.php                 (PR #8)
+database/migrations/2026_05_*_billing_*.php   (PR #5)
+database/seeders/Billing/          (PR #6)
+database/factories/Billing/        (PR #7)
+tests/Feature/Billing/             (PR #7)
+tests/Unit/Billing/                (Fase 2+)
+docs/billing/                      SPEC.md, DECISIONS.md, MIGRATION_PLAN.md, BACKLOG.md, SECRETS.md
 ```
 
 ---
@@ -334,6 +350,8 @@ Caminos laterales:
 
 ### Uso medido (sucursal extra)
 
+> Diferido a Fase 5. Ver `BACKLOG.md`.
+
 1. Tenant activa una sucursal nueva por encima de las incluidas.
 2. App emite `UsageReported($tenantId, 'branches.metered', 1, $idempotencyKey)`.
 3. `UsageService` escribe en `billing_usage_records` (idempotente por key).
@@ -354,7 +372,7 @@ Job programado:
 ### Obligatorio
 
 - **PCI-DSS SAQ-A:** jamás guardar PAN. Toda captura de tarjeta vía elementos hospedados de la pasarela. La BD solo guarda tokens.
-- **Cifrado en reposo (CipherSweet)** para `billing_email`, `billing_address`, `tax_id`.
+- **Cifrado en reposo (CipherSweet)** para `billing_email`, `billing_address`, `tax_id`. *(Pendiente de migración follow-up; ver §15.)*
 - **Validación de firma en webhooks**, siempre. Si falla → 401 + log + sin procesar.
 - **RBAC** para acciones administrativas:
   - Reembolsos: requiere `billing.refund.approve` + `RefundRequest` con flujo de aprobación.
@@ -362,11 +380,13 @@ Job programado:
   - Cancelación administrativa: requiere `billing.subscription.cancel` + motivo.
 - **Auditoría inmutable** en `billing_audit_log` y `billing_subscription_state_transitions`. Triggers PostgreSQL impiden UPDATE/DELETE.
 - **Rate limiting** en endpoints públicos de checkout y webhooks.
-- **Secrets en gestor** (AWS Secrets Manager / Doppler / Vault), no en `.env` de prod.
+- **Secrets en `.env` plano por entorno.** Procedimientos operativos en `docs/billing/SECRETS.md` (rotación, incident response). Migración a secret manager (AWS Secrets Manager / Doppler / Vault) en `BACKLOG.md`.
 - **Logs sin PII ni montos parciales.**
 
 ### En backlog (no MVP)
 
+- Migración a secret manager (AWS Secrets Manager / Doppler / Vault).
+- Cifrado CipherSweet de campos PII de billing (migración follow-up).
 - CFDI 4.0 vía PAC certificado (Facturama, Solución Factible u otro).
 - Facturación fiscal en otros países LATAM (AFIP en AR, DIAN en CO, SII en CL).
 - SOC 2 Type II (después de tracción comercial).
@@ -393,19 +413,22 @@ Job programado:
 ```
 tests/
   Feature/Billing/
-    SubscriptionLifecycleTest.php
-    StripeWebhookTest.php
-    EntitlementTest.php
-    UsageMeteredTest.php
-    DunningTest.php
-    RefundFlowTest.php
-    GatewayResolverTest.php
-    TenantIsolationTest.php
+    CatalogSeedingTest.php           ✅ (PR #7)
+    PlanCatalogTest.php               ✅ (PR #7)
+    CustomerTest.php                  ✅ (PR #7)
+    EntitlementsResolutionTest.php    ✅ (PR #7)
+    SubscriptionLifecycleTest.php     (Fase 2)
+    StripeWebhookTest.php             (Fase 2)
+    UsageMeteredTest.php              (Fase 5)
+    DunningTest.php                   (Fase 2)
+    RefundFlowTest.php                (Fase 2)
+    GatewayResolverTest.php           (Fase 4)
+    TenantIsolationTest.php           (Fase 2 — partial in PR #7)
   Unit/Billing/
-    StateMachine/SubscriptionStateMachineTest.php
-    ValueObjects/MoneyTest.php
-    ValueObjects/CurrencyTest.php
-    ProrationCalculatorTest.php
+    StateMachine/SubscriptionStateMachineTest.php   (Fase 2)
+    ValueObjects/MoneyTest.php                       (Fase 2)
+    ValueObjects/CurrencyTest.php                    (Fase 2)
+    ProrationCalculatorTest.php                      (Fase 2)
 ```
 
 ---
@@ -416,7 +439,7 @@ tests/
 
 - Latencia de procesamiento de webhooks (p50, p95, p99).
 - Tasa de fallo de jobs (Horizon ya disponible).
-- Eventos en DLQ.
+- Eventos en `needs_review` (ver ADR-012).
 - Lag del outbox (eventos no publicados después de N segundos).
 - Discrepancias de reconciliación.
 
@@ -432,7 +455,7 @@ tests/
 ### Alertas
 
 Vía Telegram (ya configurado en el proyecto) + email a SuperAdmin:
-- Webhook DLQ no vacío durante > 5 minutos.
+- Webhooks con `needs_review = true` durante > 5 minutos.
 - Reconciliación con discrepancias.
 - Fallos > 3% en cualquier pasarela en ventana de 1 hora.
 - Outbox lag > 60 segundos.
@@ -441,18 +464,19 @@ Vía Telegram (ya configurado en el proyecto) + email a SuperAdmin:
 
 ## 11. Plan de fases
 
-| Fase | Entrega | Estimación |
+| Fase | Entrega | Estado |
 |---|---|---|
-| **0 — Fundamentos** | docs, CI, Larastan, feature flags, milestones | 3-5 días |
-| **1 — Catálogo y Customers** | Migraciones 1-5, modelos, seeders, panel SuperAdmin | 1 semana |
-| **2 — Stripe end-to-end** | Adapter Stripe, checkout, webhooks, máquina de estados, dunning, reconciliación | 3-4 semanas |
-| **3 — Entitlements + migración del estado actual** | Servicio Entitlement, backfill de tenants existentes, lectura dual con flag | 2 semanas |
-| **4 — Mercado Pago** | Segundo adapter, GatewayResolver, contract tests | 2-3 semanas |
-| **5 — Cobro por sucursales extra (metered)** | UsageRecord, agregación, factura con extras | 1-2 semanas |
-| **6 — Hardening** | Métricas, dashboards, runbooks, alertas | 1-2 semanas |
-| **Backlog** | OpenPay/Conekta, PayPal, CFDI 4.0, SSO empresarial | — |
+| **0 — Fundamentos** | docs, CI, Larastan, plantillas | ✅ cerrada (PRs #1–#4) |
+| **1 — Catálogo y Customers** | Migraciones, modelos, enums, seeders, factories, tests Feature | ✅ cerrada (PRs #5–#7) |
+| **1b — Phase 2 prep** | config/billing.php, secrets docs, ADR-012, ADR-013, queues Horizon | ✅ cerrada (PRs #8–#9) |
+| **2 — Stripe end-to-end** | Adapter Stripe, checkout, webhooks, Subscription, máquina de estados, dunning, reconciliación | ⏳ en arranque |
+| **3 — Entitlements + migración del estado actual** | Servicio Entitlement, backfill de tenants existentes, lectura dual con flag | pendiente |
+| **4 — Mercado Pago** | Segundo adapter, GatewayResolver, contract tests | pendiente |
+| **5 — Cobro por sucursales extra (metered)** | UsageRecord, agregación, factura con extras, schema delta a `billing_prices` | pendiente |
+| **6 — Hardening** | Métricas, dashboards, runbooks, alertas | pendiente |
+| **Backlog** | OpenPay/Conekta, PayPal, CFDI 4.0, SSO empresarial, secrets manager | — |
 
-**MVP en producción: ~3 meses con un dev senior full-time.**
+**MVP en producción:** estimación original ~3 meses con un dev senior full-time. Recalibrar tras cierre de Fase 2.
 
 ---
 
@@ -466,7 +490,7 @@ Vía Telegram (ya configurado en el proyecto) + email a SuperAdmin:
 - ❌ No consultar el plan para autorizar features: consultar entitlements.
 - ❌ No confiar en la pasarela como única fuente de verdad: reconciliar.
 - ❌ No hacer reembolsos sin RBAC y auditoría.
-- ❌ No desplegar billing sin alertas de DLQ y reconciliación.
+- ❌ No desplegar billing sin alertas de `needs_review` y reconciliación.
 - ❌ No implementar varias pasarelas en paralelo: una completa primero, luego replicar.
 - ❌ No tocar `main` directamente: PRs contra `epic/billing`.
 
@@ -495,3 +519,12 @@ Vía Telegram (ya configurado en el proyecto) + email a SuperAdmin:
 - Cualquier cambio estructural requiere ADR en `docs/billing/DECISIONS.md`.
 - Cambios menores (precios, números, redacción): edición directa + commit `docs(billing): ...`.
 - Antes de cada release mayor de billing, revisar este documento como parte del checklist.
+
+---
+
+## 15. Historial de versiones
+
+| Versión | Fecha | Cambios |
+|---|---|---|
+| v1.0 | 2026-04-30 | Documento inicial (PR #1). |
+| v1.1 | 2026-05-06 | Sincronizado con realidad post-Fase 1. Tabla de features con columna Estado distinguiendo sembradas (10) vs backlog (7). Extra-branch metered marcado como Fase 5. `support.tier` corregido a `email` en professional. Stack actualizado a Laravel 11.51 + PHP 8.3.6. Secrets en `.env` (no gestor) con migración en backlog. Plan de fases actualizado con estado real de PRs. |
