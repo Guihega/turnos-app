@@ -98,6 +98,8 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:billing-webhooks' => 30,    // webhooks must be reactive; alert at 30s.
+        'redis:billing-outbox' => 120,     // outbox tolerates more latency.
     ],
 
     /*
@@ -194,12 +196,20 @@ return [
     | in all environments. These supervisors and settings handle all your
     | queued jobs and will be provisioned by Horizon during deployment.
     |
+    | Queues are listed in priority order: jobs in earlier queues are
+    | processed before jobs in later queues when workers compete for work.
+    |
+    | Priority order (per ADR-012 + ADR-013):
+    |   1. billing-webhooks  — must be reactive; webhook → DB → response < 200ms
+    |   2. billing-outbox    — tolerates ~30s latency to consumers
+    |   3. default           — everything else
+    |
     */
 
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            'queue' => ['billing-webhooks', 'billing-outbox', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,
