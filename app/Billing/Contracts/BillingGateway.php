@@ -12,6 +12,7 @@ use App\Billing\Exceptions\GatewayAuthenticationException;
 use App\Billing\Exceptions\GatewayException;
 use App\Billing\Exceptions\GatewayNotFoundException;
 use App\Billing\Exceptions\GatewaySignatureException;
+use App\Billing\Stripe\StripeBillingGateway;
 
 /**
  * The boundary between application code and any specific payment gateway.
@@ -27,14 +28,14 @@ use App\Billing\Exceptions\GatewaySignatureException;
  * callers can catch domain exceptions without knowing which gateway
  * is wired in. See ADR-015.
  *
- * @see \App\Billing\Stripe\StripeBillingGateway
+ * @see StripeBillingGateway
  */
 interface BillingGateway
 {
     /**
-     * @throws GatewayNotFoundException        If the customer does not exist.
-     * @throws GatewayAuthenticationException  If credentials are invalid.
-     * @throws GatewayException                For any other gateway error.
+     * @throws GatewayNotFoundException If the customer does not exist.
+     * @throws GatewayAuthenticationException If credentials are invalid.
+     * @throws GatewayException For any other gateway error.
      */
     public function retrieveCustomer(string $gatewayCustomerId): GatewayCustomer;
 
@@ -72,10 +73,10 @@ interface BillingGateway
      * Per ADR-012, callers MUST invoke this BEFORE persisting any row
      * in billing_webhook_events.
      *
-     * @return array<string, mixed>  The verified event body.
+     * @return array<string, mixed> The verified event body.
      *
-     * @throws GatewaySignatureException  If signature is missing or invalid.
-     * @throws GatewayException           For malformed payload or other errors.
+     * @throws GatewaySignatureException If signature is missing or invalid.
+     * @throws GatewayException For malformed payload or other errors.
      */
     public function verifyWebhookSignature(string $payload, string $signatureHeader): array;
 }

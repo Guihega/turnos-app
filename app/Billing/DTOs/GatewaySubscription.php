@@ -19,8 +19,8 @@ use DateTimeImmutable;
 final readonly class GatewaySubscription
 {
     /**
-     * @param  string|null  $status        Normalized to SubscriptionStatus::value, or null if unmappable.
-     * @param  string       $rawStatus     The gateway's raw status string (always populated).
+     * @param  string|null  $status  Normalized to SubscriptionStatus::value, or null if unmappable.
+     * @param  string  $rawStatus  The gateway's raw status string (always populated).
      * @param  list<array{price_id: string, quantity: int}>  $items
      * @param  array<string, mixed>  $metadata
      */
