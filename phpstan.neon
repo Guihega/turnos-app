@@ -1,5 +1,6 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-mockery/extension.neon
     # The baseline file lists all current errors so they don't break CI.
     # New code must pass at the configured level without baseline.
     # Regenerate the baseline only when fixing real errors:
