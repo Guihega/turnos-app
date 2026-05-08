@@ -1567,42 +1567,6 @@ parameters:
 			path: tests/Feature/SocialAuthTest.php
 
 		-
-			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$expiresIn\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/SocialAuthTest.php
-
-		-
-			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$refreshToken\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/SocialAuthTest.php
-
-		-
-			message: '#^Access to an undefined property Mockery\\MockInterface\:\:\$token\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/SocialAuthTest.php
-
-		-
-			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:andReturnSelf\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: tests/Feature/SocialAuthTest.php
-
-		-
-			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:with\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Feature/SocialAuthTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\SocialAuthTest\:\:mockSocialiteUser\(\) should return Laravel\\Socialite\\Two\\User but returns Mockery\\MockInterface\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/SocialAuthTest.php
-
-		-
 			message: '#^Property Tests\\Feature\\TenantIsolationTest\:\:\$branchA \(App\\Models\\Branch\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
 			identifier: assign.propertyType
 			count: 1
