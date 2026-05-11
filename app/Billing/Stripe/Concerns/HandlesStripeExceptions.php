@@ -6,11 +6,14 @@ namespace App\Billing\Stripe\Concerns;
 
 use App\Billing\Exceptions\GatewayAuthenticationException;
 use App\Billing\Exceptions\GatewayException;
+use App\Billing\Exceptions\GatewayIdempotencyConflictException;
 use App\Billing\Exceptions\GatewayNotFoundException;
 use App\Billing\Exceptions\GatewaySignatureException;
+use App\Billing\Exceptions\GatewayValidationException;
 use Closure;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Exception\AuthenticationException;
+use Stripe\Exception\IdempotencyException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\Exception\SignatureVerificationException;
 use Throwable;
@@ -45,6 +48,13 @@ trait HandlesStripeExceptions
                 'Webhook signature verification failed.',
                 previous: $e,
             );
+        } catch (IdempotencyException $e) {
+            // Same idempotency key reused with a different payload.
+            // Non-retryable: indicates a bug in the Action layer.
+            throw new GatewayIdempotencyConflictException(
+                'Idempotency key reused with different payload: '.$e->getMessage(),
+                previous: $e,
+            );
         } catch (AuthenticationException $e) {
             throw new GatewayAuthenticationException(
                 'Stripe rejected our credentials.',
@@ -58,7 +68,10 @@ trait HandlesStripeExceptions
                     previous: $e,
                 );
             }
-            throw new GatewayException(
+            // Stripe rejected the payload shape (missing field, wrong type,
+            // unsupported value). Distinct from a generic API error so callers
+            // can surface a 422 instead of a 500.
+            throw new GatewayValidationException(
                 'Invalid request to Stripe: '.$e->getMessage(),
                 previous: $e,
             );
