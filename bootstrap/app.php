@@ -1,5 +1,9 @@
 <?php
 
+use App\Billing\Exceptions\GatewayValidationException;
+use App\Exceptions\Billing\CustomerNotRegisteredInGatewayException;
+use App\Exceptions\Billing\PriceMissingGatewayMappingException;
+use App\Exceptions\Billing\PriceNotFoundException;
 use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTenantScope;
@@ -10,6 +14,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -38,6 +43,41 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // ── Billing exception mappings (PR-E, ADR-016) ──
+        $exceptions->render(function (PriceNotFoundException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'No price available for the requested plan/currency/interval.',
+                    'error' => 'price_not_found',
+                ], 422);
+            }
+        });
+        $exceptions->render(function (PriceMissingGatewayMappingException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Price is not configured for the target gateway. Contact support.',
+                    'error' => 'price_gateway_mapping_missing',
+                ], 422);
+            }
+        });
+        $exceptions->render(function (CustomerNotRegisteredInGatewayException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Customer is not registered in the payment gateway yet. Create the customer first.',
+                    'error' => 'customer_not_registered',
+                ], 409);
+            }
+        });
+        $exceptions->render(function (GatewayValidationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Payment gateway rejected the request.',
+                    'error' => 'gateway_validation_failed',
+                    'detail' => $e->getMessage(),
+                ], 422);
+            }
+        });
+
         $exceptions->report(function (Throwable $e) {
             if (app()->isProduction()
                 && ! $e instanceof AuthenticationException

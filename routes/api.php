@@ -2,6 +2,8 @@
 
 use App\Actions\IssueTicketAction;
 use App\Actions\IssueTicketData;
+use App\Http\Controllers\Api\Billing\CustomersController;
+use App\Http\Controllers\Api\Billing\SubscriptionsController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\TicketController;
 use App\Models\Branch;
@@ -178,3 +180,23 @@ Route::prefix('v1/public')->group(function () {
         ));
     })->middleware('throttle:60,1');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Billing — PR-E
+|--------------------------------------------------------------------------
+|
+| Customer + Subscription create flows. Sanctum auth + tenant scope per
+| project convention. Trial-aware: subscriptions start in 'trialing'
+| with no PM (see ADR-016).
+|
+*/
+
+Route::prefix('v1/billing')
+    ->middleware(['auth:sanctum', 'tenant.scope'])
+    ->group(function () {
+        Route::post('customers', [CustomersController::class, 'store'])
+            ->name('billing.customers.store');
+        Route::post('subscriptions', [SubscriptionsController::class, 'store'])
+            ->name('billing.subscriptions.store');
+    });
