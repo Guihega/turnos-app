@@ -38,7 +38,15 @@ final class WebhookEndpointTest extends TestCase
         // dummy secret instead of whatever the .env has.
         config([
             'billing.gateways.stripe.webhook_secret' => self::TEST_WEBHOOK_SECRET,
+            'billing.gateways.stripe.secret_key' => 'sk_test_dummy_for_factory',
+            'billing.gateways.stripe.api_version' => '2024-11-20.acacia',
         ]);
+
+        // The webhook endpoint is public and CSRF-excluded in
+        // bootstrap/app.php. Tests bypass middleware to keep them
+        // independent of the framework's CSRF stack and to avoid
+        // session bootstrap in CI.
+        $this->withoutMiddleware();
     }
 
     /**
