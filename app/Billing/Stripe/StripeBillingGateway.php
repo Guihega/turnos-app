@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Billing\Stripe;
 
 use App\Billing\Contracts\BillingGateway;
+use App\Billing\Contracts\BillingGatewayWriter;
+use App\Billing\DTOs\CreateCustomerInput;
+use App\Billing\DTOs\CreateSubscriptionInput;
 use App\Billing\DTOs\GatewayCustomer;
 use App\Billing\DTOs\GatewayInvoice;
 use App\Billing\DTOs\GatewayPaymentMethod;
@@ -28,14 +31,15 @@ use Stripe\Webhook;
  *   2. list*     — pull a collection and return DTOs,
  *   3. verifyWebhookSignature — validate + decode a webhook payload.
  *
- * Write methods (createCustomer, createSubscription, ...) are NOT here.
- * They land in PR-E with their own contract and integration tests.
+ * Write methods (createCustomer, createSubscription) implement
+ * BillingGatewayWriter (PR-E). Additional writes (cancelSubscription,
+ * updateCustomer, attachPaymentMethod, ...) land in later PRs.
  *
  * Exception translation: every public method routes its body through
  * translateStripeExceptions() so the SDK's exception types never leak.
  * See ADR-015 §4.
  */
-final class StripeBillingGateway implements BillingGateway
+final class StripeBillingGateway implements BillingGateway, BillingGatewayWriter
 {
     use HandlesStripeExceptions;
 
@@ -256,6 +260,72 @@ final class StripeBillingGateway implements BillingGateway
 
         return null;
     }
+
+    // ---------------------------------------------------------------
+    // Writer contract (BillingGatewayWriter)
+    // ---------------------------------------------------------------
+
+    public function createCustomer(CreateCustomerInput $input, string $idempotencyKey): GatewayCustomer
+    {
+        return $this->translateStripeExceptions(function () use ($input, $idempotencyKey): GatewayCustomer {
+            $payload = [
+                'email' => $input->email,
+                'metadata' => $input->metadata,
+            ];
+            if ($input->name !== null) {
+                $payload['name'] = $input->name;
+            }
+
+            // TODO(ADR-016): map $input->taxId via tax_ids->create() in a
+            // follow-up. Same for billing_address (Stripe expects a nested
+            // object with line1/line2/city/state/postal_code/country).
+
+            /** @var Customer $customer */
+            $customer = $this->client->customers->create(
+                $payload,
+                ['idempotency_key' => $idempotencyKey],
+            );
+
+            return $this->mapCustomer($customer);
+        });
+    }
+
+    public function createSubscription(CreateSubscriptionInput $input, string $idempotencyKey): GatewaySubscription
+    {
+        return $this->translateStripeExceptions(function () use ($input, $idempotencyKey): GatewaySubscription {
+            $payload = [
+                'customer' => $input->gatewayCustomerId,
+                'items' => [
+                    ['price' => $input->gatewayPriceId],
+                ],
+                // ADR-016 §4: create subscription WITHOUT requiring a PM.
+                // Stripe will mark the subscription as 'incomplete' until
+                // payment is collected, but the trial flow makes that
+                // collection deferred (see trial_will_end webhook in PR-F).
+                'payment_behavior' => 'default_incomplete',
+                'payment_settings' => [
+                    'save_default_payment_method' => 'on_subscription',
+                ],
+                'expand' => ['latest_invoice.payment_intent'],
+                'metadata' => $input->metadata,
+            ];
+            if ($input->trialDays > 0) {
+                $payload['trial_period_days'] = $input->trialDays;
+            }
+
+            /** @var Subscription $subscription */
+            $subscription = $this->client->subscriptions->create(
+                $payload,
+                ['idempotency_key' => $idempotencyKey],
+            );
+
+            return $this->mapSubscription($subscription);
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Mapping helpers (private)
+    // ---------------------------------------------------------------
 
     private function timestampToDateTime(mixed $timestamp): ?DateTimeImmutable
     {

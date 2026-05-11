@@ -117,6 +117,85 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Subscriptions
+    |--------------------------------------------------------------------------
+    |
+    | trial_days: how many days a brand-new Subscription spends in the
+    |   'trialing' status before Stripe attempts the first charge. PR-E
+    |   ADR-016 default is 14. Set to 0 to disable trial (subscriptions
+    |   arrive in 'active' or 'incomplete' depending on PM availability).
+    |
+    */
+
+    'subscriptions' => [
+        'trial_days' => (int) env('BILLING_TRIAL_DAYS', 14),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Idempotency
+    |--------------------------------------------------------------------------
+    |
+    | ttl_days: how long we retain billing_idempotency_keys rows after
+    |   creation. Stripe itself guarantees idempotency for ~24 hours
+    |   server-side; we keep them longer for forensics + auditing.
+    |   A cleanup job (PR-J) reaps rows past this TTL.
+    |
+    */
+
+    'idempotency' => [
+        'ttl_days' => (int) env('BILLING_IDEMPOTENCY_TTL_DAYS', 7),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscriptions
+    |--------------------------------------------------------------------------
+    |
+    | trial_days: how many days a brand-new Subscription spends in the
+    |   'trialing' status before Stripe attempts the first charge. PR-E
+    |   ADR-016 default is 14. Set to 0 to disable trial.
+    |
+    */
+
+    'subscriptions' => [
+        'trial_days' => (int) env('BILLING_TRIAL_DAYS', 14),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Idempotency
+    |--------------------------------------------------------------------------
+    |
+    | ttl_days: how long we retain billing_idempotency_keys rows after
+    |   creation. Stripe guarantees server-side idempotency for ~24h;
+    |   the extra window is for forensics. A cleanup job (PR-J) reaps
+    |   rows past this TTL.
+    |
+    */
+
+    'idempotency' => [
+        'ttl_days' => (int) env('BILLING_IDEMPOTENCY_TTL_DAYS', 7),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smoke tests (opt-in)
+    |--------------------------------------------------------------------------
+    |
+    | Knobs for tests/Feature/Billing/Stripe/StripeWriteSmokeTest, which
+    | hits the real Stripe API in test mode. Both must be set explicitly;
+    | the test skips otherwise. See ADR-016 and the test docblock.
+    |
+    */
+
+    'smoke' => [
+        'live' => env('STRIPE_LIVE_SMOKE') === 'true',
+        'test_price_id' => env('STRIPE_TEST_PRICE_ID'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Currency rounding
     |--------------------------------------------------------------------------
     |

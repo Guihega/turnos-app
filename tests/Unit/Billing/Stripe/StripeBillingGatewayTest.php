@@ -9,9 +9,9 @@ use App\Billing\DTOs\GatewayInvoice;
 use App\Billing\DTOs\GatewayPaymentMethod;
 use App\Billing\DTOs\GatewaySubscription;
 use App\Billing\Exceptions\GatewayAuthenticationException;
-use App\Billing\Exceptions\GatewayException;
 use App\Billing\Exceptions\GatewayNotFoundException;
 use App\Billing\Exceptions\GatewaySignatureException;
+use App\Billing\Exceptions\GatewayValidationException;
 use App\Billing\Stripe\StripeBillingGateway;
 use App\Enums\Billing\SubscriptionStatus;
 use Illuminate\Config\Repository;
@@ -355,8 +355,11 @@ final class StripeBillingGatewayTest extends TestCase
     }
 
     #[Test]
-    public function invalid_request_without_resource_missing_yields_generic_gateway_exception(): void
+    public function invalid_request_without_resource_missing_yields_validation_exception(): void
     {
+        // Stripe rejected the payload shape for a reason OTHER than
+        // resource_missing. Per ADR-016 we translate this to
+        // GatewayValidationException so HTTP callers can surface 422.
         $stripeException = InvalidRequestException::factory(
             message: 'You provided an invalid parameter',
             httpStatus: 400,
@@ -373,12 +376,8 @@ final class StripeBillingGatewayTest extends TestCase
 
         $gateway = new StripeBillingGateway($client, $this->makeConfig());
 
-        try {
-            $gateway->retrieveCustomer('cus_X');
-            $this->fail('Expected GatewayException was not thrown.');
-        } catch (GatewayException $e) {
-            $this->assertNotInstanceOf(GatewayNotFoundException::class, $e);
-        }
+        $this->expectException(GatewayValidationException::class);
+        $gateway->retrieveCustomer('cus_X');
     }
 
     #[Test]
