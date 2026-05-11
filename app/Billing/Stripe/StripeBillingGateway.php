@@ -110,10 +110,10 @@ final class StripeBillingGateway implements BillingGateway
     public function verifyWebhookSignature(string $payload, string $signatureHeader): array
     {
         return $this->translateStripeExceptions(function () use ($payload, $signatureHeader): array {
-            $secret = $this->config->get('billing.stripe.webhook_secret');
+            $secret = $this->config->get('billing.gateways.stripe.webhook_secret');
             if (! is_string($secret) || $secret === '') {
                 throw new \RuntimeException(
-                    'billing.stripe.webhook_secret is missing. Check STRIPE_MODE and the matching STRIPE_*_WEBHOOK_SECRET env var.'
+                    'billing.gateways.stripe.webhook_secret is missing. Check STRIPE_MODE and the matching STRIPE_*_WEBHOOK_SECRET env var.'
                 );
             }
 

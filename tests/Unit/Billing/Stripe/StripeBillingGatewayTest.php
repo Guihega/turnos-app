@@ -60,10 +60,12 @@ final class StripeBillingGatewayTest extends TestCase
     {
         return new Repository([
             'billing' => [
-                'stripe' => [
-                    'secret_key' => 'sk_test_dummy',
-                    'api_version' => '2024-11-20.acacia',
-                    'webhook_secret' => 'whsec_test_dummy',
+                'gateways' => [
+                    'stripe' => [
+                        'secret_key' => 'sk_test_dummy',
+                        'api_version' => '2024-11-20.acacia',
+                        'webhook_secret' => 'whsec_test_dummy',
+                    ],
                 ],
             ],
         ]);
