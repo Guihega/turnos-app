@@ -41,6 +41,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->statefulApi();
+
+        // PR-F: Stripe webhook auth is the signature header, not CSRF.
+        $middleware->validateCsrfTokens(except: [
+            'billing/webhook',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // ── Billing exception mappings (PR-E, ADR-016) ──

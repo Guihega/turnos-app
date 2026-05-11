@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\GeoController;
@@ -250,3 +251,19 @@ Route::middleware(['auth', 'verified', 'tenant.scope', EnsureTwoFactorForAdmins:
 });
 
 require __DIR__.'/auth.php';
+
+/*
+|--------------------------------------------------------------------------
+| Billing webhook — PR-F
+|--------------------------------------------------------------------------
+|
+| Public endpoint for Stripe webhook deliveries. Authentication is via
+| the Stripe-Signature header verified by BillingGateway. CSRF is
+| explicitly excluded for this route in bootstrap/app.php.
+|
+| See ADR-007, ADR-012.
+|
+*/
+
+Route::post('billing/webhook', WebhookController::class)
+    ->name('billing.webhook');
