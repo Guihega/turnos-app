@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\Billing;
 
 use App\Models\Billing\WebhookEvent;
+use App\Services\Billing\WebhookEventDispatcher;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -121,10 +122,8 @@ final class ProcessBillingWebhookEvent implements ShouldQueue
      */
     private function dispatchByEventType(WebhookEvent $event): void
     {
-        Log::info('billing.webhook.job.received', [
-            'webhook_event_id' => $event->id,
-            'event_type' => $event->event_type,
-            'note' => 'PR-G will route this to a concrete handler.',
-        ]);
+        /** @var WebhookEventDispatcher $dispatcher */
+        $dispatcher = app(WebhookEventDispatcher::class);
+        $dispatcher->dispatch($event);
     }
 }
