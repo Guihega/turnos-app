@@ -1,6 +1,9 @@
 <?php
 
 use App\Jobs\Billing\PublishOutboxEventsJob;
+use App\Jobs\Billing\PurgeOutboxEventsJob;
+use App\Jobs\Billing\PurgeWebhookEventsJob;
+use App\Jobs\Billing\ReconcileSubscriptionsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -71,3 +74,25 @@ Schedule::job(new PublishOutboxEventsJob)
     ->withoutOverlapping(60)
     ->onOneServer()
     ->name('billing:publish-outbox-events');
+
+// ── Billing Cleanups & Reconciliation (PR-J) ──
+// Nightly maintenance jobs for the Billing module. See ADR-017.
+// All three are single-instance + onOneServer for safe scheduling across replicas.
+
+Schedule::job(new ReconcileSubscriptionsJob)
+    ->dailyAt('03:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:reconcile-subscriptions');
+
+Schedule::job(new PurgeOutboxEventsJob)
+    ->dailyAt('03:30')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:purge-outbox-events');
+
+Schedule::job(new PurgeWebhookEventsJob)
+    ->dailyAt('04:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:purge-webhook-events');

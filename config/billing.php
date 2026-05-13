@@ -115,6 +115,7 @@ return [
         'tolerance_seconds' => (int) env('BILLING_WEBHOOK_TOLERANCE', 300),
         'idempotency_window_hours' => (int) env('BILLING_WEBHOOK_IDEMPOTENCY_HOURS', 24),
         'retry_max_attempts' => (int) env('BILLING_WEBHOOK_RETRY_MAX', 5),
+        'retention_days' => (int) env('BILLING_WEBHOOK_RETENTION_DAYS', 90),
     ],
 
     /*
@@ -223,6 +224,22 @@ return [
                 SubscriptionSuspendedHandler::class,
             ],
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reconciliation
+    |--------------------------------------------------------------------------
+    |
+    | Operational knobs for ReconcileSubscriptionsJob (PR-J). Runs nightly
+    | and compares local subscription status against the gateway truth.
+    | Drift is logged only — auto-correction is intentionally out of scope.
+    | See the job docblock and ADR-017 for rationale.
+    |
+    */
+
+    'reconciliation' => [
+        'batch_size' => (int) env('BILLING_RECONCILIATION_BATCH_SIZE', 200),
     ],
 
     /*
