@@ -12,6 +12,7 @@ use App\Billing\Webhooks\Handlers\InvoicePaymentFailedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionDeletedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionUpdatedHandler;
 use App\Billing\Webhooks\Handlers\TrialWillEndHandler;
+use App\Services\Billing\OutboxEventDispatcher;
 use App\Services\Billing\WebhookEventDispatcher;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Config\Repository;
@@ -20,10 +21,12 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Registers the billing module's service bindings.
  *
- * Currently a single binding: BillingGateway → StripeBillingGateway.
- * The container resolves a fresh StripeClient per request from the
- * factory, so test bindings can swap in mocks without globally
- * mutating Stripe SDK state.
+ * Webhook handlers are hardcoded here because the mapping of external
+ * Stripe events is part of the gateway contract and rarely changes
+ * without code. Outbox handlers, by contrast, are read from
+ * config/billing.php — they map internal domain events, evolve with
+ * features, and benefit from being listed in a single discoverable
+ * config file.
  */
 final class BillingServiceProvider extends ServiceProvider
 {
@@ -73,10 +76,26 @@ final class BillingServiceProvider extends ServiceProvider
                 container: $container,
             );
         });
+
+        // PR-H/I: outbox event dispatcher, handlers sourced from config.
+        // Singleton — the handler map is immutable per request.
+        $this->app->singleton(OutboxEventDispatcher::class, function ($app): OutboxEventDispatcher {
+            /** @var Container $container */
+            $container = $app;
+            /** @var array<string, class-string|list<class-string>> $handlers */
+            $handlers = (array) config('billing.outbox.handlers', []);
+
+            return new OutboxEventDispatcher(
+                handlers: $handlers,
+                container: $container,
+            );
+        });
     }
 
     public function boot(): void
     {
-        // Nothing yet. PR-H will publish the outbox listener here.
+        // Intentionally empty. Outbox persistence is invoked explicitly
+        // from producers (Actions, Handlers) inside their DB transactions,
+        // not via a wildcard event listener — see ADR-013 / SubscriptionDomainEvent.
     }
 }
