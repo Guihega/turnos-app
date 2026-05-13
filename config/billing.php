@@ -196,6 +196,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Outbox publisher
+    |--------------------------------------------------------------------------
+    |
+    | Operational knobs for PublishOutboxEventsJob (PR-H). The job runs
+    | every 30s via the scheduler and claims a batch of pending rows
+    | from billing_outbox_events.
+    |
+    | publish_batch_size — Max rows claimed per tick. Tuned so the
+    | scheduled run completes well under 30s. Increase if backlog grows.
+    |
+    | handlers — Map of event_type to OutboxEventHandler FQCN. Events
+    | with no entry are logged and marked published (no-op delivery).
+    | Consumers ship as they appear (PR-I dunning, etc.).
+    |
+    | See ADR-010 (transactional outbox), ADR-013 (operational defaults).
+    */
+
+    'outbox' => [
+        'publish_batch_size' => env('BILLING_OUTBOX_PUBLISH_BATCH_SIZE', 100),
+        'handlers' => [
+            // 'subscription.state-changed' => \App\Billing\Outbox\Handlers\StateChangedHandler::class,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Currency rounding
     |--------------------------------------------------------------------------
     |

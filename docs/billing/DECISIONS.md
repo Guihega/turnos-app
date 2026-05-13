@@ -407,6 +407,43 @@ ADR-010 firma el patrón **outbox transaccional** para eventos de dominio salien
   - `published_at < now() - interval '30 days'`
 - Eventos `failed_at IS NOT NULL` NUNCA se purgan automáticamente — requieren resolución manual.
 
+
+#### Detalles de implementación (PR-H)
+
+Tras implementar el publisher en PR-H, se concretan estos puntos que el
+ADR original no especificaba:
+
+- **Backoff por fila vía `next_attempt_at`.** El backoff `[60, 300, 1800]s` no
+  se aplica con `release($delay)` a nivel de job sino con una columna
+  `next_attempt_at` en `billing_outbox_events`. Razón: cada tick del scheduler
+  procesa N filas en estados de reintento distintos; un backoff por job
+  retrasaría todas o ninguna. La columna se setea al fallar y se filtra en el
+  `WHERE` del claim (`next_attempt_at IS NULL OR next_attempt_at <= NOW()`).
+
+- **Eventos sin handler se marcan publicados.** Si una fila tiene `event_type`
+  para el cual `config('billing.outbox.handlers')` no tiene mapeo, el
+  dispatcher loguea a nivel `info` y el job marca `published_at`. Razón: los
+  productores envían antes que los consumidores en la secuencia típica de
+  PRs (PR-H persiste `subscription.state-changed`; el consumidor de dunning
+  llega en PR-I). Tratarlos como fallo generaría backlog de filas pendientes
+  para eventos que nadie escucha aún.
+
+- **At-least-once vía transacción larga.** Cada tick corre `claim + dispatch
+  + update` dentro de un único `DB::transaction` con `FOR UPDATE SKIP LOCKED`.
+  Si el worker crashea a la mitad, la transacción se aborta, el lock se
+  libera, y la fila vuelve a estar disponible en el próximo tick. Los
+  handlers deben ser idempotentes (ya documentado arriba). Trade-off: la
+  transacción dura lo que dure el handler más lento del batch. Aceptable
+  para handlers internos (in-process, rápidos). Si en el futuro algún
+  handler hace I/O pesado, refactorizar a `claim + commit` y luego procesar
+  por fila fuera de la transacción de claim.
+
+- **Single-instance enforcement.** El job implementa `ShouldBeUnique` con
+  `uniqueId = 'publish-outbox-events'` y `uniqueFor = 120s`. Combinado con
+  `withoutOverlapping(60)` en el `Schedule::job(...)` de `routes/console.php`,
+  previene que dos ticks corran concurrentes incluso si el scheduler hace
+  doble-fire (típico durante deploys). Cinturón y tirantes con SKIP LOCKED.
+
 ### Consecuencias
 
 - ✅ Latencia máxima esperada entre commit en BD y entrega al consumidor: ~30 segundos.

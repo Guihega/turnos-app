@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\Billing\PublishOutboxEventsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -60,3 +61,13 @@ Schedule::command('report:weekly')
 Schedule::command('logs:clean --days=7')
     ->dailyAt('04:00')
     ->withoutOverlapping();
+
+// ── Billing Outbox Publisher ──
+// Drains billing_outbox_events every 30s.
+// Single-instance via uniqueId on the job + withoutOverlapping here (belt-and-braces).
+// See ADR-010 (transactional outbox), ADR-013 (operational defaults).
+Schedule::job(new PublishOutboxEventsJob)
+    ->everyThirtySeconds()
+    ->withoutOverlapping(60)
+    ->onOneServer()
+    ->name('billing:publish-outbox-events');
