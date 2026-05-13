@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use App\Billing\Outbox\Handlers\PastDueEnteredHandler;
+use App\Billing\Outbox\Handlers\SubscriptionSuspendedHandler;
 
 /**
  * Billing module configuration.
@@ -216,7 +218,10 @@ return [
     'outbox' => [
         'publish_batch_size' => env('BILLING_OUTBOX_PUBLISH_BATCH_SIZE', 100),
         'handlers' => [
-            // 'subscription.state-changed' => \App\Billing\Outbox\Handlers\StateChangedHandler::class,
+            'subscription.state-changed' => [
+                PastDueEnteredHandler::class,
+                SubscriptionSuspendedHandler::class,
+            ],
         ],
     ],
 

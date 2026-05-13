@@ -65,11 +65,17 @@ class Subscription extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Customer, $this>
+     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
+    /**
+     * @return BelongsTo<Plan, $this>
+     */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class, 'plan_id');
