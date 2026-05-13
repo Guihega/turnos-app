@@ -6,6 +6,7 @@ namespace App\Events\Billing;
 
 use App\Enums\Billing\SubscriptionStatus;
 use App\Events\Billing\Contracts\SubscriptionDomainEvent;
+use App\Models\Billing\Subscription;
 use DateTimeImmutable;
 use Illuminate\Foundation\Events\Dispatchable;
 
@@ -34,6 +35,11 @@ final class SubscriptionStateChanged implements SubscriptionDomainEvent
     public function eventType(): string
     {
         return 'subscription.state-changed';
+    }
+
+    public function aggregateType(): string
+    {
+        return Subscription::class;
     }
 
     public function aggregateId(): string

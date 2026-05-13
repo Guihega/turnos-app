@@ -43,7 +43,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::Pilot]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $result = $action->execute(
             subscription: $subscription,
@@ -90,7 +90,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::Canceled]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $this->expectException(InvalidStateTransitionException::class);
 
@@ -122,7 +122,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::Active]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         try {
             $action->execute(
@@ -150,7 +150,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::Active]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $result = $action->execute(
             subscription: $subscription,
@@ -170,7 +170,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::Active]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $action->execute(
             subscription: $subscription,
@@ -217,7 +217,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for(Customer::factory(), 'customer')
             ->create(['status' => SubscriptionStatus::PastDue]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $action->execute(
             subscription: $subscription,
@@ -254,7 +254,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for($customer, 'customer')
             ->create(['status' => SubscriptionStatus::Suspended]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         try {
             $action->execute(
@@ -311,7 +311,7 @@ final class SubscriptionStateMachineTest extends TestCase
             ->for($customer, 'customer')
             ->create(['status' => SubscriptionStatus::Active]);
 
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $result = $action->execute(
             subscription: $subscription,
@@ -335,7 +335,7 @@ final class SubscriptionStateMachineTest extends TestCase
 
         // No other subs exist for this customer; the active slot is free.
         // But the matrix says: terminal means terminal.
-        $action = new TransitionSubscriptionAction;
+        $action = $this->app->make(TransitionSubscriptionAction::class);
 
         $this->expectException(InvalidStateTransitionException::class);
 

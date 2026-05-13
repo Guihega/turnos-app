@@ -10,6 +10,7 @@ use App\Exceptions\Billing\ConcurrentActiveSubscriptionException;
 use App\Exceptions\Billing\InvalidStateTransitionException;
 use App\Models\Billing\Subscription;
 use App\Models\Billing\SubscriptionStateTransition;
+use App\Services\Billing\OutboxEventWriter;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -29,15 +30,18 @@ use Illuminate\Support\Facades\DB;
  * 4. Otherwise, inside a single DB::transaction:
  *      - inserts a row in billing_subscription_state_transitions,
  *      - updates billing_subscriptions.status,
- *      - dispatches SubscriptionStateChanged after commit.
+ *      - persists the SubscriptionStateChanged event to the outbox
+ *        (transactional outbox pattern, ADR-010),
+ *      - dispatches SubscriptionStateChanged in-process after commit
+ *        for any synchronous listeners (cache, etc.).
  */
 final class TransitionSubscriptionAction
 {
+    public function __construct(
+        private readonly OutboxEventWriter $outboxWriter,
+    ) {}
+
     /**
-     * The subset of SubscriptionStatus values that occupy the
-     * "active slot" enforced by the partial unique index
-     * `one_active_subscription_per_customer` (PR-A).
-     *
      * @var list<string>
      */
     public const ACTIVE_SET = [
@@ -49,12 +53,6 @@ final class TransitionSubscriptionAction
     ];
 
     /**
-     * The transition matrix from ADR-014. Keys are the `from` enum
-     * value; values are the list of allowed `to` enum values.
-     *
-     * Same-state targets are NOT included here; they are handled
-     * separately as a silent no-op.
-     *
      * @var array<string, list<string>>
      */
     public const ALLOWED = [
@@ -79,12 +77,10 @@ final class TransitionSubscriptionAction
     ): Subscription {
         $from = $subscription->status;
 
-        // Same-state: silent no-op.
         if ($from === $to) {
             return $subscription;
         }
 
-        // Matrix check.
         if (! self::isAllowed($from, $to)) {
             throw new InvalidStateTransitionException(
                 subscriptionId: (string) $subscription->id,
@@ -93,7 +89,6 @@ final class TransitionSubscriptionAction
             );
         }
 
-        // Active-slot check (only when entering the active set).
         if (in_array($to->value, self::ACTIVE_SET, true)) {
             $this->guardConcurrentActive($subscription);
         }
@@ -101,9 +96,6 @@ final class TransitionSubscriptionAction
         $occurredAt = new DateTimeImmutable;
 
         return DB::transaction(function () use ($subscription, $from, $to, $reason, $actor, $metadata, $occurredAt): Subscription {
-            // Persist using PR-A's column names. The schema does not have a
-            // dedicated `actor` column; we fold it into `context` along with
-            // any caller-provided metadata. ADR-014 §6 documents the mapping.
             $context = $metadata;
             if ($actor !== null) {
                 $context['actor'] = $actor;
@@ -121,16 +113,22 @@ final class TransitionSubscriptionAction
             $subscription->status = $to;
             $subscription->save();
 
-            DB::afterCommit(function () use ($subscription, $from, $to, $reason, $actor, $occurredAt, $metadata): void {
-                event(new SubscriptionStateChanged(
-                    subscriptionId: (string) $subscription->id,
-                    from: $from,
-                    to: $to,
-                    reason: $reason,
-                    actor: $actor,
-                    occurredAt: $occurredAt,
-                    metadata: $metadata,
-                ));
+            $event = new SubscriptionStateChanged(
+                subscriptionId: (string) $subscription->id,
+                from: $from,
+                to: $to,
+                reason: $reason,
+                actor: $actor,
+                occurredAt: $occurredAt,
+                metadata: $metadata,
+            );
+
+            // Transactional outbox: persist event in the same tx as the
+            // status change. If this throws, the transition rolls back.
+            $this->outboxWriter->write($event);
+
+            DB::afterCommit(function () use ($event): void {
+                event($event);
             });
 
             return $subscription->refresh();
@@ -140,23 +138,12 @@ final class TransitionSubscriptionAction
     public static function isAllowed(SubscriptionStatus $from, SubscriptionStatus $to): bool
     {
         if ($from === $to) {
-            // Same-state is handled by execute() as a no-op; the matrix
-            // itself does not "allow" it in the sense of generating a
-            // recorded transition.
             return false;
         }
 
         return in_array($to->value, self::ALLOWED[$from->value] ?? [], true);
     }
 
-    /**
-     * Raise ConcurrentActiveSubscriptionException if the customer
-     * already has another subscription occupying the active slot.
-     *
-     * Excludes the subscription being transitioned, so a sub already
-     * in the active set transitioning to another active state (e.g.
-     * active → past_due) does not trip the guard.
-     */
     private function guardConcurrentActive(Subscription $subscription): void
     {
         $existing = Subscription::query()

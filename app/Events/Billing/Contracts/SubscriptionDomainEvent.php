@@ -7,14 +7,22 @@ namespace App\Events\Billing\Contracts;
 /**
  * Marker interface for subscription domain events.
  *
- * PR-H will register a global listener on this interface to write
- * implementing events into billing_outbox_events. Until then, events
- * dispatched through Laravel's event() helper are observed only by
- * direct listeners.
+ * Events implementing this interface are persisted to
+ * billing_outbox_events in the SAME database transaction as the
+ * domain change that produced them (transactional outbox pattern).
+ * This is done via explicit calls to OutboxEventWriter from the
+ * producing Action / Handler — there is no wildcard listener that
+ * would run after commit.
  *
- * Implementers MUST expose an immutable payload via toArray(). The
- * outbox writer in PR-H will persist the result of toArray() as the
- * event payload column.
+ * After commit, Laravel's event(...) helper still dispatches the
+ * event to any in-process listeners (cache invalidation, etc.).
+ * Async / cross-boundary delivery is handled exclusively by the
+ * outbox publisher (PublishOutboxEventsJob, PR-H).
+ *
+ * Implementers MUST expose an immutable payload via toArray() that
+ * is JSON-serializable and contains no Eloquent models or closures.
+ *
+ * @see docs/billing/DECISIONS.md ADR-010 (outbox), ADR-013 (ops defaults)
  */
 interface SubscriptionDomainEvent
 {
@@ -26,20 +34,29 @@ interface SubscriptionDomainEvent
     public function eventType(): string;
 
     /**
-     * The aggregate (subscription) ULID this event refers to.
+     * Fully-qualified class name of the aggregate root the event
+     * refers to, used as billing_outbox_events.aggregate_type.
+     * Typically a model FQCN, e.g. App\Models\Billing\Subscription::class.
+     */
+    public function aggregateType(): string;
+
+    /**
+     * ULID of the aggregate this event refers to. Stored as
+     * billing_outbox_events.aggregate_id.
      */
     public function aggregateId(): string;
 
     /**
      * Wall-clock instant when the domain change occurred. Distinct
      * from the dispatch time; for state transitions it equals the
-     * occurred_at column on billing_subscription_state_transitions.
+     * transitioned_at column on billing_subscription_state_transitions.
      */
     public function occurredAt(): \DateTimeImmutable;
 
     /**
-     * Serializable payload for outbox persistence and downstream
-     * consumers. MUST NOT contain Eloquent models or closures.
+     * Serializable payload persisted as billing_outbox_events.payload
+     * and consumed by downstream handlers. MUST NOT contain Eloquent
+     * models or closures.
      *
      * @return array<string, mixed>
      */
