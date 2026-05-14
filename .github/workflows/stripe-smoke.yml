@@ -1,0 +1,85 @@
+name: Stripe Smoke
+
+# Live connectivity smoke test against Stripe test mode.
+# Runs out-of-band from the main ci-cd pipeline because:
+#   - Each run consumes a real Stripe API call (rate-limited resource).
+#   - Stripe outages should not block PR merges; this workflow is
+#     diagnostic, not gating.
+#   - Catching credential expiry, API breakages, or our wiring drift is
+#     more valuable on a daily schedule than on every push.
+#
+# Trigger surface:
+#   - workflow_dispatch: manual run from the Actions tab. Use after
+#     touching anything billing-related to validate against Stripe live
+#     before merging.
+#   - schedule: daily 03:00 UTC (~midnight Argentina). Detects external
+#     breakages overnight so the team learns about them at start of day,
+#     not when shipping a release.
+#
+# The job has a built-in skip path: if STRIPE_TEST_SECRET_KEY is not
+# configured in repo secrets, the test self-skips (see
+# tests/Feature/Billing/Stripe/StripeConnectivitySmokeTest.php). That
+# means a missing secret produces a green run with a warning, not a red
+# failure. This is intentional: the workflow should not flag credential
+# misconfiguration as a Stripe outage.
+#
+# Scope is intentionally narrow: only StripeConnectivitySmokeTest
+# (read-only, balance.retrieve()). StripeWriteSmokeTest is excluded
+# because it creates real customer + subscription rows in Stripe test
+# mode and would accumulate noise in the Dashboard. Write-mode smoke
+# will land in a follow-up PR with cleanup logic.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 03:00 UTC. Cron syntax: minute hour dom month dow.
+    - cron: '0 3 * * *'
+
+env:
+  PHP_VERSION: '8.3'
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
+
+jobs:
+  stripe-connectivity:
+    name: Stripe Connectivity Smoke
+    runs-on: ubuntu-latest
+    # No service containers: this smoke does not touch Postgres or Redis.
+    # The test resolves StripeBillingGateway via the container and calls
+    # Stripe's balance.retrieve() directly. ~30s startup saved vs ci-cd.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, bcmath, curl
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          # Inject Stripe test credentials from GitHub secret.
+          # If the secret is unset, the value resolves to an empty
+          # string and the test will skip itself with a clear message.
+          sed -i "s|^STRIPE_MODE=.*|STRIPE_MODE=test|" .env
+          sed -i "s|^STRIPE_TEST_SECRET_KEY=.*|STRIPE_TEST_SECRET_KEY=${{ secrets.STRIPE_TEST_SECRET_KEY }}|" .env
+
+      - name: Run Stripe connectivity smoke
+        run: php artisan test --group=billing-stripe
