@@ -23,6 +23,7 @@ use App\Services\Billing\OutboxEventWriter;
 use App\Services\Billing\PriceResolver;
 use App\Services\Billing\WebhookEventDispatcher;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -52,6 +53,28 @@ use Throwable;
  */
 final class BillingContainerBindingsTest extends TestCase
 {
+    /**
+     * Stub the Stripe secret key so StripeClientFactory's eager validation
+     * passes during container resolution. This audit only verifies that the
+     * container CAN resolve every billing service, not that Stripe config
+     * is valid in the runtime environment — that's the responsibility of
+     * StripeConnectivitySmokeTest (env-gated, runs against Stripe test mode).
+     *
+     * The stub value is never used for an actual API call: this test only
+     * resolves the binding graph. PR-D / ADR-015 chose fail-fast validation
+     * in StripeClientFactory; this stub is the documented escape hatch for
+     * environments without Stripe credentials (CI default).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Config::set(
+            'billing.gateways.stripe.secret_key',
+            'sk_test_stub_for_container_audit_only'
+        );
+    }
+
     /**
      * Concrete service classes that MUST be container-resolvable.
      *
