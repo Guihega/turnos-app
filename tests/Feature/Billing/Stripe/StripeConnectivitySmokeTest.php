@@ -7,6 +7,7 @@ namespace Tests\Feature\Billing\Stripe;
 use App\Billing\Contracts\BillingGateway;
 use App\Billing\Stripe\StripeBillingGateway;
 use App\Billing\Stripe\StripeClientFactory;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -29,10 +30,9 @@ use Tests\TestCase;
  *   so the real wiring (config path, SDK constructor signature) was
  *   never exercised. A single end-to-end smoke test prevents that
  *   class of regression.
- *
- * @group integration
- * @group billing-stripe
  */
+#[Group('integration')]
+#[Group('billing-stripe')]
 final class StripeConnectivitySmokeTest extends TestCase
 {
     protected function setUp(): void
