@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Billing\CheckoutController;
 use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisplayController;
@@ -82,6 +83,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
         ->middleware('throttle:30,1')
         ->name('onboarding.check-slug');
+
+    // — PR-O: Public checkout flow (plan select + signup + confirmation) —
+    Route::get('/checkout', [CheckoutController::class, 'select'])
+        ->name('checkout.select');
+    Route::get('/checkout/signup', [CheckoutController::class, 'signupForm'])
+        ->name('checkout.signup-form');
+    Route::post('/checkout', [CheckoutController::class, 'signup'])
+        ->middleware('throttle:5,1')
+        ->name('checkout.signup');
+    Route::get('/checkout/confirmation', [CheckoutController::class, 'confirmation'])
+        ->name('checkout.confirmation');
 });
 
 // Two-Factor Authentication Challenge (post-login, before full auth)

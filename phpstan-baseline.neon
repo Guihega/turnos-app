@@ -588,12 +588,7 @@ parameters:
 			count: 1
 			path: app/Http/Controllers/KioskController.php
 
-		-
-			message: '#^Anonymous function has an unused use \$country\.$#'
-			identifier: closure.unusedUse
-			count: 1
-			path: app/Http/Controllers/OnboardingController.php
-
+		
 		-
 			message: '#^Access to an undefined property App\\Models\\Queue\:\:\$waiting_count\.$#'
 			identifier: property.notFound
