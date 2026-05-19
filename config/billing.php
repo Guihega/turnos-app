@@ -263,4 +263,19 @@ return [
         'ARS' => 0,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Operational flag and offsets for NotifyPilotExpirationJob (PR-P).
+    | When disabled, the job becomes a no-op. Offsets are the day counts
+    | before trial_ends_at at which a pilot tenant receives an email
+    | nudge. See MIGRATION_PLAN Fase D.
+    |
+    */
+    'notifications' => [
+        'enabled' => (bool) env('BILLING_NOTIFICATIONS_ENABLED', false),
+        'pilot_expiration_offsets' => [30, 15, 7, 1],
+    ],
 ];

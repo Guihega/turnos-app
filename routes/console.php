@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\Billing\NotifyPilotExpirationJob;
 use App\Jobs\Billing\PublishOutboxEventsJob;
 use App\Jobs\Billing\PurgeOutboxEventsJob;
 use App\Jobs\Billing\PurgeWebhookEventsJob;
@@ -96,3 +97,12 @@ Schedule::job(new PurgeWebhookEventsJob)
     ->withoutOverlapping(3600)
     ->onOneServer()
     ->name('billing:purge-webhook-events');
+
+// ── Billing Pilot Expiration Notifications (PR-P) ──
+// Sends email reminders to tenants in pilot status before their trial ends.
+// Gated by config('billing.notifications.enabled'). See MIGRATION_PLAN Fase D.
+Schedule::job(new NotifyPilotExpirationJob)
+    ->dailyAt('09:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:notify-pilot-expiration');
