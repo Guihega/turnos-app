@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
-use App\Models\Branch;
+use App\Actions\Onboarding\OnboardTenantAction;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Spatie\LaravelCipherSweet\Rules\EncryptedUniqueRule;
@@ -38,12 +34,14 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Process the onboarding: create tenant, admin user, and first branch.
+     * Process the onboarding: validate input, delegate to
+     * OnboardTenantAction for tenant/user/branch creation, then handle
+     * HTTP-layer post-actions (registered event, auto-login, redirect).
      *
-     * All three are created in a single DB transaction so we never end up
-     * with orphaned records if something fails mid-way.
+     * Action extracted in PR-O to enable reuse from CheckoutController.
+     * Behavior here is unchanged; OnboardingTest must still pass.
      */
-    public function store(Request $request)
+    public function store(Request $request, OnboardTenantAction $onboardTenant)
     {
         // Si viene de registro social, password es opcional
         $socialData = session('social_registration');
@@ -80,76 +78,7 @@ class OnboardingController extends Controller
             'branch_schedule' => ['nullable', 'array'],
         ]);
 
-        $country = $validated['branch_country']
-            ?? $validated['company_country']
-            ?? 'MX';
-
-        $timezone = $validated['branch_timezone']
-            ?? $this->timezoneForCountry($country);
-
-        $result = DB::transaction(function () use ($validated, $country, $timezone, $socialData, $isSocialRegistration) {
-            // 1. Create the tenant
-            $tenant = Tenant::create([
-                'name' => $validated['company_name'],
-                'slug' => $validated['slug'],
-                'email' => $validated['email'],
-                'phone' => $validated['company_phone'] ?? null,
-                'timezone' => $timezone,
-                'is_active' => true,
-                'settings' => [],
-            ]);
-
-            // 2. Create the admin user attached to this tenant
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => ! empty($validated['password'])
-                            ? Hash::make($validated['password'])
-                            : '',
-                'tenant_id' => $tenant->id,
-                'role' => UserRole::TENANT_ADMIN,
-            ]);
-
-            // 3. Vincular cuenta social si viene de OAuth
-            if ($isSocialRegistration && $socialData) {
-                $user->socialAccounts()->create([
-                    'provider' => $socialData['provider'],
-                    'provider_id' => $socialData['provider_id'],
-                    'provider_email' => $socialData['email'],
-                    'provider_avatar' => $socialData['avatar'],
-                    'provider_token' => $socialData['token'],
-                ]);
-
-                // Si el email coincide con el del provider, marcar como verificado
-                if ($user->email === $socialData['email'] && ! $user->hasVerifiedEmail()) {
-                    $user->markEmailAsVerified();
-                }
-            }
-
-            // 4. Create the first branch
-            $branch = Branch::create([
-                'tenant_id' => $tenant->id,
-                'name' => $validated['branch_name'],
-                'code' => $validated['branch_code'],
-                'slug' => Str::slug($validated['branch_name']),
-                'address' => $validated['branch_address'] ?? null,
-                'city' => $validated['branch_city'] ?? null,
-                'state' => $validated['branch_state'] ?? null,
-                'country' => $validated['branch_country'] ?? $validated['company_country'] ?? 'MX',
-                'timezone' => $timezone,
-                'latitude' => $validated['branch_latitude'] ?? null,
-                'longitude' => $validated['branch_longitude'] ?? null,
-                'is_active' => true,
-                'operating_hours' => $validated['branch_schedule'] ?? $this->defaultSchedule(),
-                'max_daily_tickets' => 200,
-                'max_concurrent_waiting' => 30,
-            ]);
-
-            // 5. Attach user to the branch
-            $user->branches()->attach($branch->id);
-
-            return compact('tenant', 'user', 'branch');
-        });
+        $result = $onboardTenant->execute($validated, $socialData);
 
         // Limpiar datos de social registration de la sesión
         session()->forget('social_registration');
@@ -176,56 +105,5 @@ class OnboardingController extends Controller
         $available = ! Tenant::where('slug', $request->slug)->exists();
 
         return response()->json(['available' => $available]);
-    }
-
-    /**
-     * Default business hours schedule (Mon-Fri 9-18, Sat 9-14, Sun closed).
-     */
-    private function defaultSchedule(): array
-    {
-        $weekday = ['open' => '09:00', 'close' => '18:00', 'is_open' => true];
-        $saturday = ['open' => '09:00', 'close' => '14:00', 'is_open' => true];
-        $sunday = ['open' => null, 'close' => null, 'is_open' => false];
-
-        return [
-            'monday' => $weekday,
-            'tuesday' => $weekday,
-            'wednesday' => $weekday,
-            'thursday' => $weekday,
-            'friday' => $weekday,
-            'saturday' => $saturday,
-            'sunday' => $sunday,
-        ];
-    }
-
-    /**
-     * Map country code to a sensible default timezone.
-     */
-    private function timezoneForCountry(string $country): string
-    {
-        $map = [
-            'MX' => 'America/Mexico_City',
-            'CO' => 'America/Bogota',
-            'PE' => 'America/Lima',
-            'CL' => 'America/Santiago',
-            'AR' => 'America/Argentina/Buenos_Aires',
-            'EC' => 'America/Guayaquil',
-            'BO' => 'America/La_Paz',
-            'PY' => 'America/Asuncion',
-            'UY' => 'America/Montevideo',
-            'VE' => 'America/Caracas',
-            'BR' => 'America/Sao_Paulo',
-            'GT' => 'America/Guatemala',
-            'CR' => 'America/Costa_Rica',
-            'PA' => 'America/Panama',
-            'SV' => 'America/El_Salvador',
-            'HN' => 'America/Tegucigalpa',
-            'NI' => 'America/Managua',
-            'DO' => 'America/Santo_Domingo',
-            'US' => 'America/New_York',
-            'ES' => 'Europe/Madrid',
-        ];
-
-        return $map[strtoupper($country)] ?? 'America/Mexico_City';
     }
 }
