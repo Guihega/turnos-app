@@ -101,6 +101,11 @@ class Subscription extends Model
         return $this->hasMany(Invoice::class, 'subscription_id');
     }
 
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(Entitlement::class, 'subscription_id');
+    }
+
     /**
      * Estados que se consideran "activos" (con derecho a usar el producto).
      * Coincide con la condición del unique partial index en BD.
