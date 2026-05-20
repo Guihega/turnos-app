@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Billing\EntitlementGrant;
 use App\Models\Concerns\HasTenantSettings;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ */
 class Tenant extends Model
 {
     use HasFactory, HasTenantSettings, HasUlids, SoftDeletes;
@@ -50,6 +54,11 @@ class Tenant extends Model
     public function activeBranches(): HasMany
     {
         return $this->branches()->where('is_active', true);
+    }
+
+    public function entitlementGrants(): HasMany
+    {
+        return $this->hasMany(EntitlementGrant::class, 'tenant_id');
     }
 
     // ── Scopes ──
