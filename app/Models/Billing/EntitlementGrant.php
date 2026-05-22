@@ -39,6 +39,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $expires_at
  * @property Carbon|null $revoked_at
  * @property array<string, mixed>|null $metadata
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<EntitlementGrant> active()
  */
 class EntitlementGrant extends Model
 {

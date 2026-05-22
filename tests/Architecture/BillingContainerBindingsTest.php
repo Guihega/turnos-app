@@ -18,6 +18,7 @@ use App\Billing\Webhooks\Handlers\InvoicePaymentFailedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionDeletedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionUpdatedHandler;
 use App\Billing\Webhooks\Handlers\TrialWillEndHandler;
+use App\Services\Billing\EntitlementService;
 use App\Services\Billing\OutboxEventDispatcher;
 use App\Services\Billing\OutboxEventWriter;
 use App\Services\Billing\PriceResolver;
@@ -102,6 +103,7 @@ final class BillingContainerBindingsTest extends TestCase
         yield 'TrialWillEndHandler' => [TrialWillEndHandler::class];
 
         // Services
+        yield 'EntitlementService' => [EntitlementService::class];
         yield 'OutboxEventDispatcher' => [OutboxEventDispatcher::class];
         yield 'OutboxEventWriter' => [OutboxEventWriter::class];
         yield 'PriceResolver' => [PriceResolver::class];

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models\Billing;
 
+use App\Billing\DTOs\ResolvedEntitlements;
+use App\Models\Tenant;
+use App\Services\Billing\EntitlementService;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -72,6 +75,19 @@ class Entitlement extends Model
             'value_boolean' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    /**
+     * Resolve the effective entitlements for a tenant.
+     *
+     * Facade over EntitlementService (per SPEC §4): the product calls
+     * Entitlement::for($tenant)->has('whitelabel.full') and friends,
+     * without knowing how subscriptions, grants, and the dual-read
+     * fallback are stitched together.
+     */
+    public static function for(Tenant $tenant): ResolvedEntitlements
+    {
+        return app(EntitlementService::class)->for($tenant);
     }
 
     public function subscription(): BelongsTo

@@ -278,4 +278,28 @@ return [
         'enabled' => (bool) env('BILLING_NOTIFICATIONS_ENABLED', false),
         'pilot_expiration_offsets' => [30, 15, 7, 1],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enforcement
+    |--------------------------------------------------------------------------
+    |
+    | Master switch for entitlement enforcement (MIGRATION_PLAN Fase F).
+    |
+    | While false (Fases A-E), EntitlementService runs in dual-read mode:
+    | features not yet materialized into billing_entitlements fall back to
+    | the plan catalog (billing_plan_features), so behaviour is unchanged.
+    | The product may already call Entitlement::for() and log what *would*
+    | be blocked, without blocking anything.
+    |
+    | When true, billing_entitlements becomes authoritative: a missing
+    | entitlement means no access, and the dual-read fallback is skipped.
+    | Flip only after the Fase F pre-requisites are met. Rollback = flip
+    | back to false; no data changes.
+    |
+    */
+
+    'enforcement' => [
+        'enabled' => (bool) env('BILLING_ENFORCEMENT_ENABLED', false),
+    ],
 ];
