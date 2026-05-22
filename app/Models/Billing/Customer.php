@@ -71,4 +71,15 @@ class Customer extends Model
     {
         return $this->hasMany(CustomerGatewayRef::class);
     }
+
+    /**
+     * All subscriptions billed to this customer (history included).
+     *
+     * The currently-effective one is resolved by EntitlementService via
+     * SubscriptionStatus::grantsAccess(); see Tenant::activeSubscription().
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
 }
