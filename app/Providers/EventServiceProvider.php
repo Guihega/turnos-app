@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\Billing\SubscriptionCreated;
 use App\Events\TicketCalled;
 use App\Events\TicketCompleted;
 use App\Events\TicketIssued;
 use App\Events\TicketTransferred;
+use App\Listeners\Billing\MaterializeEntitlementsOnSubscriptionCreated;
 use App\Listeners\InvalidateTicketCaches;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -31,6 +33,13 @@ class EventServiceProvider extends ServiceProvider
         ],
         TicketTransferred::class => [
             InvalidateTicketCaches::class,
+        ],
+
+        // Billing lifecycle events: materialize plan-derived
+        // entitlements when a subscription is created (post-commit,
+        // synchronous; see the listener docblock).
+        SubscriptionCreated::class => [
+            MaterializeEntitlementsOnSubscriptionCreated::class,
         ],
     ];
 
