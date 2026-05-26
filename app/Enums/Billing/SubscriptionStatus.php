@@ -68,6 +68,29 @@ enum SubscriptionStatus: string
         };
     }
 
+    /**
+     * The status values that occupy a customer's single active-subscription
+     * slot, mirroring the partial unique index
+     * one_active_subscription_per_customer (see the billing_subscriptions
+     * migration). A customer may hold at most one subscription in any of
+     * these states at a time.
+     *
+     * NOTE: this set is intentionally broader than grantsAccess(): a paused
+     * subscription does not grant access but still occupies the slot.
+     *
+     * @return list<string>
+     */
+    public static function activeSlotValues(): array
+    {
+        return [
+            self::Pilot->value,
+            self::Trialing->value,
+            self::Active->value,
+            self::PastDue->value,
+            self::Paused->value,
+        ];
+    }
+
     public function isTerminal(): bool
     {
         return $this === self::Canceled;
