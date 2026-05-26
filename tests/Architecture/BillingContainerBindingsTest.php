@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Architecture;
 
 use App\Actions\Billing\CreateCustomerAction;
+use App\Actions\Billing\CreatePilotSubscriptionAction;
 use App\Actions\Billing\CreateSubscriptionAction;
 use App\Actions\Billing\MaterializeEntitlementsAction;
 use App\Actions\Billing\TransitionSubscriptionAction;
@@ -86,6 +87,7 @@ final class BillingContainerBindingsTest extends TestCase
     {
         // Actions
         yield 'CreateCustomerAction' => [CreateCustomerAction::class];
+        yield 'CreatePilotSubscriptionAction' => [CreatePilotSubscriptionAction::class];
         yield 'CreateSubscriptionAction' => [CreateSubscriptionAction::class];
         yield 'MaterializeEntitlementsAction' => [MaterializeEntitlementsAction::class];
         yield 'TransitionSubscriptionAction' => [TransitionSubscriptionAction::class];
