@@ -13,6 +13,9 @@ use App\Models\Billing\PlanFeature;
 use App\Models\Billing\Subscription;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Mockery;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -244,5 +247,81 @@ final class EntitlementServiceTest extends TestCase
         ]);
 
         $this->assertTrue(Entitlement::for($tenant)->has('whitelabel.full'));
+    }
+
+    // ── Enforcement-mode logging (PR-T) ─────────────────────────────
+
+    #[Test]
+    public function it_logs_a_denial_for_each_plan_feature_not_materialized_when_enforcement_is_on(): void
+    {
+        config(['billing.enforcement.enabled' => true]);
+        [$tenant, $subscription, $plan] = $this->makeActiveSubscription();
+
+        // Plan offers a feature but no Entitlement row was materialized.
+        $feature = Feature::factory()->quota()->create(['code' => 'branches.max']);
+        PlanFeature::factory()->forQuota(3)->create([
+            'plan_id' => $plan->id,
+            'feature_id' => $feature->id,
+        ]);
+
+        /** @var MockInterface $logSpy */
+        $logSpy = Log::spy();
+
+        Entitlement::for($tenant);
+
+        $logSpy->shouldHaveReceived('info')
+            ->once()
+            ->with('billing.entitlement.denied', Mockery::on(function (array $payload) use ($tenant, $subscription): bool {
+                return $payload['tenant_id'] === $tenant->id
+                    && $payload['feature_code'] === 'branches.max'
+                    && $payload['subscription_id'] === $subscription->id
+                    && $payload['reason'] === 'not_materialized';
+            }));
+    }
+
+    #[Test]
+    public function it_does_not_log_denials_when_enforcement_is_off(): void
+    {
+        config(['billing.enforcement.enabled' => false]);
+        [$tenant, , $plan] = $this->makeActiveSubscription();
+
+        $feature = Feature::factory()->quota()->create(['code' => 'branches.max']);
+        PlanFeature::factory()->forQuota(3)->create([
+            'plan_id' => $plan->id,
+            'feature_id' => $feature->id,
+        ]);
+
+        /** @var MockInterface $logSpy */
+        $logSpy = Log::spy();
+
+        Entitlement::for($tenant);
+
+        $logSpy->shouldNotHaveReceived('info', ['billing.entitlement.denied']);
+    }
+
+    #[Test]
+    public function it_does_not_log_denials_when_all_plan_features_are_materialized(): void
+    {
+        config(['billing.enforcement.enabled' => true]);
+        [$tenant, $subscription, $plan] = $this->makeActiveSubscription();
+
+        $feature = Feature::factory()->quota()->create(['code' => 'branches.max']);
+        PlanFeature::factory()->forQuota(3)->create([
+            'plan_id' => $plan->id,
+            'feature_id' => $feature->id,
+        ]);
+        Entitlement::factory()->create([
+            'subscription_id' => $subscription->id,
+            'feature_id' => $feature->id,
+            'value_numeric' => 3,
+            'value_boolean' => null,
+        ]);
+
+        /** @var MockInterface $logSpy */
+        $logSpy = Log::spy();
+
+        Entitlement::for($tenant);
+
+        $logSpy->shouldNotHaveReceived('info', ['billing.entitlement.denied']);
     }
 }

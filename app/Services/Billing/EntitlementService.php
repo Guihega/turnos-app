@@ -12,6 +12,7 @@ use App\Models\Billing\PlanFeature;
 use App\Models\Billing\Subscription;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Resolves a tenant's effective entitlements into a ResolvedEntitlements
@@ -74,22 +75,41 @@ final class EntitlementService
             $values[$feature->code] = $this->extractGrant($grant);
         }
 
-        // Dual-read fallback (Fase C): catalog values for features not yet
-        // materialized, only while enforcement is disabled.
-        if (! (bool) config('billing.enforcement.enabled')) {
-            /** @var Collection<int, PlanFeature> $planFeatures */
-            $planFeatures = PlanFeature::query()
-                ->where('plan_id', $subscription->plan_id)
-                ->with('feature:id,code')
-                ->get();
+        // Plan catalog: read once, used either to fill the snapshot (when
+        // enforcement is disabled, Fase C dual-read) or to detect denials
+        // for observability (when enforcement is enabled, Fase F).
+        /** @var Collection<int, PlanFeature> $planFeatures */
+        $planFeatures = PlanFeature::query()
+            ->where('plan_id', $subscription->plan_id)
+            ->with('feature:id,code')
+            ->get();
 
-            foreach ($planFeatures as $planFeature) {
-                /** @var Feature $feature */
-                $feature = $planFeature->feature;
-                if (! array_key_exists($feature->code, $values)) {
-                    $values[$feature->code] = $this->extractPlanFeature($planFeature);
-                }
+        $enforcementEnabled = (bool) config('billing.enforcement.enabled');
+
+        foreach ($planFeatures as $planFeature) {
+            /** @var Feature $feature */
+            $feature = $planFeature->feature;
+            if (array_key_exists($feature->code, $values)) {
+                continue;
             }
+
+            if ($enforcementEnabled) {
+                // Fase F: a plan feature not materialized into
+                // billing_entitlements is denied. Log structured so the
+                // metric is aggregable in dashboards (MIGRATION_PLAN Fase F
+                // verification: 'metricas de bloqueos por entitlement').
+                Log::info('billing.entitlement.denied', [
+                    'tenant_id' => $tenant->id,
+                    'feature_code' => $feature->code,
+                    'subscription_id' => $subscription->id,
+                    'reason' => 'not_materialized',
+                ]);
+
+                continue;
+            }
+
+            // Fase C dual-read fallback: fill the snapshot from the catalog.
+            $values[$feature->code] = $this->extractPlanFeature($planFeature);
         }
 
         return new ResolvedEntitlements($values);

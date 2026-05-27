@@ -166,7 +166,8 @@ Mientras `billing.enforcement.enabled = false`:
 
 **Impacto en producción:**
 - Tenants con uso por encima de sus entitlements: bloqueo en próxima acción.
-- Tenants en `pilot` cuya `trial_end` ya pasó: pasan a `past_due` en el próximo run del job.
+- Tenants en `pilot` cuya `trial_end` ya pasó: pasan a `canceled` en el próximo run del job.
+  - **Nota (PR-T):** la versión original de este plan decía `past_due`. Se rectifica a `canceled` para alinear con **ADR-014 §4**: un `pilot` no tiene método de pago ni plan comprometido, por lo que `past_due` no aplica (no hay nada que reclamar). La matriz `ALLOWED` del state machine ya contempla `pilot → canceled` con actor `(J)` (job). El job que materializa esta transición es `CancelExpiredPilotsJob` (gated por `billing.trial_expiration.enabled`).
 
 **Pre-requisitos para activar:**
 - Fase D corriendo > 30 días: todos los tenants tuvieron al menos un mes de aviso.
