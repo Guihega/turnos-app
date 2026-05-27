@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Billing\OnboardPilotAction;
 use App\Actions\Onboarding\OnboardTenantAction;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Spatie\LaravelCipherSweet\Rules\EncryptedUniqueRule;
@@ -41,7 +43,7 @@ class OnboardingController extends Controller
      * Action extracted in PR-O to enable reuse from CheckoutController.
      * Behavior here is unchanged; OnboardingTest must still pass.
      */
-    public function store(Request $request, OnboardTenantAction $onboardTenant)
+    public function store(Request $request, OnboardTenantAction $onboardTenant, OnboardPilotAction $onboardPilot)
     {
         // Si viene de registro social, password es opcional
         $socialData = session('social_registration');
@@ -79,6 +81,19 @@ class OnboardingController extends Controller
         ]);
 
         $result = $onboardTenant->execute($validated, $socialData);
+
+        // Provision pilot billing for the freshly created tenant. Best-effort:
+        // a billing failure must not abort the user's onboarding. The
+        // billing:backfill-existing-tenants command is the safety net for any
+        // tenant left without billing here, and OnboardPilotAction is idempotent.
+        try {
+            $onboardPilot->execute($result['tenant']);
+        } catch (\Throwable $e) {
+            Log::error('[Onboarding] Pilot billing provisioning failed', [
+                'tenant_id' => $result['tenant']->id,
+                'exception' => $e,
+            ]);
+        }
 
         // Limpiar datos de social registration de la sesión
         session()->forget('social_registration');

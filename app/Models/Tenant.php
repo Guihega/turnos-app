@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -62,6 +63,17 @@ class Tenant extends Model
     public function entitlementGrants(): HasMany
     {
         return $this->hasMany(EntitlementGrant::class, 'tenant_id');
+    }
+
+    /**
+     * The billing Customer for this tenant (1:1). Null until billing is
+     * provisioned (e.g. via OnboardPilotAction or the paid checkout flow).
+     *
+     * @return HasOne<Customer, $this>
+     */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(Customer::class);
     }
 
     /**

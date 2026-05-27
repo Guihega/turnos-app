@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Architecture;
 
 use App\Actions\Billing\CreateCustomerAction;
+use App\Actions\Billing\CreatePilotCustomerAction;
 use App\Actions\Billing\CreatePilotSubscriptionAction;
 use App\Actions\Billing\CreateSubscriptionAction;
 use App\Actions\Billing\MaterializeEntitlementsAction;
+use App\Actions\Billing\OnboardPilotAction;
 use App\Actions\Billing\TransitionSubscriptionAction;
 use App\Billing\Contracts\BillingGateway;
 use App\Billing\Contracts\BillingGatewayWriter;
@@ -87,9 +89,11 @@ final class BillingContainerBindingsTest extends TestCase
     {
         // Actions
         yield 'CreateCustomerAction' => [CreateCustomerAction::class];
+        yield 'CreatePilotCustomerAction' => [CreatePilotCustomerAction::class];
         yield 'CreatePilotSubscriptionAction' => [CreatePilotSubscriptionAction::class];
         yield 'CreateSubscriptionAction' => [CreateSubscriptionAction::class];
         yield 'MaterializeEntitlementsAction' => [MaterializeEntitlementsAction::class];
+        yield 'OnboardPilotAction' => [OnboardPilotAction::class];
         yield 'TransitionSubscriptionAction' => [TransitionSubscriptionAction::class];
 
         // Outbox handlers (PR-I)
