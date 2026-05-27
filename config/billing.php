@@ -281,6 +281,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trial expiration
+    |--------------------------------------------------------------------------
+    |
+    | Operational flag for CancelExpiredPilotsJob (PR-T). When enabled,
+    | the nightly job transitions every pilot Subscription whose
+    | trial_ends_at has passed into Canceled, via the canonical
+    | TransitionSubscriptionAction. Disabled by default so the job can
+    | be scheduled before being switched on (mirrors notifications).
+    | See ADR-014 (the pilot -> canceled transition is the intended
+    | trial-expiry path; pilot -> past_due is intentionally NOT modeled
+    | because a pilot has no payment method or committed plan).
+    |
+    */
+    'trial_expiration' => [
+        'enabled' => (bool) env('BILLING_TRIAL_EXPIRATION_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Enforcement
     |--------------------------------------------------------------------------
     |
