@@ -64,8 +64,6 @@ class KioskController extends Controller
         $tenant = $branch->tenant;
         $security = $tenant->getEffectiveSettings()['security'] ?? [];
         $botProtection = $security['bot_protection'] ?? true;
-        // TODO(Q1, docs/billing/OPEN_QUESTIONS.md): $security['max_concurrent_waiting'] — leído
-        // desde tenant_settings JSON. Q1 también cubre la duplicación con $branch->max_concurrent_waiting.
         $maxConcurrent = $security['max_concurrent_waiting'] ?? 50;
         $requireName = $security['require_customer_name'] ?? false;
 
@@ -111,8 +109,6 @@ class KioskController extends Controller
         }
 
         // Max concurrent waiting check (branch limit takes precedence, tenant overrides as ceiling)
-        // TODO(Q1, docs/billing/OPEN_QUESTIONS.md): $branch->max_concurrent_waiting — ¿operational
-        // config o plan-feature? Si Lectura B, migrar a entitlement. No tocar hasta Q1.
         $branchMax = $branch->max_concurrent_waiting ?? 50;
         $effectiveMax = min($branchMax, $maxConcurrent);
         if ($branch->activeWaitingCount() >= $effectiveMax) {
