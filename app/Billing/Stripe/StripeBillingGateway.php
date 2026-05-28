@@ -276,9 +276,11 @@ final class StripeBillingGateway implements BillingGateway, BillingGatewayWriter
                 $payload['name'] = $input->name;
             }
 
-            // TODO(ADR-016): map $input->taxId via tax_ids->create() in a
-            // follow-up. Same for billing_address (Stripe expects a nested
-            // object with line1/line2/city/state/postal_code/country).
+            // Customer enrichment (taxId, billing_address) intentionally not
+            // wired to Stripe yet. See ADR-021 (deferred until product input
+            // resolves type formats, validation, encryption, backfill UX).
+            // - KI-001 (tax_id silent loss): docs/billing/KNOWN_ISSUES.md
+            // - KI-002 (billing_address gap): docs/billing/KNOWN_ISSUES.md
 
             /** @var Customer $customer */
             $customer = $this->client->customers->create(
