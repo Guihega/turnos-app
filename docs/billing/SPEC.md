@@ -20,7 +20,7 @@ Olinora es un SaaS multi-tenant de gestión de turnos / colas / atención presen
 | Unidad de cobro | Tenant |
 | Modelo de pricing | Tiers fijos con sucursales incluidas + cobro por sucursal adicional (metered, **diferido a Fase 5**) |
 | Onboarding gratis | Plan `pilot` con 90 días de expiración → fuerza upgrade |
-| Pasarela primaria (Fase 2) | Stripe |
+| Pasarela primaria | Stripe |
 | Pasarelas siguientes | Mercado Pago (Fase 4); OpenPay/Conekta y PayPal en backlog |
 | Multi-moneda | MXN, USD, COP, ARS, CLP, PEN |
 | Facturación fiscal MX | NO en MVP. Solo PDF comercial. CFDI 4.0 queda en backlog |
@@ -45,20 +45,20 @@ Olinora es un SaaS multi-tenant de gestión de turnos / colas / atención presen
 - **Feature** — capacidad del producto (boolean | quota | metered | string).
 - **PlanFeature** — entitlements base de cada plan.
 - **Price** — precio concreto de un Plan en una moneda + país + intervalo.
-- **Subscription** — suscripción activa de un Customer a un Plan/Price. *(Fase 2)*
-- **SubscriptionItem** — componentes de la suscripción (base + add-ons + metered). *(Fase 2)*
-- **SubscriptionStateTransition** — auditoría inmutable de cambios de estado. *(Fase 2)*
-- **Entitlement** — vista materializada por tenant que el resto de la app consulta en runtime. *(Fase 3)*
+- **Subscription** — suscripción activa de un Customer a un Plan/Price.
+- **SubscriptionItem** — componentes de la suscripción (base + add-ons + metered).
+- **SubscriptionStateTransition** — auditoría inmutable de cambios de estado.
+- **Entitlement** — vista materializada por tenant que el resto de la app consulta en runtime.
 - **UsageRecord** — registro inmutable e idempotente de consumo. *(Fase 5)*
-- **Invoice** — factura emitida (PDF comercial; CFDI fiscal queda fuera de MVP). *(Fase 2)*
-- **InvoiceLine** — línea de factura. *(Fase 2)*
-- **Payment** — intento de cobro contra una Invoice. *(Fase 2)*
-- **PaymentMethod** — método tokenizado (NUNCA PAN). *(Fase 2)*
-- **RefundRequest** — devolución con flujo de aprobación. *(Fase 2)*
-- **DunningAttempt** — intento de recuperación de cobro fallido. *(Fase 2)*
-- **WebhookEvent** — registro de todo webhook entrante (auditoría + idempotencia). *(Fase 2)*
-- **OutboxEvent** — eventos de dominio pendientes de publicar. *(Fase 2)*
-- **AuditLog** — bitácora de acciones administrativas. *(Fase 2)*
+- **Invoice** — factura emitida (PDF comercial; CFDI fiscal queda fuera de MVP).
+- **InvoiceLine** — línea de factura.
+- **Payment** — intento de cobro contra una Invoice.
+- **PaymentMethod** — método tokenizado (NUNCA PAN).
+- **RefundRequest** — devolución con flujo de aprobación.
+- **DunningAttempt** — intento de recuperación de cobro fallido.
+- **WebhookEvent** — registro de todo webhook entrante (auditoría + idempotencia).
+- **OutboxEvent** — eventos de dominio pendientes de publicar.
+- **AuditLog** — bitácora de acciones administrativas.
 
 > **Estado a 2026-05-06:** Customer, CustomerGatewayRef, Plan, Feature, PlanFeature, Price implementadas (Fase 1, PRs #5–#7). El resto se construye en fases posteriores.
 
@@ -195,7 +195,7 @@ abort_if($used >= $max, 403, 'Límite de sucursales alcanzado.');
 $tier = Entitlement::for($tenant)->string('support.tier');
 ```
 
-> El servicio `Entitlement::for()` se implementa en Fase 3. Hasta entonces, lecturas directas a `billing_plan_features` vía Eloquent (uso temporal, refactorizable).
+> El servicio `Entitlement::for()` está implementado (Fase 3 cerrada en PR-Q a PR-V). Es la única vía autorizada de lectura de entitlements desde el código del producto.
 
 ---
 
@@ -264,7 +264,7 @@ database/migrations/2026_05_*_billing_*.php   (PR #5)
 database/seeders/Billing/          (PR #6)
 database/factories/Billing/        (PR #7)
 tests/Feature/Billing/             (PR #7)
-tests/Unit/Billing/                (Fase 2+)
+tests/Unit/Billing/                (cobertura activa)
 docs/billing/                      SPEC.md, DECISIONS.md, MIGRATION_PLAN.md, BACKLOG.md, SECRETS.md
 ```
 
@@ -417,18 +417,18 @@ tests/
     PlanCatalogTest.php               ✅ (PR #7)
     CustomerTest.php                  ✅ (PR #7)
     EntitlementsResolutionTest.php    ✅ (PR #7)
-    SubscriptionLifecycleTest.php     (Fase 2)
-    StripeWebhookTest.php             (Fase 2)
-    UsageMeteredTest.php              (Fase 5)
-    DunningTest.php                   (Fase 2)
-    RefundFlowTest.php                (Fase 2)
-    GatewayResolverTest.php           (Fase 4)
-    TenantIsolationTest.php           (Fase 2 — partial in PR #7)
+    SubscriptionLifecycleTest.php     ✅ (Fase 2)
+    StripeWebhookTest.php             ✅ (Fase 2)
+    UsageMeteredTest.php              📋 (Fase 5)
+    DunningTest.php                   ✅ (Fase 2)
+    RefundFlowTest.php                ✅ (Fase 2)
+    GatewayResolverTest.php           📋 (Fase 4)
+    TenantIsolationTest.php           ✅ (Fase 2 — partial in PR #7)
   Unit/Billing/
-    StateMachine/SubscriptionStateMachineTest.php   (Fase 2)
-    ValueObjects/MoneyTest.php                       (Fase 2)
-    ValueObjects/CurrencyTest.php                    (Fase 2)
-    ProrationCalculatorTest.php                      (Fase 2)
+    StateMachine/SubscriptionStateMachineTest.php   ✅ (Fase 2)
+    ValueObjects/MoneyTest.php                       ✅ (Fase 2)
+    ValueObjects/CurrencyTest.php                    ✅ (Fase 2)
+    ProrationCalculatorTest.php                      ✅ (Fase 2)
 ```
 
 ---
@@ -469,14 +469,14 @@ Vía Telegram (ya configurado en el proyecto) + email a SuperAdmin:
 | **0 — Fundamentos** | docs, CI, Larastan, plantillas | ✅ cerrada (PRs #1–#4) |
 | **1 — Catálogo y Customers** | Migraciones, modelos, enums, seeders, factories, tests Feature | ✅ cerrada (PRs #5–#7) |
 | **1b — Phase 2 prep** | config/billing.php, secrets docs, ADR-012, ADR-013, queues Horizon | ✅ cerrada (PRs #8–#9) |
-| **2 — Stripe end-to-end** | Adapter Stripe, checkout, webhooks, Subscription, máquina de estados, dunning, reconciliación | ⏳ en arranque |
-| **3 — Entitlements + migración del estado actual** | Servicio Entitlement, backfill de tenants existentes, lectura dual con flag | pendiente |
+| **2 — Stripe end-to-end** | Adapter Stripe, checkout, webhooks, Subscription, máquina de estados, dunning, reconciliación | ✅ cerrada (PRs A-J) |
+| **3 — Entitlements + migración del estado actual** | Servicio Entitlement, backfill de tenants existentes, lectura dual con flag | ✅ cerrada (PRs Q-V) |
 | **4 — Mercado Pago** | Segundo adapter, GatewayResolver, contract tests | pendiente |
 | **5 — Cobro por sucursales extra (metered)** | UsageRecord, agregación, factura con extras, schema delta a `billing_prices` | pendiente |
 | **6 — Hardening** | Métricas, dashboards, runbooks, alertas | pendiente |
 | **Backlog** | OpenPay/Conekta, PayPal, CFDI 4.0, SSO empresarial, secrets manager | — |
 
-**MVP en producción:** estimación original ~3 meses con un dev senior full-time. Recalibrar tras cierre de Fase 2.
+**MVP en producción:** estimación original ~3 meses con un dev senior full-time. Fases 2 y 3 cerradas (mayo 2026). Próximas: Fase 4 (MercadoPago), Fase 5 (metered), Fase 6 (hardening). Recalibrar tras cierre de Fase 4.
 
 ---
 
