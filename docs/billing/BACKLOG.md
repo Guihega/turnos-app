@@ -110,8 +110,8 @@ el producto las requiera.
 | `reports.retention_days` | quota | Producto aún no expone reportes con retención variable. Sembrar cuando exista la infra de retention en módulo Reports. | Post-MVP |
 | `whitelabel.custom_domain` | boolean | Requiere DNS automation y validación TLS. Subsistema separado. | Fase 6+ |
 | `announcements.media` | boolean | Feature de producto (anuncios multimedia en pantallas), no de billing. Sembrar cuando el módulo Display soporte media. | Post-MVP |
-| `alerts.telegram` | boolean | Telegram ya está disponible globalmente. Solo tendría sentido gatear si se decide cobrarlo como diferenciador. Decisión pendiente. | TBD |
-| `auth.2fa_required_admins` | boolean | 2FA ya está implementado y forzado para admins en código. Sembrar como feature billing solo si se decide hacerla opcional para algunos planes. | TBD |
+| `alerts.telegram` | boolean | **Decisión PR-Y (2026-05-28):** no gatear. Telegram permanece disponible globalmente, sin diferenciación por plan. | Cerrado |
+| `auth.2fa_required_admins` | boolean | **Decisión PR-Y (2026-05-28):** no gatear. 2FA permanece forzado para admins en todos los planes (status quo). | Cerrado |
 | `audit.advanced` | boolean | Requiere panel de auditoría avanzada (no MVP). | Fase 6+ |
 | `sso.enabled` | boolean | Solo plan `enterprise`. Implementar cuando llegue el primer cliente enterprise. | Pull-driven |
 
