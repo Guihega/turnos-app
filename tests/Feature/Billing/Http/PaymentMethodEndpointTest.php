@@ -13,6 +13,7 @@ use App\Models\Billing\CustomerGatewayRef;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,32 @@ use Tests\TestCase;
 final class PaymentMethodEndpointTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Stub Stripe credentials so StripeClientFactory's eager validation
+     * passes during container resolution. The controller's action
+     * dependencies (CreateSetupIntentAction, UpdatePaymentMethodAction)
+     * inject BillingGatewayWriter, which the provider binds to
+     * StripeBillingGateway → StripeClientFactory::make(). Without these
+     * stubs, every test in this file 500s during controller resolution
+     * (before assertions run) in environments without Stripe env vars
+     * (CI default). Stub values are never used for real API calls — the
+     * BillingGatewayWriter is mocked per-test (see class docblock). This
+     * mirrors the pattern in BillingContainerBindingsTest::setUp().
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Config::set(
+            'billing.gateways.stripe.secret_key',
+            'sk_test_stub_for_container_audit_only'
+        );
+        Config::set(
+            'billing.gateways.stripe.public_key',
+            'pk_test_stub_for_container_audit_only'
+        );
+    }
 
     protected function tearDown(): void
     {
