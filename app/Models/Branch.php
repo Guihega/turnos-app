@@ -117,6 +117,11 @@ class Branch extends Model
             ->count();
     }
 
+    /**
+     * TODO(Q1, docs/billing/OPEN_QUESTIONS.md): $this->max_daily_tickets — ¿operational
+     * config o plan-feature? Si Q1 se resuelve como Lectura B, este método debe consultar
+     * el entitlement correspondiente (dual-read con fallback a columna). No tocar hasta Q1.
+     */
     public function canIssueTicket(): bool
     {
         return $this->is_active
