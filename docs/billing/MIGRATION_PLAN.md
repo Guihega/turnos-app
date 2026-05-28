@@ -10,7 +10,7 @@
 
 - N tenants existentes en producción (todos sin suscripción asociada).
 - El onboarding público crea tenants gratis sin límite temporal.
-- Modelos `Tenant`, `Branch`, `User` con campos como `max_concurrent_waiting`, `max_daily_tickets` hardcoded en `Branch` (ver `OPEN_QUESTIONS.md` Q1 — la naturaleza "hardcoded" de estos dos campos en particular está bajo revisión).
+- Modelos `Tenant`, `Branch`, `User` con límites de plan hardcoded en código (caps de sucursales, operadores, volumen mensual). Configuración operativa per-sucursal (`max_daily_tickets`, `max_concurrent_waiting` en `Branch`) coexiste como columnas editables vía UI — ver ADR-019.
 - Sin tabla de suscripciones, sin tabla de planes, sin pasarelas integradas.
 
 ## 2. Estado deseado
@@ -40,8 +40,8 @@ billing.notifications.enabled → emails de aviso de expiración del pilot
 ```
 
 Mientras `billing.enforcement.enabled = false`:
-- La app sigue usando los límites hardcoded de Branch.
-  - **Nota (PR-U):** la categorización de `max_daily_tickets` y `max_concurrent_waiting` como "hardcoded a deprecar" está sujeta a `OPEN_QUESTIONS.md` Q1. El resto de los límites hardcoded (`branches.max`, `operators.max`, `tickets.monthly`) no están en duda.
+- La app sigue usando los límites de plan hardcoded en código (caps de sucursales/operadores/volumen mensual). Los entitlements aún no son fuente autoritativa.
+- La configuración operativa per-sucursal (`Branch.max_daily_tickets`, `Branch.max_concurrent_waiting`) NO está en esta categoría: son configuración del tenant, no caps de plan (ver ADR-019).
 - Los entitlements se materializan pero no se aplican.
 - Útil para verificar que la materialización es correcta antes de activarla.
 
@@ -162,9 +162,8 @@ Mientras `billing.enforcement.enabled = false`:
 
 **Cambios:**
 - `billing.enforcement.enabled = true`.
-- Los entitlements pasan a ser autoritativos. Los límites de Branch hardcoded dejan de leerse.
-- La columna `max_concurrent_waiting` y `max_daily_tickets` de Branch se mantienen pero ya no se consultan; quedan deprecated y se eliminarán en una migración posterior.
-  - **Nota (PR-U):** este bullet asume que ambas columnas son legacy a migrar. El descubrimiento durante PR-U mostró que el código actual las trata como configuración operativa per-sucursal (UI editable en `Branches/Form.jsx`, sin features análogas en el catálogo de entitlements). Resolución pendiente en `OPEN_QUESTIONS.md` Q1.
+- Los entitlements pasan a ser autoritativos para los límites de plan (`branches.max`, `operators.max`, `tickets.monthly`, etc.). Los chequeos que antes leían valores hardcoded equivalentes dejan de leerse.
+- La configuración operativa per-sucursal (`Branch.max_daily_tickets`, `Branch.max_concurrent_waiting`) NO se ve afectada por este flip: sigue siendo configuración del tenant, no entitlement. Ver ADR-019.
 
 **Impacto en producción:**
 - Tenants con uso por encima de sus entitlements: bloqueo en próxima acción.
@@ -189,15 +188,12 @@ Mientras `billing.enforcement.enabled = false`:
 ### Fase G — Cleanup (mes 4+)
 
 **Cambios:**
-- Eliminar columnas deprecated en `branches` (`max_concurrent_waiting`, `max_daily_tickets`) en una migración expand-contract.
-  - **⛔ BLOQUEADO por PR-U / `OPEN_QUESTIONS.md` Q1.** No ejecutar este punto hasta que Q1 se resuelva. Si la resolución es Lectura A (campos son configuración operativa), este bullet se elimina del plan; si es Lectura B (campos son entitlements), se mantiene tal cual.
 - Eliminar lógica de fallback en EntitlementService.
 - Refactorizar tests para que dependan solo de entitlements.
 
 **Pre-requisitos:**
 - Enforcement activo > 60 días sin rollback.
-- Cero código que aún consulte las columnas deprecated.
-- `OPEN_QUESTIONS.md` Q1 resuelto. Si la resolución fue Lectura B, código de wiring entitlements (dual-read en `IssueTicketAction` / `Branch::canIssueTicket` / `KioskController`) ya en producción > 60 días.
+- Cero código que aún consulte lógica de fallback de entitlements.
 
 ---
 
