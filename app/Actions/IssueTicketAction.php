@@ -88,6 +88,9 @@ final class IssueTicketAction
             throw new RuntimeException('La sucursal está cerrada en este momento.');
         }
 
+        // TODO(Q1, docs/billing/OPEN_QUESTIONS.md): $branch->max_daily_tickets — ¿operational config
+        // o plan-feature? Si Q1 se resuelve como Lectura B, este chequeo debe migrar a dual-read
+        // con Entitlement::for($tenant)->getQuota('branch.max_daily_tickets'). No tocar hasta Q1.
         if ($branch->todayTicketCount() >= $branch->max_daily_tickets) {
             throw new RuntimeException('Se alcanzó el límite diario de turnos para esta sucursal.');
         }
