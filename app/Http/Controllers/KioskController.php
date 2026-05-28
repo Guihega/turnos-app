@@ -108,7 +108,9 @@ class KioskController extends Controller
             return back()->withErrors(['branch' => 'Servicio no disponible en esta cola.']);
         }
 
-        // Max concurrent waiting check (branch limit takes precedence, tenant overrides as ceiling)
+        // Max concurrent waiting check: tenant security setting is the absolute
+        // ceiling; branch column can restrict further (more restrictive wins via min()).
+        // See ADR-020 for the duality (operational config: tenant-wide vs per-branch).
         $branchMax = $branch->max_concurrent_waiting ?? 50;
         $effectiveMax = min($branchMax, $maxConcurrent);
         if ($branch->activeWaitingCount() >= $effectiveMax) {
