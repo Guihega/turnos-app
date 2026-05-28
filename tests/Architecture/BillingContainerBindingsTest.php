@@ -7,10 +7,12 @@ namespace Tests\Architecture;
 use App\Actions\Billing\CreateCustomerAction;
 use App\Actions\Billing\CreatePilotCustomerAction;
 use App\Actions\Billing\CreatePilotSubscriptionAction;
+use App\Actions\Billing\CreateSetupIntentAction;
 use App\Actions\Billing\CreateSubscriptionAction;
 use App\Actions\Billing\MaterializeEntitlementsAction;
 use App\Actions\Billing\OnboardPilotAction;
 use App\Actions\Billing\TransitionSubscriptionAction;
+use App\Actions\Billing\UpdatePaymentMethodAction;
 use App\Billing\Contracts\BillingGateway;
 use App\Billing\Contracts\BillingGatewayWriter;
 use App\Billing\Outbox\Handlers\PastDueEnteredHandler;
@@ -91,10 +93,12 @@ final class BillingContainerBindingsTest extends TestCase
         yield 'CreateCustomerAction' => [CreateCustomerAction::class];
         yield 'CreatePilotCustomerAction' => [CreatePilotCustomerAction::class];
         yield 'CreatePilotSubscriptionAction' => [CreatePilotSubscriptionAction::class];
+        yield 'CreateSetupIntentAction' => [CreateSetupIntentAction::class];
         yield 'CreateSubscriptionAction' => [CreateSubscriptionAction::class];
         yield 'MaterializeEntitlementsAction' => [MaterializeEntitlementsAction::class];
         yield 'OnboardPilotAction' => [OnboardPilotAction::class];
         yield 'TransitionSubscriptionAction' => [TransitionSubscriptionAction::class];
+        yield 'UpdatePaymentMethodAction' => [UpdatePaymentMethodAction::class];
 
         // Outbox handlers (PR-I)
         yield 'PastDueEnteredHandler' => [PastDueEnteredHandler::class];

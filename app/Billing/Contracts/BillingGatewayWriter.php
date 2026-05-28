@@ -7,6 +7,8 @@ namespace App\Billing\Contracts;
 use App\Billing\DTOs\CreateCustomerInput;
 use App\Billing\DTOs\CreateSubscriptionInput;
 use App\Billing\DTOs\GatewayCustomer;
+use App\Billing\DTOs\GatewayPaymentMethod;
+use App\Billing\DTOs\GatewaySetupIntent;
 use App\Billing\DTOs\GatewaySubscription;
 use App\Billing\Exceptions\GatewayException;
 
@@ -59,4 +61,42 @@ interface BillingGatewayWriter
      * @throws GatewayException
      */
     public function createSubscription(CreateSubscriptionInput $input, string $idempotencyKey): GatewaySubscription;
+
+    /**
+     * Create a SetupIntent for an existing gateway customer.
+     *
+     * A SetupIntent is the gateway primitive that lets the frontend
+     * collect a payment method without an immediate charge. The returned
+     * DTO carries the $clientSecret the frontend SDK needs to confirm
+     * card collection (Stripe Elements, MercadoPago Brick, etc.) per
+     * ADR-018.
+     *
+     * Idempotent: calling twice with the same $idempotencyKey returns
+     * the same SetupIntent without creating a duplicate.
+     *
+     * @throws GatewayException
+     */
+    public function createSetupIntent(string $gatewayCustomerId, string $idempotencyKey): GatewaySetupIntent;
+
+    /**
+     * Attach a payment method (already tokenized by the frontend SDK
+     * via a confirmed SetupIntent) to an existing gateway customer.
+     *
+     * When $setAsDefault is true, the adapter MUST also mark the PM as
+     * the customer's default for future invoices. The flag is part of
+     * the idempotency surface: a retry with the same key but a different
+     * $setAsDefault value is an idempotency conflict.
+     *
+     * Returns the gateway's view of the attached PM (brand, last4,
+     * expiry, default flag) so the application can persist the local
+     * mirror without an extra round trip.
+     *
+     * @throws GatewayException
+     */
+    public function attachPaymentMethod(
+        string $gatewayCustomerId,
+        string $paymentMethodId,
+        bool $setAsDefault,
+        string $idempotencyKey,
+    ): GatewayPaymentMethod;
 }
