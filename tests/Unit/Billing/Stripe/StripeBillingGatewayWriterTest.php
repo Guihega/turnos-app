@@ -7,6 +7,8 @@ namespace Tests\Unit\Billing\Stripe;
 use App\Billing\DTOs\CreateCustomerInput;
 use App\Billing\DTOs\CreateSubscriptionInput;
 use App\Billing\DTOs\GatewayCustomer;
+use App\Billing\DTOs\GatewayPaymentMethod;
+use App\Billing\DTOs\GatewaySetupIntent;
 use App\Billing\DTOs\GatewaySubscription;
 use App\Billing\Exceptions\GatewayIdempotencyConflictException;
 use App\Billing\Stripe\StripeBillingGateway;
@@ -17,8 +19,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stripe\Customer;
 use Stripe\Exception\IdempotencyException;
+use Stripe\PaymentMethod;
 use Stripe\Service\CustomerService;
+use Stripe\Service\PaymentMethodService;
+use Stripe\Service\SetupIntentService;
 use Stripe\Service\SubscriptionService;
+use Stripe\SetupIntent;
 use Stripe\StripeClient;
 use Stripe\StripeObject;
 use Stripe\Subscription;
@@ -93,6 +99,48 @@ final class StripeBillingGatewayWriterTest extends TestCase
             'trial_end' => 1701209600,
             'cancel_at_period_end' => false,
             'canceled_at' => null,
+            'metadata' => StripeObject::constructFrom([]),
+        ]);
+    }
+
+    private function makeStripeSetupIntent(): SetupIntent
+    {
+        return SetupIntent::constructFrom([
+            'id' => 'seti_NEW_TEST',
+            'client_secret' => 'seti_NEW_TEST_secret_xyz',
+            'status' => 'requires_payment_method',
+            'customer' => 'cus_NEW_TEST',
+            'payment_method_types' => ['card'],
+            'usage' => 'off_session',
+        ]);
+    }
+
+    private function makeStripePaymentMethod(?string $customerId = 'cus_NEW_TEST'): PaymentMethod
+    {
+        return PaymentMethod::constructFrom([
+            'id' => 'pm_NEW_TEST',
+            'type' => 'card',
+            'customer' => $customerId,
+            'card' => StripeObject::constructFrom([
+                'brand' => 'visa',
+                'last4' => '4242',
+                'exp_month' => 12,
+                'exp_year' => 2030,
+            ]),
+            'metadata' => StripeObject::constructFrom([]),
+        ]);
+    }
+
+    private function makeStripeCustomerWithDefaultPm(string $pmId): Customer
+    {
+        return Customer::constructFrom([
+            'id' => 'cus_NEW_TEST',
+            'email' => 'owner@acme.test',
+            'name' => 'Acme Co.',
+            'currency' => 'mxn',
+            'invoice_settings' => StripeObject::constructFrom([
+                'default_payment_method' => $pmId,
+            ]),
             'metadata' => StripeObject::constructFrom([]),
         ]);
     }
@@ -357,5 +405,162 @@ final class StripeBillingGatewayWriterTest extends TestCase
 
         $this->expectException(GatewayIdempotencyConflictException::class);
         $gateway->createSubscription($input, 'idem_REUSED');
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // PR-AA — SetupIntent + PaymentMethod attach (BillingGatewayWriter)
+    // ──────────────────────────────────────────────────────────────
+
+    #[Test]
+    public function create_setup_intent_sends_customer_payment_method_types_and_off_session_usage(): void
+    {
+        /** @var SetupIntentService&MockInterface $service */
+        $service = Mockery::mock(SetupIntentService::class);
+        $service->shouldReceive('create')
+            ->once()
+            ->withArgs(function (array $payload, array $options): bool {
+                return $payload['customer'] === 'cus_NEW_TEST'
+                    && $payload['payment_method_types'] === ['card']
+                    && $payload['usage'] === 'off_session'
+                    && $options['idempotency_key'] === 'idem_SETI_1';
+            })
+            ->andReturn($this->makeStripeSetupIntent());
+
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
+        $client->setupIntents = $service;
+
+        $gateway = new StripeBillingGateway($client, $this->makeConfig());
+
+        $result = $gateway->createSetupIntent('cus_NEW_TEST', 'idem_SETI_1');
+
+        $this->assertInstanceOf(GatewaySetupIntent::class, $result);
+        $this->assertSame('seti_NEW_TEST', $result->gatewayId);
+        $this->assertSame('seti_NEW_TEST_secret_xyz', $result->clientSecret);
+        $this->assertSame('requires_payment_method', $result->status);
+    }
+
+    #[Test]
+    public function create_setup_intent_translates_idempotency_exception(): void
+    {
+        $idempotencyException = IdempotencyException::factory(
+            message: 'Keys for idempotent requests can only be used with the same parameters they were first used with.',
+            httpStatus: 400,
+        );
+
+        /** @var SetupIntentService&MockInterface $service */
+        $service = Mockery::mock(SetupIntentService::class);
+        $service->shouldReceive('create')->andThrow($idempotencyException);
+
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
+        $client->setupIntents = $service;
+
+        $gateway = new StripeBillingGateway($client, $this->makeConfig());
+
+        $this->expectException(GatewayIdempotencyConflictException::class);
+        $gateway->createSetupIntent('cus_NEW_TEST', 'idem_REUSED');
+    }
+
+    #[Test]
+    public function attach_payment_method_attaches_with_idempotency_key_and_skips_default_update_when_flag_false(): void
+    {
+        /** @var PaymentMethodService&MockInterface $pmService */
+        $pmService = Mockery::mock(PaymentMethodService::class);
+        $pmService->shouldReceive('attach')
+            ->once()
+            ->withArgs(function (string $pmId, array $payload, array $options): bool {
+                return $pmId === 'pm_NEW_TEST'
+                    && $payload['customer'] === 'cus_NEW_TEST'
+                    && $options['idempotency_key'] === 'idem_ATTACH_1';
+            })
+            ->andReturn($this->makeStripePaymentMethod());
+
+        // CustomerService->update MUST NOT be called when setAsDefault=false.
+        /** @var CustomerService&MockInterface $cusService */
+        $cusService = Mockery::mock(CustomerService::class);
+        $cusService->shouldNotReceive('update');
+
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
+        $client->paymentMethods = $pmService;
+        $client->customers = $cusService;
+
+        $gateway = new StripeBillingGateway($client, $this->makeConfig());
+
+        $result = $gateway->attachPaymentMethod(
+            gatewayCustomerId: 'cus_NEW_TEST',
+            paymentMethodId: 'pm_NEW_TEST',
+            setAsDefault: false,
+            idempotencyKey: 'idem_ATTACH_1',
+        );
+
+        $this->assertInstanceOf(GatewayPaymentMethod::class, $result);
+        $this->assertSame('pm_NEW_TEST', $result->gatewayId);
+        $this->assertFalse($result->isDefault);
+    }
+
+    #[Test]
+    public function attach_payment_method_sets_invoice_settings_default_when_flag_true(): void
+    {
+        /** @var PaymentMethodService&MockInterface $pmService */
+        $pmService = Mockery::mock(PaymentMethodService::class);
+        $pmService->shouldReceive('attach')
+            ->once()
+            ->andReturn($this->makeStripePaymentMethod());
+
+        /** @var CustomerService&MockInterface $cusService */
+        $cusService = Mockery::mock(CustomerService::class);
+        $cusService->shouldReceive('update')
+            ->once()
+            ->withArgs(function (string $cusId, array $payload): bool {
+                return $cusId === 'cus_NEW_TEST'
+                    && $payload['invoice_settings']['default_payment_method'] === 'pm_NEW_TEST';
+            })
+            ->andReturn($this->makeStripeCustomerWithDefaultPm('pm_NEW_TEST'));
+
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
+        $client->paymentMethods = $pmService;
+        $client->customers = $cusService;
+
+        $gateway = new StripeBillingGateway($client, $this->makeConfig());
+
+        $result = $gateway->attachPaymentMethod(
+            gatewayCustomerId: 'cus_NEW_TEST',
+            paymentMethodId: 'pm_NEW_TEST',
+            setAsDefault: true,
+            idempotencyKey: 'idem_ATTACH_DEFAULT',
+        );
+
+        $this->assertInstanceOf(GatewayPaymentMethod::class, $result);
+        $this->assertTrue($result->isDefault);
+    }
+
+    #[Test]
+    public function attach_payment_method_translates_idempotency_exception(): void
+    {
+        $idempotencyException = IdempotencyException::factory(
+            message: 'Keys for idempotent requests can only be used with the same parameters they were first used with.',
+            httpStatus: 400,
+        );
+
+        /** @var PaymentMethodService&MockInterface $pmService */
+        $pmService = Mockery::mock(PaymentMethodService::class);
+        $pmService->shouldReceive('attach')->andThrow($idempotencyException);
+
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
+        $client->paymentMethods = $pmService;
+
+        $gateway = new StripeBillingGateway($client, $this->makeConfig());
+
+        $this->expectException(GatewayIdempotencyConflictException::class);
+        $gateway->attachPaymentMethod(
+            gatewayCustomerId: 'cus_NEW_TEST',
+            paymentMethodId: 'pm_NEW_TEST',
+            setAsDefault: false,
+            idempotencyKey: 'idem_REUSED',
+        );
     }
 }

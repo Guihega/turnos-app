@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Billing\CheckoutController;
+use App\Http\Controllers\Billing\PaymentMethodController;
 use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisplayController;
@@ -259,6 +260,13 @@ Route::middleware(['auth', 'verified', 'tenant.scope', EnsureTwoFactorForAdmins:
             Route::get('/metrics/branches', [DashboardController::class, 'branchComparison'])->name('metrics.branches');
             Route::get('/metrics/heatmap/{branch}', [DashboardController::class, 'heatmap'])->name('metrics.heatmap');
         });
+
+        // ── Método de Pago (Billing — PR-AA) ──
+        Route::get('/metodo-de-pago', [PaymentMethodController::class, 'show'])
+            ->name('payment-method.show');
+        Route::post('/metodo-de-pago', [PaymentMethodController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('payment-method.store');
     });
 });
 

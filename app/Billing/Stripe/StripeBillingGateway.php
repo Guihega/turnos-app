@@ -11,6 +11,7 @@ use App\Billing\DTOs\CreateSubscriptionInput;
 use App\Billing\DTOs\GatewayCustomer;
 use App\Billing\DTOs\GatewayInvoice;
 use App\Billing\DTOs\GatewayPaymentMethod;
+use App\Billing\DTOs\GatewaySetupIntent;
 use App\Billing\DTOs\GatewaySubscription;
 use App\Billing\Stripe\Concerns\HandlesStripeExceptions;
 use App\Enums\Billing\SubscriptionStatus;
@@ -19,6 +20,7 @@ use Illuminate\Contracts\Config\Repository;
 use Stripe\Customer;
 use Stripe\Invoice;
 use Stripe\PaymentMethod;
+use Stripe\SetupIntent;
 use Stripe\StripeClient;
 use Stripe\Subscription;
 use Stripe\Webhook;
@@ -212,6 +214,19 @@ final class StripeBillingGateway implements BillingGateway, BillingGatewayWriter
         );
     }
 
+    private function mapSetupIntent(SetupIntent $setupIntent): GatewaySetupIntent
+    {
+        return new GatewaySetupIntent(
+            gatewayId: $setupIntent->id,
+            // client_secret is always present for SetupIntents the
+            // adapter just created. A retrieved SetupIntent in
+            // 'canceled' state may have null here; we cast to string
+            // and let domain code treat empty as "unusable".
+            clientSecret: is_string($setupIntent->client_secret) ? $setupIntent->client_secret : '',
+            status: is_string($setupIntent->status) ? $setupIntent->status : 'unknown',
+        );
+    }
+
     /**
      * Map Stripe's subscription.status to SubscriptionStatus::value, or
      * null if the status doesn't have a domain equivalent.
@@ -322,6 +337,72 @@ final class StripeBillingGateway implements BillingGateway, BillingGatewayWriter
             );
 
             return $this->mapSubscription($subscription);
+        });
+    }
+
+    public function createSetupIntent(string $gatewayCustomerId, string $idempotencyKey): GatewaySetupIntent
+    {
+        return $this->translateStripeExceptions(function () use ($gatewayCustomerId, $idempotencyKey): GatewaySetupIntent {
+            /** @var SetupIntent $setupIntent */
+            $setupIntent = $this->client->setupIntents->create(
+                [
+                    'customer' => $gatewayCustomerId,
+                    // Card-only for PR-AA. Broader payment method types
+                    // (OXXO, SEPA, bank transfers) are out of scope until
+                    // the gateway is extended for non-card PMs.
+                    'payment_method_types' => ['card'],
+                    // Off-session usage: the PM will be charged later by
+                    // the subscription billing engine without the customer
+                    // present. This is the correct setting for "save card
+                    // for future invoices".
+                    'usage' => 'off_session',
+                ],
+                ['idempotency_key' => $idempotencyKey],
+            );
+
+            return $this->mapSetupIntent($setupIntent);
+        });
+    }
+
+    public function attachPaymentMethod(
+        string $gatewayCustomerId,
+        string $paymentMethodId,
+        bool $setAsDefault,
+        string $idempotencyKey,
+    ): GatewayPaymentMethod {
+        return $this->translateStripeExceptions(function () use (
+            $gatewayCustomerId,
+            $paymentMethodId,
+            $setAsDefault,
+            $idempotencyKey,
+        ): GatewayPaymentMethod {
+            // Step 1: attach the PM to the customer. Idempotent at the
+            // gateway protocol level via Stripe-Idempotency-Key.
+            /** @var PaymentMethod $pm */
+            $pm = $this->client->paymentMethods->attach(
+                $paymentMethodId,
+                ['customer' => $gatewayCustomerId],
+                ['idempotency_key' => $idempotencyKey],
+            );
+
+            // Step 2 (optional): mark as the customer's default for future
+            // invoices. Naturally idempotent — setting the same PM as
+            // default repeatedly is a no-op — so no idempotency key needed.
+            $defaultPmId = null;
+            if ($setAsDefault) {
+                /** @var Customer $customer */
+                $customer = $this->client->customers->update(
+                    $gatewayCustomerId,
+                    [
+                        'invoice_settings' => [
+                            'default_payment_method' => $paymentMethodId,
+                        ],
+                    ],
+                );
+                $defaultPmId = $this->extractDefaultPaymentMethodId($customer);
+            }
+
+            return $this->mapPaymentMethod($pm, $defaultPmId);
         });
     }
 
