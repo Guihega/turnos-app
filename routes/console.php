@@ -1,5 +1,11 @@
 <?php
 
+use App\Jobs\Billing\CancelExpiredPilotsJob;
+use App\Jobs\Billing\NotifyPilotExpirationJob;
+use App\Jobs\Billing\PublishOutboxEventsJob;
+use App\Jobs\Billing\PurgeOutboxEventsJob;
+use App\Jobs\Billing\PurgeWebhookEventsJob;
+use App\Jobs\Billing\ReconcileSubscriptionsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -60,3 +66,56 @@ Schedule::command('report:weekly')
 Schedule::command('logs:clean --days=7')
     ->dailyAt('04:00')
     ->withoutOverlapping();
+
+// ── Billing Outbox Publisher ──
+// Drains billing_outbox_events every 30s.
+// Single-instance via uniqueId on the job + withoutOverlapping here (belt-and-braces).
+// See ADR-010 (transactional outbox), ADR-013 (operational defaults).
+Schedule::job(new PublishOutboxEventsJob)
+    ->everyThirtySeconds()
+    ->withoutOverlapping(60)
+    ->onOneServer()
+    ->name('billing:publish-outbox-events');
+
+// ── Billing Cleanups & Reconciliation (PR-J) ──
+// Nightly maintenance jobs for the Billing module. See ADR-017.
+// All three are single-instance + onOneServer for safe scheduling across replicas.
+
+Schedule::job(new ReconcileSubscriptionsJob)
+    ->dailyAt('03:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:reconcile-subscriptions');
+
+Schedule::job(new PurgeOutboxEventsJob)
+    ->dailyAt('03:30')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:purge-outbox-events');
+
+Schedule::job(new PurgeWebhookEventsJob)
+    ->dailyAt('04:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:purge-webhook-events');
+
+// ── Billing Pilot Expiration Notifications (PR-P) ──
+// Sends email reminders to tenants in pilot status before their trial ends.
+// Gated by config('billing.notifications.enabled'). See MIGRATION_PLAN Fase D.
+Schedule::job(new NotifyPilotExpirationJob)
+    ->dailyAt('09:00')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:notify-pilot-expiration');
+
+// ── Cancel Expired Pilot Subscriptions (PR-T) ──
+// Transitions pilots whose trial_ends_at has passed into Canceled
+// via TransitionSubscriptionAction. Runs before the Notify job (09:00)
+// so already-expired pilots are canceled before reminder emails go out.
+// Gated by config('billing.trial_expiration.enabled'). See MIGRATION_PLAN
+// Fase F and ADR-014 (pilot -> canceled is the intended trial-expiry path).
+Schedule::job(new CancelExpiredPilotsJob)
+    ->dailyAt('08:30')
+    ->withoutOverlapping(3600)
+    ->onOneServer()
+    ->name('billing:cancel-expired-pilots');

@@ -1,0 +1,81 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [main, 'epic/**']
+  pull_request:
+    branches: [main, 'epic/**']
+
+env:
+  PHP_VERSION: '8.3'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Pint — Code style (Laravel's official formatter)
+  # ─────────────────────────────────────────────
+  pint:
+    name: Code Style (Pint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run Pint (test mode)
+        run: vendor/bin/pint --test
+
+  # ─────────────────────────────────────────────
+  # Larastan — Static analysis
+  # ─────────────────────────────────────────────
+  larastan:
+    name: Static Analysis (Larastan)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, pgsql, redis, mbstring, xml, bcmath
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Cache PHPStan results
+        uses: actions/cache@v4
+        with:
+          path: /tmp/phpstan
+          key: phpstan-${{ github.sha }}
+          restore-keys: phpstan-
+
+      - name: Run Larastan
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress

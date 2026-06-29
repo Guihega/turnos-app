@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Billing\Customer;
+use App\Models\Billing\EntitlementGrant;
+use App\Models\Billing\Subscription;
 use App\Models\Concerns\HasTenantSettings;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ */
 class Tenant extends Model
 {
     use HasFactory, HasTenantSettings, HasUlids, SoftDeletes;
@@ -50,6 +58,43 @@ class Tenant extends Model
     public function activeBranches(): HasMany
     {
         return $this->branches()->where('is_active', true);
+    }
+
+    public function entitlementGrants(): HasMany
+    {
+        return $this->hasMany(EntitlementGrant::class, 'tenant_id');
+    }
+
+    /**
+     * The billing Customer for this tenant (1:1). Null until billing is
+     * provisioned (e.g. via OnboardPilotAction or the paid checkout flow).
+     *
+     * @return HasOne<Customer, $this>
+     */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(Customer::class);
+    }
+
+    /**
+     * The single billing subscription for this tenant, via its Customer.
+     *
+     * Structural 1:1:1 chain (Tenant -> Customer -> Subscription); both
+     * hops are enforced UNIQUE in the schema (billing_customers.tenant_id,
+     * billing_subscriptions.customer_id). Whether the subscription grants
+     * feature access is a domain decision evaluated by EntitlementService
+     * via SubscriptionStatus::grantsAccess(), not filtered here.
+     */
+    public function subscription(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Subscription::class,
+            Customer::class,
+            'tenant_id',    // FK on billing_customers -> tenants.id
+            'customer_id',  // FK on billing_subscriptions -> billing_customers.id
+            'id',           // local key on tenants
+            'id',           // local key on billing_customers
+        );
     }
 
     // ── Scopes ──

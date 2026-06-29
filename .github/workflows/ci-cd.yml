@@ -2,9 +2,9 @@ name: Olinora CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'epic/**']
   pull_request:
-    branches: [main]
+    branches: [main, 'epic/**']
 
 env:
   PHP_VERSION: '8.3'
@@ -95,6 +95,11 @@ jobs:
 
       - name: Run migrations
         run: php artisan migrate --force
+
+      - name: Verify migration rollback is reversible
+        run: |
+          php artisan migrate:rollback --force
+          php artisan migrate --force
 
       - name: Run tests
         run: php artisan test

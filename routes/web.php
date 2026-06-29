@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Billing\CheckoutController;
+use App\Http\Controllers\Billing\PaymentMethodController;
+use App\Http\Controllers\Billing\WebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\GeoController;
@@ -81,6 +84,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/onboarding/check-slug', [OnboardingController::class, 'checkSlug'])
         ->middleware('throttle:30,1')
         ->name('onboarding.check-slug');
+
+    // — PR-O: Public checkout flow (plan select + signup + confirmation) —
+    Route::get('/checkout', [CheckoutController::class, 'select'])
+        ->name('checkout.select');
+    Route::get('/checkout/signup', [CheckoutController::class, 'signupForm'])
+        ->name('checkout.signup-form');
+    Route::post('/checkout', [CheckoutController::class, 'signup'])
+        ->middleware('throttle:5,1')
+        ->name('checkout.signup');
+    Route::get('/checkout/confirmation', [CheckoutController::class, 'confirmation'])
+        ->name('checkout.confirmation');
 });
 
 // Two-Factor Authentication Challenge (post-login, before full auth)
@@ -246,7 +260,30 @@ Route::middleware(['auth', 'verified', 'tenant.scope', EnsureTwoFactorForAdmins:
             Route::get('/metrics/branches', [DashboardController::class, 'branchComparison'])->name('metrics.branches');
             Route::get('/metrics/heatmap/{branch}', [DashboardController::class, 'heatmap'])->name('metrics.heatmap');
         });
+
+        // ── Método de Pago (Billing — PR-AA) ──
+        Route::get('/metodo-de-pago', [PaymentMethodController::class, 'show'])
+            ->name('payment-method.show');
+        Route::post('/metodo-de-pago', [PaymentMethodController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('payment-method.store');
     });
 });
 
 require __DIR__.'/auth.php';
+
+/*
+|--------------------------------------------------------------------------
+| Billing webhook — PR-F
+|--------------------------------------------------------------------------
+|
+| Public endpoint for Stripe webhook deliveries. Authentication is via
+| the Stripe-Signature header verified by BillingGateway. CSRF is
+| explicitly excluded for this route in bootstrap/app.php.
+|
+| See ADR-007, ADR-012.
+|
+*/
+
+Route::post('billing/webhook', WebhookController::class)
+    ->name('billing.webhook');
