@@ -18,10 +18,13 @@ final class SyncStripeCatalog extends Command
     protected $description = 'Crea los Products y Prices del catalogo local en Stripe y vincula los gateway_refs.';
 
     private const PLAN_META_KEY = 'olinora_plan_code';
+
     private const PRICE_META_KEY = 'olinora_price_id';
 
     private int $created = 0;
+
     private int $skipped = 0;
+
     private int $failed = 0;
 
     public function handle(StripeClientFactory $factory): int
@@ -77,6 +80,7 @@ final class SyncStripeCatalog extends Command
             }
 
             foreach ($plan->prices as $price) {
+                /** @var Price $price */
                 $this->syncPrice($stripe, $plan, $price, $productId, $dryRun);
             }
         }

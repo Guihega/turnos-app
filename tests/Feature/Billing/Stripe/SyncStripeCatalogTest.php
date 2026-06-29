@@ -11,6 +11,8 @@ use App\Models\Billing\Price;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Mockery\MockInterface;
+use Stripe\Service\PriceService;
+use Stripe\Service\ProductService;
 use Stripe\StripeClient;
 use Tests\TestCase;
 
@@ -18,29 +20,43 @@ final class SyncStripeCatalogTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function mockStripeClient(): MockInterface
-    {
-        $client = Mockery::mock(StripeClient::class);
+    /**
+     * @var ProductService&MockInterface
+     */
+    private $products;
 
-        $products = Mockery::mock();
+    /**
+     * @var PriceService&MockInterface
+     */
+    private $prices;
+
+    private function mockStripeClient(): StripeClient
+    {
+        /** @var ProductService&MockInterface $products */
+        $products = Mockery::mock(ProductService::class);
         $products->shouldReceive('search')->andReturn((object) ['data' => []])->byDefault();
         $products->shouldReceive('create')->andReturn((object) ['id' => 'prod_TEST123'])->byDefault();
+        $this->products = $products;
 
-        $prices = Mockery::mock();
+        /** @var PriceService&MockInterface $prices */
+        $prices = Mockery::mock(PriceService::class);
         $counter = 0;
         $prices->shouldReceive('create')->andReturnUsing(function () use (&$counter) {
             $counter++;
 
             return (object) ['id' => 'price_TEST'.$counter];
         })->byDefault();
+        $this->prices = $prices;
 
+        /** @var StripeClient&MockInterface $client */
+        $client = Mockery::mock(StripeClient::class);
         $client->products = $products;
         $client->prices = $prices;
 
         return $client;
     }
 
-    private function bindFactory(StripeClient|MockInterface $client): void
+    private function bindFactory(StripeClient $client): void
     {
         $this->app->instance(StripeClientFactory::class, new FakeStripeClientFactory($client));
 
@@ -68,7 +84,7 @@ final class SyncStripeCatalogTest extends TestCase
             'interval' => BillingInterval::Month,
             'interval_count' => 1,
             'amount_cents' => $amountCents,
-            'tax_behavior' => 'inclusive',
+            'tax_behavior' => 'exclusive',
             'gateway_refs' => null,
             'is_active' => true,
         ]);
@@ -90,7 +106,7 @@ final class SyncStripeCatalogTest extends TestCase
     public function test_es_idempotente_salta_precios_ya_vinculados(): void
     {
         $client = $this->mockStripeClient();
-        $client->prices->shouldReceive('create')->never();
+        $this->prices->shouldReceive('create')->never();
         $this->bindFactory($client);
 
         $price = $this->makePlanWithPrice('starter', 49900);
@@ -106,8 +122,8 @@ final class SyncStripeCatalogTest extends TestCase
     public function test_omite_precios_de_monto_cero(): void
     {
         $client = $this->mockStripeClient();
-        $client->products->shouldReceive('create')->never();
-        $client->prices->shouldReceive('create')->never();
+        $this->products->shouldReceive('create')->never();
+        $this->prices->shouldReceive('create')->never();
         $this->bindFactory($client);
 
         $price = $this->makePlanWithPrice('pilot', 0);
@@ -121,8 +137,8 @@ final class SyncStripeCatalogTest extends TestCase
     public function test_dry_run_no_escribe_ni_llama_a_stripe(): void
     {
         $client = $this->mockStripeClient();
-        $client->products->shouldReceive('create')->never();
-        $client->prices->shouldReceive('create')->never();
+        $this->products->shouldReceive('create')->never();
+        $this->prices->shouldReceive('create')->never();
         $this->bindFactory($client);
 
         $price = $this->makePlanWithPrice('business', 349900);
@@ -142,9 +158,7 @@ final class SyncStripeCatalogTest extends TestCase
 
 class FakeStripeClientFactory extends StripeClientFactory
 {
-    public function __construct(private StripeClient $client)
-    {
-    }
+    public function __construct(private StripeClient $client) {}
 
     public function make(): StripeClient
     {
