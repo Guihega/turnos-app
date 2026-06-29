@@ -11,31 +11,24 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Seeds 42 prices across 4 public plans × 6 currencies × 1-2 intervals.
+ * Seeds prices across the public paid plans x 6 currencies x 1-2 intervals.
  *
- *   pilot:        6 rows  (1 interval, all amounts = 0)
- *   starter:     12 rows  (month + year)
- *   professional:12 rows  (month + year)
- *   business:    12 rows  (month + year)
- *   enterprise:   0 rows  (custom, no public price)
+ * Amounts are stored in Stripe's smallest unit. For 2-decimal currencies
+ * (USD/MXN/PEN) that means cents (major x 100). For zero-decimal currencies
+ * (COP/CLP/ARS) the smallest unit IS the major unit (major x 1) -- Stripe
+ * rejects sub-unit amounts for them. The multiplier is derived from
+ * config('billing.currency_decimals'), the single source of truth.
  *
- * Yearly amount = monthly amount × 10  (≈17% effective discount).
+ * Idempotent via Price::updateOrCreate on the unique combination.
  *
- * Amounts are stored in CENTS (smallest currency unit). For zero-decimal
- * currencies (COP, ARS, CLP) we still multiply by 100 for table-wide
- * consistency; the application layer is the single source of truth on
- * how to format each currency.
- *
- * Idempotent via Price::updateOrCreate on the unique combination
- * (plan_id, currency, country, interval, interval_count).
- *
- * @see docs/billing/SPEC.md §5
+ * @see config/billing.php (currency_decimals)
+ * @see docs/billing/SPEC.md
  */
 final class PricesSeeder extends Seeder
 {
     /**
-     * Monthly prices per (plan, currency) in MAJOR units (USD/MXN/etc).
-     * Yearly is derived: monthly × 10. Cents conversion happens at write time.
+     * Monthly prices per (plan, currency) in MAJOR units.
+     * Yearly is derived: monthly x 10.
      *
      * @var array<string, array<string, int>>
      */
@@ -100,7 +93,6 @@ final class PricesSeeder extends Seeder
                     amountMajor: $monthlyMajor,
                 );
 
-                // Pilot has no yearly price (it's a 90-day trial, not a subscription).
                 if ($planCode === 'pilot') {
                     continue;
                 }
@@ -130,11 +122,24 @@ final class PricesSeeder extends Seeder
                 'interval_count' => 1,
             ],
             [
-                'amount_cents' => $amountMajor * 100,
+                'amount_cents' => $amountMajor * $this->minorUnitFactor($currency),
                 'tax_behavior' => 'exclusive',
                 'gateway_refs' => null,
                 'is_active' => true,
             ]
         );
+    }
+
+    /**
+     * Multiplier to convert a MAJOR amount into Stripe's smallest unit,
+     * derived from the currency's decimal count. 2 decimals -> 100,
+     * 0 decimals -> 1. Falls back to 2 decimals if a currency is missing
+     * from the config map (conservative default).
+     */
+    private function minorUnitFactor(string $currency): int
+    {
+        $decimals = config('billing.currency_decimals.'.$currency, 2);
+
+        return 10 ** $decimals;
     }
 }

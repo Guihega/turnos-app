@@ -53,11 +53,9 @@ final class CatalogSeedingTest extends TestCase
     {
         $this->seed(BillingCatalogSeeder::class);
 
-        // pilot: 1 interval × 6 currencies = 6 rows
         $pilot = Plan::query()->where('code', 'pilot')->firstOrFail();
         $this->assertSame(6, $pilot->prices()->count());
 
-        // each non-pilot public plan: 2 intervals × 6 currencies = 12 rows
         foreach (['starter', 'professional', 'business'] as $code) {
             $plan = Plan::query()->where('code', $code)->firstOrFail();
             $this->assertSame(
@@ -67,8 +65,57 @@ final class CatalogSeedingTest extends TestCase
             );
         }
 
-        // enterprise: 0 prices (custom, not public)
         $enterprise = Plan::query()->where('code', 'enterprise')->firstOrFail();
         $this->assertSame(0, $enterprise->prices()->count());
+    }
+
+    /**
+     * Regression guard: zero-decimal currencies (ARS/CLP/COP) must NOT be
+     * multiplied by 100 into amount_cents. Two-decimal currencies (USD/MXN/PEN)
+     * must be. This is the bug fixed on 2026-06-29 where the seeder blindly
+     * multiplied every currency by 100, inflating zero-decimal amounts 100x.
+     *
+     * Starter monthly major amounts (see PricesSeeder::MONTHLY_PRICES):
+     *   USD 29, MXN 499, PEN 109   (2 decimals -> x100)
+     *   COP 129000, ARS 29900, CLP 27990  (0 decimals -> x1)
+     */
+    public function test_zero_decimal_currencies_are_not_inflated(): void
+    {
+        $this->seed(BillingCatalogSeeder::class);
+
+        $starter = Plan::query()->where('code', 'starter')->firstOrFail();
+
+        $monthly = fn (string $currency): int => (int) $starter->prices()
+            ->where('currency', $currency)
+            ->where('interval', 'month')
+            ->value('amount_cents');
+
+        // Two-decimal currencies: major x 100.
+        $this->assertSame(2900, $monthly('USD'), 'USD starter monthly');
+        $this->assertSame(49900, $monthly('MXN'), 'MXN starter monthly');
+        $this->assertSame(10900, $monthly('PEN'), 'PEN starter monthly');
+
+        // Zero-decimal currencies: major x 1 (NOT inflated).
+        $this->assertSame(129000, $monthly('COP'), 'COP starter monthly');
+        $this->assertSame(29900, $monthly('ARS'), 'ARS starter monthly');
+        $this->assertSame(27990, $monthly('CLP'), 'CLP starter monthly');
+    }
+
+    /**
+     * Regression guard: no price may exceed Stripe's maximum unit_amount
+     * (99,999,999). This is what caused the 2 failures on first sync —
+     * Business yearly in ARS/CLP exceeded the cap before the fix.
+     */
+    public function test_no_price_exceeds_stripe_max_unit_amount(): void
+    {
+        $this->seed(BillingCatalogSeeder::class);
+
+        $maxAmount = Price::query()->max('amount_cents');
+
+        $this->assertLessThanOrEqual(
+            99999999,
+            $maxAmount,
+            'No price may exceed Stripe max unit_amount (99,999,999)'
+        );
     }
 }
