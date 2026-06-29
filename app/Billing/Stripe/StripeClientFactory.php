@@ -24,7 +24,7 @@ use Stripe\StripeClient;
  * Per docs/billing/SECRETS.md, the secret key is read from process
  * environment via config — never hard-coded, never logged.
  */
-final class StripeClientFactory
+class StripeClientFactory
 {
     public function __construct(
         private readonly Repository $config,
