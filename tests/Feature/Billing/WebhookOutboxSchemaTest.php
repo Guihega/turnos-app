@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Billing;
 
-use App\Models\Billing\OutboxEvent;
+use App\Models\Billing\BillingOutboxEvent;
 use App\Models\Billing\WebhookEvent;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -179,7 +179,7 @@ final class WebhookOutboxSchemaTest extends TestCase
     #[Test]
     public function an_outbox_event_can_be_persisted(): void
     {
-        $event = OutboxEvent::create([
+        $event = BillingOutboxEvent::create([
             'aggregate_type' => 'Subscription',
             'aggregate_id' => '01jx00000000000000000000ab',
             'event_type' => 'SubscriptionActivated',
@@ -200,14 +200,14 @@ final class WebhookOutboxSchemaTest extends TestCase
     #[Test]
     public function pending_scope_excludes_published_and_failed_events(): void
     {
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Subscription',
             'aggregate_id' => '01jx00000000000000000000ab',
             'event_type' => 'SubscriptionActivated',
             'payload' => [],
         ]);
 
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Invoice',
             'aggregate_id' => '01jx00000000000000000000cd',
             'event_type' => 'InvoicePaid',
@@ -215,7 +215,7 @@ final class WebhookOutboxSchemaTest extends TestCase
             'published_at' => now(),
         ]);
 
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Payment',
             'aggregate_id' => '01jx00000000000000000000ef',
             'event_type' => 'PaymentFailed',
@@ -225,7 +225,7 @@ final class WebhookOutboxSchemaTest extends TestCase
             'last_error' => 'Consumer raised exception',
         ]);
 
-        $pending = OutboxEvent::query()->pending()->get();
+        $pending = BillingOutboxEvent::query()->pending()->get();
 
         $this->assertCount(1, $pending);
         $this->assertSame('SubscriptionActivated', $pending->first()?->event_type);
@@ -234,7 +234,7 @@ final class WebhookOutboxSchemaTest extends TestCase
     #[Test]
     public function published_and_failed_scopes_are_disjoint(): void
     {
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Subscription',
             'aggregate_id' => '01jx00000000000000000000ab',
             'event_type' => 'SubscriptionActivated',
@@ -242,7 +242,7 @@ final class WebhookOutboxSchemaTest extends TestCase
             'published_at' => now(),
         ]);
 
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Payment',
             'aggregate_id' => '01jx00000000000000000000cd',
             'event_type' => 'PaymentFailed',
@@ -250,29 +250,29 @@ final class WebhookOutboxSchemaTest extends TestCase
             'failed_at' => now(),
         ]);
 
-        $this->assertSame(1, OutboxEvent::query()->published()->count());
-        $this->assertSame(1, OutboxEvent::query()->failed()->count());
-        $this->assertSame(0, OutboxEvent::query()->pending()->count());
+        $this->assertSame(1, BillingOutboxEvent::query()->published()->count());
+        $this->assertSame(1, BillingOutboxEvent::query()->failed()->count());
+        $this->assertSame(0, BillingOutboxEvent::query()->pending()->count());
     }
 
     #[Test]
     public function for_aggregate_scope_filters_events_by_aggregate_type(): void
     {
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Subscription',
             'aggregate_id' => '01jx00000000000000000000ab',
             'event_type' => 'SubscriptionActivated',
             'payload' => [],
         ]);
 
-        OutboxEvent::create([
+        BillingOutboxEvent::create([
             'aggregate_type' => 'Invoice',
             'aggregate_id' => '01jx00000000000000000000cd',
             'event_type' => 'InvoicePaid',
             'payload' => [],
         ]);
 
-        $subs = OutboxEvent::query()->forAggregate('Subscription')->get();
+        $subs = BillingOutboxEvent::query()->forAggregate('Subscription')->get();
 
         $this->assertCount(1, $subs);
         $this->assertSame('Subscription', $subs->first()?->aggregate_type);

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * billing_outbox_events — outbox transaccional para eventos de dominio salientes.
  *
  * Cuando una entidad de Billing cambia de estado relevante (Subscription
- * activada, Payment fallido, etc.), se escribe un OutboxEvent en la
+ * activada, Payment fallido, etc.), se escribe un BillingOutboxEvent en la
  * MISMA transacción que el cambio de estado. Esto garantiza:
  *
  *   - Si el commit BD tiene éxito, el evento queda persistido pendiente.
