@@ -19,7 +19,11 @@ use RuntimeException;
  * rejects sub-unit amounts for them. The multiplier is derived from
  * config('billing.currency_decimals'), the single source of truth.
  *
- * Idempotent via Price::updateOrCreate on the unique combination.
+ * Idempotent via firstOrNew on the unique combination. Re-seeding updates
+ * the amount/tax/active flags but PRESERVES gateway_refs: once a price is
+ * linked to Stripe, a re-seed must not wipe that link (it would unlink the
+ * whole catalog from the gateway and break checkout). gateway_refs is only
+ * initialized to null when the row is brand new.
  *
  * @see config/billing.php (currency_decimals)
  * @see docs/billing/SPEC.md
@@ -113,21 +117,25 @@ final class PricesSeeder extends Seeder
         BillingInterval $interval,
         int $amountMajor,
     ): void {
-        Price::updateOrCreate(
-            [
-                'plan_id' => $plan->id,
-                'currency' => $currency,
-                'country' => null,
-                'interval' => $interval->value,
-                'interval_count' => 1,
-            ],
-            [
-                'amount_cents' => $amountMajor * $this->minorUnitFactor($currency),
-                'tax_behavior' => 'exclusive',
-                'gateway_refs' => null,
-                'is_active' => true,
-            ]
-        );
+        $price = Price::firstOrNew([
+            'plan_id' => $plan->id,
+            'currency' => $currency,
+            'country' => null,
+            'interval' => $interval->value,
+            'interval_count' => 1,
+        ]);
+
+        $price->amount_cents = $amountMajor * $this->minorUnitFactor($currency);
+        $price->tax_behavior = 'exclusive';
+        $price->is_active = true;
+
+        // Preserve gateway_refs: never overwrite an existing Stripe link on
+        // re-seed. Only initialize to null when the row is brand new.
+        if (! $price->exists) {
+            $price->gateway_refs = null;
+        }
+
+        $price->save();
     }
 
     /**
