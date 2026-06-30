@@ -20,6 +20,7 @@ use App\Billing\Outbox\Handlers\SubscriptionSuspendedHandler;
 use App\Billing\Stripe\Mappers\StripeSubscriptionStatusMapper;
 use App\Billing\Stripe\StripeBillingGateway;
 use App\Billing\Stripe\StripeClientFactory;
+use App\Billing\Webhooks\Handlers\InvoicePaidHandler;
 use App\Billing\Webhooks\Handlers\InvoicePaymentFailedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionDeletedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionUpdatedHandler;
@@ -109,6 +110,7 @@ final class BillingContainerBindingsTest extends TestCase
         yield 'StripeClientFactory' => [StripeClientFactory::class];
 
         // Webhook handlers (PR-G)
+        yield 'InvoicePaidHandler' => [InvoicePaidHandler::class];
         yield 'InvoicePaymentFailedHandler' => [InvoicePaymentFailedHandler::class];
         yield 'SubscriptionDeletedHandler' => [SubscriptionDeletedHandler::class];
         yield 'SubscriptionUpdatedHandler' => [SubscriptionUpdatedHandler::class];
