@@ -118,4 +118,49 @@ final class CatalogSeedingTest extends TestCase
             'No price may exceed Stripe max unit_amount (99,999,999)'
         );
     }
+
+    /**
+     * Regression guard: re-seeding must PRESERVE an existing gateway_refs.
+     * Bug context (2026-06-30): the seeder used updateOrCreate with
+     * 'gateway_refs' => null in the update payload, so every re-seed wiped
+     * the Stripe link on all prices — unlinking the catalog from the gateway
+     * and breaking checkout. The fix uses firstOrNew and only initializes
+     * gateway_refs to null for brand-new rows. This test locks that in,
+     * especially ahead of Stripe live where an accidental re-seed must never
+     * unlink the production catalog.
+     */
+    public function test_reseed_preserves_existing_gateway_refs(): void
+    {
+        $this->seed(BillingCatalogSeeder::class);
+
+        /** @var Price $price */
+        $price = Price::query()
+            ->where('currency', 'MXN')
+            ->where('interval', 'month')
+            ->whereNotNull('amount_cents')
+            ->where('amount_cents', '>', 0)
+            ->firstOrFail();
+
+        $price->gateway_refs = ['stripe' => 'price_FAKE123'];
+        $price->save();
+
+        $amountBefore = $price->amount_cents;
+
+        // Re-run the catalog seed: this must update amount/flags but keep
+        // the Stripe link intact.
+        $this->seed(BillingCatalogSeeder::class);
+
+        $price->refresh();
+
+        $this->assertSame(
+            ['stripe' => 'price_FAKE123'],
+            $price->gateway_refs,
+            'gateway_refs must survive a re-seed'
+        );
+        $this->assertSame(
+            $amountBefore,
+            $price->amount_cents,
+            'amount_cents should remain correct after re-seed'
+        );
+    }
 }
