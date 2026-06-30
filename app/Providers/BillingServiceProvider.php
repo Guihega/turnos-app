@@ -8,6 +8,7 @@ use App\Billing\Contracts\BillingGateway;
 use App\Billing\Contracts\BillingGatewayWriter;
 use App\Billing\Stripe\StripeBillingGateway;
 use App\Billing\Stripe\StripeClientFactory;
+use App\Billing\Webhooks\Handlers\InvoicePaidHandler;
 use App\Billing\Webhooks\Handlers\InvoicePaymentFailedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionDeletedHandler;
 use App\Billing\Webhooks\Handlers\SubscriptionUpdatedHandler;
@@ -71,6 +72,7 @@ final class BillingServiceProvider extends ServiceProvider
                     'customer.subscription.updated' => SubscriptionUpdatedHandler::class,
                     'customer.subscription.deleted' => SubscriptionDeletedHandler::class,
                     'customer.subscription.trial_will_end' => TrialWillEndHandler::class,
+                    'invoice.paid' => InvoicePaidHandler::class,
                     'invoice.payment_failed' => InvoicePaymentFailedHandler::class,
                 ],
                 container: $container,
